@@ -13,6 +13,7 @@ export default function ExportsPage() {
   const [done, setDone] = useState(false);
   const [singleExporting, setSingleExporting] = useState<string | null>(null);
   const [groupExporting, setGroupExporting] = useState(false);
+  const [groupLangFilter, setGroupLangFilter] = useState<"nl" | "fr" | "all">("all");
 
   const data = useMemo(
     () => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter),
@@ -41,8 +42,9 @@ export default function ExportsPage() {
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
-      const doc = generateGroupPDF(allData, language, selectedYear, sourceLanguageFilter);
-      doc.save(`Aquilae_Barometer_${selectedYear}_Groepsrapport.pdf`);
+      const doc = generateGroupPDF(allData, language, selectedYear, groupLangFilter);
+      const langSuffix = groupLangFilter === "all" ? "NL+FR" : groupLangFilter.toUpperCase();
+      doc.save(`Aquilae_Barometer_${selectedYear}_Groepsrapport_${langSuffix}.pdf`);
     } catch (err) {
       console.error("Group PDF generation failed:", err);
     }
