@@ -160,7 +160,6 @@ export function generateOfficePDF(
       fmtCur(bm.mean),
       fmtCur(bm.median),
       bm.percentile !== null ? `P${bm.percentile}` : "—",
-      bm.quartile !== null ? `Q${bm.quartile}` : "—",
     ];
   });
 
@@ -168,7 +167,7 @@ export function generateOfficePDF(
     startY: y,
     head: [[
       "", t("office.value", lang), t("benchmark.mean", lang),
-      t("benchmark.median", lang), t("benchmark.percentile", lang), t("benchmark.quartile", lang)
+      t("benchmark.median", lang), t("benchmark.percentile", lang)
     ]],
     body: tableBody,
     theme: "grid",

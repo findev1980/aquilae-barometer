@@ -33,9 +33,9 @@ function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string 
   );
 }
 
-function BenchmarkRow({ label, value, mean, median, percentile, quartile, formatFn }: {
+function BenchmarkRow({ label, value, mean, median, percentile, formatFn }: {
   label: string; value: number | null; mean: number | null; median: number | null;
-  percentile: number | null; quartile: number | null; formatFn: (v: number | null) => string;
+  percentile: number | null; formatFn: (v: number | null) => string;
 }) {
   return (
     <tr className="border-b border-border/50">
@@ -43,8 +43,7 @@ function BenchmarkRow({ label, value, mean, median, percentile, quartile, format
       <td className="py-2 pr-3 text-right text-sm tabular-nums font-semibold">{formatFn(value)}</td>
       <td className="py-2 pr-3 text-right text-sm tabular-nums text-muted-foreground">{formatFn(mean)}</td>
       <td className="py-2 pr-3 text-right text-sm tabular-nums text-muted-foreground">{formatFn(median)}</td>
-      <td className="py-2 pr-3 text-right text-sm tabular-nums">{percentile !== null ? `P${percentile}` : "—"}</td>
-      <td className="py-2 text-right text-sm tabular-nums">{quartile !== null ? `Q${quartile}` : "—"}</td>
+      <td className="py-2 text-right text-sm tabular-nums">{percentile !== null ? `P${percentile}` : "—"}</td>
     </tr>
   );
 }
@@ -175,14 +174,13 @@ export default function OfficeDashboard() {
                       <HeaderWithTooltip label={t("benchmark.mean", language)} tooltip={t("benchmark.mean_tooltip", language)} />
                       <HeaderWithTooltip label={t("benchmark.median", language)} tooltip={t("benchmark.median_tooltip", language)} />
                       <HeaderWithTooltip label={t("benchmark.percentile", language)} tooltip={t("benchmark.percentile_tooltip", language)} />
-                      <HeaderWithTooltip label={t("benchmark.quartile", language)} tooltip={t("benchmark.quartile_tooltip", language)} />
                     </tr>
                   </thead>
                   <tbody>
-                    <BenchmarkRow label={t("field.commission_ins", language)} value={office.commission_insurance} mean={benchmarks.commIns.mean} median={benchmarks.commIns.median} percentile={benchmarks.commIns.percentile} quartile={benchmarks.commIns.quartile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.commission_bank", language)} value={office.commission_bank} mean={benchmarks.commBank.mean} median={benchmarks.commBank.median} percentile={benchmarks.commBank.percentile} quartile={benchmarks.commBank.quartile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.total_commission", language)} value={benchmarks.computed.total_commission} mean={benchmarks.totalComm.mean} median={benchmarks.totalComm.median} percentile={benchmarks.totalComm.percentile} quartile={benchmarks.totalComm.quartile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.commission_per_fte", language)} value={benchmarks.computed.commission_per_fte} mean={benchmarks.commPerFte.mean} median={benchmarks.commPerFte.median} percentile={benchmarks.commPerFte.percentile} quartile={benchmarks.commPerFte.quartile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_ins", language)} value={office.commission_insurance} mean={benchmarks.commIns.mean} median={benchmarks.commIns.median} percentile={benchmarks.commIns.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_bank", language)} value={office.commission_bank} mean={benchmarks.commBank.mean} median={benchmarks.commBank.median} percentile={benchmarks.commBank.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.total_commission", language)} value={benchmarks.computed.total_commission} mean={benchmarks.totalComm.mean} median={benchmarks.totalComm.median} percentile={benchmarks.totalComm.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_per_fte", language)} value={benchmarks.computed.commission_per_fte} mean={benchmarks.commPerFte.mean} median={benchmarks.commPerFte.median} percentile={benchmarks.commPerFte.percentile} formatFn={formatCurrency} />
                   </tbody>
                 </table>
               </div>
