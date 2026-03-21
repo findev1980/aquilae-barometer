@@ -67,6 +67,7 @@ export default function GroupDashboard() {
         {activeTab === "companies" && <CompaniesTab data={data} language={language} />}
         {activeTab === "strategy" && <StrategyTab data={data} language={language} />}
         {activeTab === "engagement" && <EngagementTab data={data} language={language} />}
+        {activeTab === "topbottom" && <TopBottomTab data={data} language={language} />}
       </div>
     </div>
   );
