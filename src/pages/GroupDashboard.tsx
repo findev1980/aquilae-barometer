@@ -106,15 +106,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
     [data]
   );
 
-  const scatterData = useMemo(() =>
-    data
-      .filter((r) => r.commission_insurance !== null)
-      .map((r) => {
-        const c = getComputed(r);
-        return { name: r.office_name, x: c.total_fte || 0, y: c.total_commission || 0 };
-      }),
-    [data]
-  );
+
 
   const privateSmeData = useMemo(() =>
     data
