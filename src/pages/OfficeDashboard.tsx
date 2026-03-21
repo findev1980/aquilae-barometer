@@ -88,8 +88,8 @@ export default function OfficeDashboard() {
     });
   }, [office, data, language]);
 
-  const nonLifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_nonlife").slice(0, 5), [data]);
-  const lifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_life").slice(0, 5), [data]);
+  const nonLifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_nonlife"), [data]);
+  const lifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_life"), [data]);
 
   // Evolution data: gather this office across all available years
   const evolutionData = useMemo(() => {
