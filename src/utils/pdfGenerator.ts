@@ -48,7 +48,7 @@ function addFooter(doc: jsPDF, year: number, pageNum: number, totalPages: number
   doc.setTextColor(...GREY);
   doc.text(`${t("filter.year", lang)}: ${year}`, 15, h - 9);
   doc.text(`${pageNum} / ${totalPages}`, w / 2, h - 9, { align: "center" });
-  doc.text(new Date().toLocaleDateString("nl-BE"), w - 15, h - 9, { align: "right" });
+  doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-BE" : "nl-BE"), w - 15, h - 9, { align: "right" });
 }
 
 function sectionTitle(doc: jsPDF, title: string, y: number): number {
@@ -80,6 +80,9 @@ export function generateOfficePDF(
   lang: Language,
   allYearsData?: OfficeRecord[]
 ): jsPDF {
+  // Use the office's own language for the PDF content
+  const officeLang: Language = (office.source_language === "fr" ? "fr" : "nl");
+  lang = officeLang;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
