@@ -59,8 +59,7 @@ export async function parseExcelFile(
   const emptyFieldCounts: Record<string, number> = {};
   const records: OfficeRecord[] = [];
 
-  const allSheets = await readXlsxFile(file, { getSheets: true });
-  const sheetNames = allSheets.map((s) => s.name);
+  const sheetNames = await readSheetNames(file);
 
   const hasNL = sheetNames.some((n) => n.toUpperCase() === "NL");
   const hasFR = sheetNames.some((n) => n.toUpperCase() === "FR");
