@@ -896,8 +896,10 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
 const COMPARE_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)", "hsl(200,70%,50%)", "hsl(45,90%,50%)", "hsl(310,50%,55%)"];
 
 function CompareTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { selectedYear } = useBarometerStore();
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
   const filtered = useMemo(() => {
