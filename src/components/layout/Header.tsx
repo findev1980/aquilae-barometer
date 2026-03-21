@@ -1,9 +1,28 @@
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t, type Language } from "@/i18n/translations";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("barometer_theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("barometer_theme", dark ? "dark" : "light");
+  }, [dark]);
+
+  return [dark, () => setDark((d) => !d)] as const;
+}
 
 export default function Header() {
   const { language, setLanguage, selectedYear, setSelectedYear, sourceLanguageFilter, setSourceLanguageFilter, meta } = useBarometerStore();
+  const [dark, toggleDark] = useTheme();
 
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-card/80 px-6 py-3 backdrop-blur-sm">
@@ -56,6 +75,15 @@ export default function Header() {
             </button>
           ))}
         </div>
+
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggleDark}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:scale-[0.95]"
+          aria-label="Toggle dark mode"
+        >
+          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </div>
     </header>
   );
