@@ -7,10 +7,31 @@ import {
   alignmentScore
 } from "@/utils/benchmarkCalc";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Download, Loader2, TrendingUp } from "lucide-react";
+import { Building2, Download, Info, Loader2, TrendingUp } from "lucide-react";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
+
+function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
+  return (
+    <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">
+      <TooltipProvider delayDuration={200}>
+        <UITooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex cursor-help items-center gap-1">
+              {label}
+              <Info className="h-3 w-3 text-muted-foreground/60" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-xs leading-relaxed">
+            {tooltip}
+          </TooltipContent>
+        </UITooltip>
+      </TooltipProvider>
+    </th>
+  );
+}
 
 function BenchmarkRow({ label, value, mean, median, percentile, quartile, formatFn }: {
   label: string; value: number | null; mean: number | null; median: number | null;
@@ -151,10 +172,10 @@ export default function OfficeDashboard() {
                     <tr className="border-b border-border text-left">
                       <th className="pb-2 pr-3 text-xs font-medium text-muted-foreground" />
                       <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("office.value", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.mean", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.median", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.percentile", language)}</th>
-                      <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{t("benchmark.quartile", language)}</th>
+                      <HeaderWithTooltip label={t("benchmark.mean", language)} tooltip={t("benchmark.mean_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.median", language)} tooltip={t("benchmark.median_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.percentile", language)} tooltip={t("benchmark.percentile_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.quartile", language)} tooltip={t("benchmark.quartile_tooltip", language)} />
                     </tr>
                   </thead>
                   <tbody>
