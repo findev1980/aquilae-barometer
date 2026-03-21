@@ -235,6 +235,15 @@ const translations: Record<Language, Record<string, string>> = {
     "common.company": "Compagnie",
     "common.points": "Points",
     "common.in_top3": "Dans top 3",
+    "evolution.title": "Évolution année par année",
+    "evolution.commission_ins": "Commission assurances",
+    "evolution.commission_bank": "Commission banque",
+    "evolution.total_commission": "Commission totale",
+    "evolution.fte": "ETP (équivalents temps plein)",
+    "evolution.commission_per_fte": "Commission / ETP",
+    "evolution.satisfaction": "Satisfaction",
+    "evolution.no_history": "Données historiques insuffisantes (1 seule année disponible)",
+    "evolution.year": "Année",
   },
 };
 
