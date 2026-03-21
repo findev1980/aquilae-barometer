@@ -26,6 +26,8 @@ interface SidebarProps {
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { language } = useBarometerStore();
   const location = useLocation();
+  const isAdmin = useIsAdmin();
+  const navItems = isAdmin ? [...publicNavItems, ...adminNavItems] : publicNavItems;
 
   return (
     <TooltipProvider delayDuration={200}>
