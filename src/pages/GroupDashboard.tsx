@@ -27,7 +27,7 @@ const TAB_KEYS: Record<Tab, string> = {
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
 
 export default function GroupDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, allData, meta } = useBarometerStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "financial";
 
