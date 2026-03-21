@@ -9,7 +9,7 @@ import {
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  Cell, PieChart, Pie, LineChart, Line, Legend,
+  Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 import { X, Info } from "lucide-react";
@@ -115,6 +115,23 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
     [data]
   );
 
+  const avgPrivate = useMemo(() => {
+    const vals = data.map((r) => r.pct_private).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgSme = useMemo(() => {
+    const vals = data.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgLife = useMemo(() => {
+    const vals = data.map((r) => r.pct_life).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgNonlife = useMemo(() => {
+    const vals = data.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+
 
   const privateSmeData = useMemo(() =>
     data
@@ -207,9 +224,14 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
                     <p className="font-semibold mb-1">{d.fullName}</p>
                     <p className="text-muted-foreground">{t("field.pct_private", language)}: {d.private}%</p>
                     <p className="text-muted-foreground">{t("field.pct_sme", language)}: {d.sme}%</p>
+                    <hr className="my-1 border-border" />
+                    <p className="text-muted-foreground">{language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}:</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_private", language)}: {avgPrivate.toFixed(1)}%</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_sme", language)}: {avgSme.toFixed(1)}%</p>
                   </div>
                 );
               }} />
+              <ReferenceLine x={avgPrivate} stroke="hsl(262,50%,40%)" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgPrivate.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(262,50%,40%)" }} />
               <Bar dataKey="private" stackId="ps" fill="hsl(262,30%,53%)" name={t("field.pct_private", language)} />
               <Bar dataKey="sme" stackId="ps" fill="hsl(262,40%,78%)" name={t("field.pct_sme", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -231,9 +253,14 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
                     <p className="font-semibold mb-1">{d.fullName}</p>
                     <p className="text-muted-foreground">{t("field.pct_life", language)}: {d.life}%</p>
                     <p className="text-muted-foreground">{t("field.pct_nonlife", language)}: {d.nonlife}%</p>
+                    <hr className="my-1 border-border" />
+                    <p className="text-muted-foreground">{language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}:</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_life", language)}: {avgLife.toFixed(1)}%</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_nonlife", language)}: {avgNonlife.toFixed(1)}%</p>
                   </div>
                 );
               }} />
+              <ReferenceLine x={avgNonlife} stroke="hsl(14,60%,40%)" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgNonlife.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(14,60%,40%)" }} />
               <Bar dataKey="nonlife" stackId="ln" fill="hsl(14,80%,55%)" name={t("field.pct_nonlife", language)} />
               <Bar dataKey="life" stackId="ln" fill="hsl(45,85%,55%)" name={t("field.pct_life", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
