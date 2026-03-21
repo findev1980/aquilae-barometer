@@ -115,6 +115,23 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
     [data]
   );
 
+  const avgPrivate = useMemo(() => {
+    const vals = data.map((r) => r.pct_private).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgSme = useMemo(() => {
+    const vals = data.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgLife = useMemo(() => {
+    const vals = data.map((r) => r.pct_life).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgNonlife = useMemo(() => {
+    const vals = data.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+
 
   const privateSmeData = useMemo(() =>
     data
