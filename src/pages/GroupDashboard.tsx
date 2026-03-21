@@ -73,6 +73,7 @@ export default function GroupDashboard() {
         {activeTab === "engagement" && <EngagementTab data={data} language={language} />}
         {activeTab === "topbottom" && <TopBottomTab data={data} language={language} />}
         {activeTab === "evolution" && <EvolutionTab allData={allData} meta={meta} sourceLanguageFilter={sourceLanguageFilter} language={language} />}
+        {activeTab === "compare" && <CompareTab data={data} language={language} />}
       </div>
     </div>
   );
