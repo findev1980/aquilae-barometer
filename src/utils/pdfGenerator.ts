@@ -927,7 +927,7 @@ export function generateGroupPDF(
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.avgFte, groupValue: null })), {
       x: 115, y, w: chartW, h: chartH,
-      title: lang === "nl" ? "Gem. VTE" : "ETP moyen",
+      title: lang === "nl" ? "Gem. FTE" : "ETP moyen",
       formatFn: (v) => v.toFixed(1),
       color: [76, 175, 80],
     });
