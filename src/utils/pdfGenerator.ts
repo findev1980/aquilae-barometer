@@ -1299,29 +1299,48 @@ export function generateComparePDF(
   if (insights.length > 0) {
     y = sectionTitle(doc, lang === "nl" ? "Analyse" : "Analyse", y);
 
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
+    const pageH = doc.internal.pageSize.getHeight();
+    const textAreaW = w - 38; // leave space for marker dot
+
     for (const insight of insights) {
-      doc.setTextColor(...DARK);
-      const icon = insight.icon + " ";
-      const lines = doc.splitTextToSize(icon + insight.text, w - 30);
-      
-      if (y + lines.length * 4.5 > doc.internal.pageSize.getHeight() - 25) break;
-      
-      if (insight.type === "positive") {
-        doc.setFillColor(232, 245, 233);
-        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
-      } else if (insight.type === "negative") {
-        doc.setFillColor(255, 243, 224);
-        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
-      } else {
-        doc.setFillColor(245, 245, 250);
-        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      // Strip emoji — jsPDF Helvetica cannot render them
+      const lines = doc.splitTextToSize(insight.text, textAreaW);
+      const blockH = lines.length * 4.2 + 4;
+
+      if (y + blockH > pageH - 25) {
+        doc.addPage();
+        addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 3);
+        y = 28;
+        y = sectionTitle(doc, lang === "nl" ? "Analyse (vervolg)" : "Analyse (suite)", y);
       }
 
+      // Background
+      let bgColor: [number, number, number];
+      let dotColor: [number, number, number];
+      if (insight.type === "positive") {
+        bgColor = [232, 245, 233];
+        dotColor = [56, 142, 60];
+      } else if (insight.type === "negative") {
+        bgColor = [255, 243, 224];
+        dotColor = [230, 126, 34];
+      } else {
+        bgColor = [245, 245, 250];
+        dotColor = [120, 120, 150];
+      }
+
+      doc.setFillColor(...bgColor);
+      doc.roundedRect(14, y - 3, w - 28, blockH, 1.5, 1.5, "F");
+
+      // Colored marker dot instead of emoji
+      doc.setFillColor(...dotColor);
+      doc.circle(18, y + 1, 1.4, "F");
+
+      // Text
       doc.setTextColor(...DARK);
-      doc.text(lines, 17, y);
-      y += lines.length * 4.5 + 4;
+      doc.text(lines, 22, y);
+      y += blockH + 2;
     }
   }
 
