@@ -195,11 +195,48 @@ export default function OfficeDashboard() {
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
               <h3 className="mb-4 text-sm font-semibold">{t("office.personnel", language)}</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("field.managers", language)}</span><span className="font-medium">{office.num_managers ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("field.employees", language)}</span><span className="font-medium">{office.num_employees_fte ?? "—"}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("field.commission_per_fte", language)}</span><span className="font-medium">{formatCurrency(benchmarks?.computed.commission_per_fte ?? null)}</span></div>
-              </div>
+              {(() => {
+                const avgManagers = (() => { const v = data.map(r => r.num_managers).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+                const avgEmployees = (() => { const v = data.map(r => r.num_employees_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+                const avgFte = (() => { const v = data.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+                const avgCommPerFte = (() => { const v = data.map(r => getComputed(r).commission_per_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+                const rows = [
+                  { label: t("field.managers", language), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? String(v) : "—" },
+                  { label: t("field.employees", language), value: office.num_employees_fte, groupAvg: avgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(1) : "—" },
+                  { label: "Total FTE", value: benchmarks?.computed.total_fte ?? null, groupAvg: avgFte, fmt: (v: number | null) => v !== null ? v.toFixed(1) : "—" },
+                  { label: t("field.commission_per_fte", language), value: benchmarks?.computed.commission_per_fte ?? null, groupAvg: avgCommPerFte, fmt: (v: number | null) => formatCurrency(v) },
+                ];
+                return (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="pb-2 text-left text-xs font-medium text-muted-foreground" />
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Kantoor" : "Bureau"}</th>
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}</th>
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Verschil" : "Différence"}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map(({ label, value, groupAvg, fmt }) => {
+                          const diff = value !== null && groupAvg !== null ? value - groupAvg : null;
+                          const isPositive = diff !== null && diff >= 0;
+                          return (
+                            <tr key={label} className="border-b border-border/50">
+                              <td className="py-2 pr-3 font-medium text-muted-foreground">{label}</td>
+                              <td className="py-2 pr-3 text-right tabular-nums font-semibold">{fmt(value)}</td>
+                              <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{groupAvg !== null ? fmt(groupAvg) : "—"}</td>
+                              <td className={`py-2 text-right tabular-nums text-xs ${diff === null ? "text-muted-foreground" : isPositive ? "text-accent-green" : "text-accent-orange"}`}>
+                                {diff !== null ? `${isPositive ? "+" : ""}${fmt(diff)}` : "—"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Companies */}
