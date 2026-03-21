@@ -53,6 +53,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const isAdmin = useIsAdmin();
+  if (isAdmin === null) return null; // loading
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -67,8 +74,8 @@ const App = () => (
                 <Route path="/group" element={<GroupDashboard />} />
                 <Route path="/office" element={<OfficeDashboard />} />
                 <Route path="/exports" element={<ExportsPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route path="/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
