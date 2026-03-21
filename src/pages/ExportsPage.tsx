@@ -105,6 +105,22 @@ export default function ExportsPage() {
                 ? "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends"
                 : "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{language === "nl" ? "Taal:" : "Langue :"}</span>
+              {(["all", "nl", "fr"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setGroupLangFilter(opt)}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    groupLangFilter === opt
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-background hover:bg-muted"
+                  }`}
+                >
+                  {opt === "all" ? "NL + FR" : opt.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <button
               onClick={handleExportGroup}
               disabled={groupExporting || data.length === 0}
