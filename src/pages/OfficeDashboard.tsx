@@ -260,6 +260,88 @@ export default function OfficeDashboard() {
               )}
             </div>
           </div>
+
+          {/* Year-over-Year Evolution */}
+          {evolutionData.length >= 2 ? (
+            <div className="rounded-xl border border-border bg-card p-5 card-shadow animate-fade-in" style={{ animationDelay: "120ms" }}>
+              <div className="mb-5 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">{t("evolution.title", language)}</h3>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Commission evolution */}
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.total_commission", language)}</p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v: number, name: string) => [formatCurrency(v), name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="totalComm" name={t("office.value", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
+                      <Line type="monotone" dataKey="groupCommMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* FTE evolution */}
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.fte", language)}</p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(v: number, name: string) => [v?.toFixed(1) ?? "—", name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="totalFte" name={t("office.value", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
+                      <Line type="monotone" dataKey="groupFteMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Commission per FTE evolution */}
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.commission_per_fte", language)}</p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v: number, name: string) => [formatCurrency(v), name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="commPerFte" name={t("office.value", language)} stroke="hsl(142,60%,40%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(142,60%,40%)" }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Satisfaction evolution */}
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.satisfaction", language)}</p>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
+                      <Tooltip formatter={(v: number, name: string) => [v ?? "—", name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="satisfaction" name={t("office.value", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
+                      <Line type="monotone" dataKey="groupSatMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          ) : evolutionData.length === 1 ? (
+            <div className="rounded-xl border border-border bg-card p-5 card-shadow">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <TrendingUp className="h-4 w-4" />
+                <p className="text-sm">{t("evolution.no_history", language)}</p>
+              </div>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
