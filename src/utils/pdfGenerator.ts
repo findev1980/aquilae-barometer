@@ -160,7 +160,6 @@ export function generateOfficePDF(
       fmtCur(bm.mean),
       fmtCur(bm.median),
       bm.percentile !== null ? `P${bm.percentile}` : "—",
-      bm.quartile !== null ? `Q${bm.quartile}` : "—",
     ];
   });
 
