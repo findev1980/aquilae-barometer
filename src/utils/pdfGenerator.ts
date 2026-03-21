@@ -1054,3 +1054,277 @@ export function generateGroupPDF(
   addFooter(doc, year, 4, totalPages, lang);
   return doc;
 }
+
+// ===== Compare PDF =====
+const COMPARE_PDF_COLORS: [number, number, number][] = [
+  [121, 97, 171],   // purple
+  [76, 175, 80],    // green
+  [255, 87, 34],    // orange
+  [33, 150, 243],   // blue
+  [255, 193, 7],    // yellow
+  [186, 104, 200],  // pink
+];
+
+export interface CompareInsight {
+  icon: string;
+  text: string;
+  type: "positive" | "negative" | "neutral";
+}
+
+export function generateComparePDF(
+  selectedRecords: OfficeRecord[],
+  allData: OfficeRecord[],
+  lang: Language,
+  year: number,
+  insights: CompareInsight[]
+): jsPDF {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const w = doc.internal.pageSize.getWidth();
+  const totalPages = 2;
+
+  // ===== PAGE 1 — Radar + Detail Table =====
+  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 1);
+  let y = 28;
+
+  doc.setFontSize(18);
+  doc.setTextColor(...DARK);
+  doc.setFont("helvetica", "bold");
+  doc.text(lang === "nl" ? "Vergelijking kantoren" : "Comparaison des bureaux", 15, y);
+  y += 8;
+
+  // Office badges
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  let bx = 15;
+  selectedRecords.forEach((r, i) => {
+    const color = COMPARE_PDF_COLORS[i % COMPARE_PDF_COLORS.length];
+    const tw = doc.getTextWidth(r.office_name) + 8;
+    doc.setFillColor(...color);
+    doc.roundedRect(bx, y - 3.5, tw, 6, 2, 2, "F");
+    doc.setTextColor(...WHITE);
+    doc.text(r.office_name, bx + 4, y + 0.5);
+    bx += tw + 3;
+    if (bx > w - 30) { bx = 15; y += 9; }
+  });
+  y += 12;
+
+  // Radar chart (drawn manually)
+  y = sectionTitle(doc, lang === "nl" ? "Radaroverzicht" : "Aperçu radar", y);
+
+  const allComm = allData.filter((r) => r.survey_year === year).map((r) => r.commission_insurance).filter((v): v is number => v !== null);
+  const allFte = allData.filter((r) => r.survey_year === year).map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
+  const allEff = allData.filter((r) => r.survey_year === year).map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
+  const allSat = allData.filter((r) => r.survey_year === year).map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+  const maxComm = Math.max(...allComm, 1);
+  const maxFte = Math.max(...allFte, 1);
+  const maxEff = Math.max(...allEff, 1);
+  const maxSat = Math.max(...allSat, 1);
+
+  const metrics = [
+    { label: t("field.commission_ins", lang), max: maxComm, getValue: (r: OfficeRecord) => r.commission_insurance },
+    { label: t("kpi.avg_fte", lang), max: maxFte, getValue: (r: OfficeRecord) => getComputed(r).total_fte },
+    { label: t("field.commission_per_fte", lang), max: maxEff, getValue: (r: OfficeRecord) => getComputed(r).commission_per_fte },
+    { label: t("field.satisfaction", lang), max: maxSat, getValue: (r: OfficeRecord) => satisfactionScore(r.satisfaction_aquilae) },
+  ];
+
+  const cx = w / 2;
+  const cy = y + 42;
+  const radius = 35;
+  const n = metrics.length;
+
+  // Draw radar grid
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = (ring / 4) * radius;
+    doc.setDrawColor(220, 220, 230);
+    doc.setLineWidth(0.2);
+    for (let i = 0; i < n; i++) {
+      const a1 = (Math.PI * 2 * i) / n - Math.PI / 2;
+      const a2 = (Math.PI * 2 * ((i + 1) % n)) / n - Math.PI / 2;
+      doc.line(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, cx + Math.cos(a2) * r, cy + Math.sin(a2) * r);
+    }
+  }
+
+  // Draw axes and labels
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+    doc.setDrawColor(200, 200, 210);
+    doc.setLineWidth(0.15);
+    doc.line(cx, cy, cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+    const lx = cx + Math.cos(angle) * (radius + 8);
+    const ly = cy + Math.sin(angle) * (radius + 8);
+    doc.setTextColor(...GREY);
+    doc.text(metrics[i].label, lx, ly, { align: "center" });
+  }
+
+  // Draw data polygons
+  selectedRecords.forEach((record, idx) => {
+    const color = COMPARE_PDF_COLORS[idx % COMPARE_PDF_COLORS.length];
+    const points: { x: number; y: number }[] = [];
+    for (let i = 0; i < n; i++) {
+      const val = metrics[i].getValue(record);
+      const pct = val !== null ? Math.min(val / metrics[i].max, 1) : 0;
+      const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+      points.push({ x: cx + Math.cos(angle) * pct * radius, y: cy + Math.sin(angle) * pct * radius });
+    }
+    // Draw polygon outline
+    doc.setDrawColor(...color);
+    doc.setLineWidth(0.8);
+    for (let i = 0; i < points.length; i++) {
+      const next = points[(i + 1) % points.length];
+      doc.line(points[i].x, points[i].y, next.x, next.y);
+    }
+    // Draw dots
+    doc.setFillColor(...color);
+    points.forEach((p) => doc.circle(p.x, p.y, 1, "F"));
+  });
+
+  y = cy + radius + 18;
+
+  // Legend for radar
+  doc.setFontSize(7);
+  let lx = 15;
+  selectedRecords.forEach((r, i) => {
+    const color = COMPARE_PDF_COLORS[i % COMPARE_PDF_COLORS.length];
+    doc.setFillColor(...color);
+    doc.rect(lx, y - 2.5, 4, 3, "F");
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "normal");
+    doc.text(r.office_name, lx + 6, y);
+    lx += doc.getTextWidth(r.office_name) + 12;
+    if (lx > w - 30) { lx = 15; y += 5; }
+  });
+  y += 10;
+
+  // Detail comparison table
+  y = sectionTitle(doc, lang === "nl" ? "Vergelijking — Detail" : "Comparaison — Détail", y);
+
+  const tableHead = ["", ...selectedRecords.map((r) => r.office_name.slice(0, 22))];
+  const rows = [
+    { label: t("field.commission_ins", lang), fn: (r: OfficeRecord) => fmtCur(r.commission_insurance) },
+    { label: t("field.commission_bank", lang), fn: (r: OfficeRecord) => fmtCur(r.commission_bank) },
+    { label: t("field.total_commission", lang), fn: (r: OfficeRecord) => fmtCur(getComputed(r).total_commission) },
+    { label: t("field.commission_per_fte", lang), fn: (r: OfficeRecord) => fmtCur(getComputed(r).commission_per_fte) },
+    { label: t("field.managers", lang), fn: (r: OfficeRecord) => r.num_managers !== null ? String(r.num_managers) : "—" },
+    { label: t("field.employees", lang), fn: (r: OfficeRecord) => r.num_employees_fte !== null ? String(r.num_employees_fte) : "—" },
+    { label: t("kpi.avg_fte", lang), fn: (r: OfficeRecord) => getComputed(r).total_fte !== null ? String(getComputed(r).total_fte) : "—" },
+    { label: t("field.pct_private", lang), fn: (r: OfficeRecord) => r.pct_private !== null ? `${r.pct_private}%` : "—" },
+    { label: t("field.pct_sme", lang), fn: (r: OfficeRecord) => r.pct_sme !== null ? `${r.pct_sme}%` : "—" },
+    { label: t("field.satisfaction", lang), fn: (r: OfficeRecord) => r.satisfaction_aquilae || "—" },
+    { label: t("field.recommend", lang), fn: (r: OfficeRecord) => r.recommend_aquilae || "—" },
+  ];
+
+  const tableBody = rows.map((row) => [row.label, ...selectedRecords.map((r) => row.fn(r))]);
+
+  // Color the header columns
+  const headColStyles: Record<number, { textColor: number[] }> = {};
+  selectedRecords.forEach((_, i) => {
+    headColStyles[i + 1] = { textColor: [...COMPARE_PDF_COLORS[i % COMPARE_PDF_COLORS.length]] };
+  });
+
+  autoTable(doc, {
+    startY: y,
+    head: [tableHead],
+    body: tableBody,
+    theme: "grid",
+    headStyles: { fillColor: [...PRIMARY], fontSize: 7, textColor: [...WHITE], fontStyle: "bold" },
+    bodyStyles: { fontSize: 7, textColor: [...DARK] },
+    alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+    margin: { left: 15, right: 15 },
+    styles: { cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: "bold", textColor: [...GREY] } },
+  });
+
+  addFooter(doc, year, 1, totalPages, lang);
+
+  // ===== PAGE 2 — Bar chart + Analysis =====
+  doc.addPage();
+  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 2);
+  y = 28;
+
+  // Commission bar chart
+  y = sectionTitle(doc, t("field.commission_ins", lang), y);
+
+  const barMaxVal = Math.max(...selectedRecords.map((r) => r.commission_insurance ?? 0), 1);
+  const barW = w - 70;
+
+  selectedRecords.forEach((r, i) => {
+    const val = r.commission_insurance ?? 0;
+    const color = COMPARE_PDF_COLORS[i % COMPARE_PDF_COLORS.length];
+    const pct = val / barMaxVal;
+
+    doc.setFontSize(7);
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "normal");
+    doc.text(r.office_name.slice(0, 22), 15, y + 3.5);
+
+    doc.setFillColor(...color);
+    const bw = Math.max(pct * barW, 2);
+    doc.roundedRect(55, y, bw, 5, 1.5, 1.5, "F");
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(...DARK);
+    doc.text(fmtCur(val), 55 + bw + 2, y + 3.5);
+    y += 9;
+  });
+  y += 8;
+
+  // Efficiency bar chart
+  y = sectionTitle(doc, t("field.commission_per_fte", lang), y);
+  const effMaxVal = Math.max(...selectedRecords.map((r) => getComputed(r).commission_per_fte ?? 0), 1);
+
+  selectedRecords.forEach((r, i) => {
+    const val = getComputed(r).commission_per_fte ?? 0;
+    const color = COMPARE_PDF_COLORS[i % COMPARE_PDF_COLORS.length];
+    const pct = val / effMaxVal;
+
+    doc.setFontSize(7);
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "normal");
+    doc.text(r.office_name.slice(0, 22), 15, y + 3.5);
+
+    doc.setFillColor(...color);
+    const bw = Math.max(pct * barW, 2);
+    doc.roundedRect(55, y, bw, 5, 1.5, 1.5, "F");
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(...DARK);
+    doc.text(fmtCur(val), 55 + bw + 2, y + 3.5);
+    y += 9;
+  });
+  y += 8;
+
+  // Analysis insights
+  if (insights.length > 0) {
+    y = sectionTitle(doc, lang === "nl" ? "Analyse" : "Analyse", y);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    for (const insight of insights) {
+      doc.setTextColor(...DARK);
+      const icon = insight.icon + " ";
+      const lines = doc.splitTextToSize(icon + insight.text, w - 30);
+      
+      if (y + lines.length * 4.5 > doc.internal.pageSize.getHeight() - 25) break;
+      
+      if (insight.type === "positive") {
+        doc.setFillColor(232, 245, 233);
+        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
+      } else if (insight.type === "negative") {
+        doc.setFillColor(255, 243, 224);
+        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
+      } else {
+        doc.setFillColor(245, 245, 250);
+        doc.roundedRect(14, y - 3, w - 28, lines.length * 4.5 + 2, 1.5, 1.5, "F");
+      }
+
+      doc.setTextColor(...DARK);
+      doc.text(lines, 17, y);
+      y += lines.length * 4.5 + 4;
+    }
+  }
+
+  addFooter(doc, year, 2, totalPages, lang);
+  return doc;
+}
