@@ -21,8 +21,7 @@ export default function AdminPage() {
 
   const handleValidate = async () => {
     if (!file) return;
-    const buf = await file.arrayBuffer();
-    const result = parseExcelFile(buf, year);
+    const result = await parseExcelFile(file, year);
     setValidation(result);
     setSuccess(false);
 
