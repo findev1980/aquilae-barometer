@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import type { OfficeRecord } from "@/types/barometer";
 import type { Language } from "@/i18n/translations";
 import { t } from "@/i18n/translations";
@@ -8,14 +8,6 @@ import {
   formatCurrency, satisfactionScore, recommendScore, alignmentScore,
   calcFrequency
 } from "@/utils/benchmarkCalc";
-
-// Extend jsPDF type for autotable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: Record<string, unknown>) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 const PRIMARY = [121, 97, 171] as const; // #7961AB
 const PRIMARY_LIGHT = [237, 232, 245] as const;
