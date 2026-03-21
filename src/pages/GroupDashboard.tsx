@@ -9,7 +9,7 @@ import {
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  ScatterChart, Scatter, Cell, PieChart, Pie
+  ScatterChart, Scatter, Cell, PieChart, Pie, LineChart, Line, Legend
 } from "recharts";
 
 const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom"] as const;
