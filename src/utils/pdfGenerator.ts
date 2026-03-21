@@ -961,27 +961,6 @@ export function generateGroupPDF(
     y = lastAutoTableFinalY(doc, y) + 10;
   }
 
-  // Activities frequency
-  const activityFreq = calcFrequency(data, "activities");
-  if (activityFreq.length > 0) {
-    doc.setFontSize(10);
-    doc.setTextColor(...DARK);
-    doc.setFont("helvetica", "bold");
-    doc.text(lang === "nl" ? "Activiteiten" : "Activités", 15, y);
-    y += 6;
-
-    autoTable(doc, {
-      startY: y,
-      head: [[lang === "nl" ? "Activiteit" : "Activité", lang === "nl" ? "Aantal" : "Nombre", "%"]],
-      body: activityFreq.map((a) => [a.label, String(a.count), `${((a.count / data.length) * 100).toFixed(1)}%`]),
-      theme: "grid",
-      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-      bodyStyles: { fontSize: 8, textColor: [...DARK] },
-      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
-      margin: { left: 15, right: 15 },
-      styles: { cellPadding: 2 },
-    });
-  }
 
   addFooter(doc, year, 3, totalPages, lang);
 

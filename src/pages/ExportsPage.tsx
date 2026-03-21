@@ -13,6 +13,7 @@ export default function ExportsPage() {
   const [done, setDone] = useState(false);
   const [singleExporting, setSingleExporting] = useState<string | null>(null);
   const [groupExporting, setGroupExporting] = useState(false);
+  const [groupLangFilter, setGroupLangFilter] = useState<"nl" | "fr" | "all">("all");
 
   const data = useMemo(
     () => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter),
@@ -41,8 +42,9 @@ export default function ExportsPage() {
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
-      const doc = generateGroupPDF(allData, language, selectedYear, sourceLanguageFilter);
-      doc.save(`Aquilae_Barometer_${selectedYear}_Groepsrapport.pdf`);
+      const doc = generateGroupPDF(allData, language, selectedYear, groupLangFilter);
+      const langSuffix = groupLangFilter === "all" ? "NL+FR" : groupLangFilter.toUpperCase();
+      doc.save(`Aquilae_Barometer_${selectedYear}_Groepsrapport_${langSuffix}.pdf`);
     } catch (err) {
       console.error("Group PDF generation failed:", err);
     }
@@ -103,6 +105,22 @@ export default function ExportsPage() {
                 ? "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends"
                 : "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
             </p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{language === "nl" ? "Taal:" : "Langue :"}</span>
+              {(["all", "nl", "fr"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setGroupLangFilter(opt)}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    groupLangFilter === opt
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-background hover:bg-muted"
+                  }`}
+                >
+                  {opt === "all" ? "NL + FR" : opt.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <button
               onClick={handleExportGroup}
               disabled={groupExporting || data.length === 0}
