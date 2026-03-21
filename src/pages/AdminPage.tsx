@@ -8,7 +8,7 @@ export default function AdminPage() {
   const { language, meta, importData } = useBarometerStore();
   const [file, setFile] = useState<File | null>(null);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [validation, setValidation] = useState<ReturnType<typeof parseExcelFile> | null>(null);
+  const [validation, setValidation] = useState<Awaited<ReturnType<typeof parseExcelFile>> | null>(null);
   const [importing, setImporting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showOverwrite, setShowOverwrite] = useState(false);
@@ -21,8 +21,7 @@ export default function AdminPage() {
 
   const handleValidate = async () => {
     if (!file) return;
-    const buf = await file.arrayBuffer();
-    const result = parseExcelFile(buf, year);
+    const result = await parseExcelFile(file, year);
     setValidation(result);
     setSuccess(false);
 
