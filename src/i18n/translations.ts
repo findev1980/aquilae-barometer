@@ -6,7 +6,7 @@ const translations: Record<Language, Record<string, string>> = {
     "nav.group": "Groepsdashboard",
     "nav.office": "Kantoordashboard",
     "nav.export": "Exports",
-    "nav.admin": "Beheer",
+    "nav.admin": "Beheer 🚨",
     "nav.settings": "Instellingen",
     "kpi.total_offices": "Totaal kantoren",
     "kpi.avg_commission": "Gem. commissie verzekeringen",
