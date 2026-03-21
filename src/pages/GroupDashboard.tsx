@@ -1057,7 +1057,17 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
         </div>
       ) : (
         <>
-          {/* Radar chart */}
+          {/* Export button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleExportPDF}
+              disabled={pdfExporting}
+              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform active:scale-[0.97] disabled:opacity-50"
+            >
+              {pdfExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {language === "nl" ? "Exporteer als PDF" : "Exporter en PDF"}
+            </button>
+          </div>
           {radarData.length > 0 && (
             <SectionCard title={t("compare.radar_title", language)}>
               <ResponsiveContainer width="100%" height={350}>
