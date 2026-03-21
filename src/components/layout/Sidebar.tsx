@@ -30,7 +30,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           collapsed ? "w-16" : "w-60"
         }`}
       >
-        <div className={`flex items-center border-b border-border px-3 py-4 ${collapsed ? "justify-center" : "justify-between"}`}>
+        <div className={`flex items-center border-b border-border px-3 py-3 ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && <img src={aquilaeLogo} alt="Aquilae" className="h-8 w-auto ml-2" />}
           <button
             onClick={onToggle}
