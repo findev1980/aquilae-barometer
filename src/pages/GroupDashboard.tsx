@@ -12,7 +12,8 @@ import {
   Cell, PieChart, Pie, LineChart, Line, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
-import { X } from "lucide-react";
+import { X, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution", "compare"] as const;
 type Tab = (typeof TABS)[number];
@@ -285,6 +286,31 @@ function CompaniesTab({ data, language }: { data: import("@/types/barometer").Of
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2 mb-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+              <Info className="h-3.5 w-3.5" />
+              {language === "nl" ? "Hoe worden punten berekend?" : "Comment les points sont-ils calculés ?"}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 text-sm" align="start">
+            <p className="font-semibold mb-2">{language === "nl" ? "Puntentelling" : "Calcul des points"}</p>
+            <ul className="space-y-1 text-muted-foreground">
+              <li>{language === "nl" ? "• Positie 1 = 5 punten" : "• Position 1 = 5 points"}</li>
+              <li>{language === "nl" ? "• Positie 2 = 4 punten" : "• Position 2 = 4 points"}</li>
+              <li>{language === "nl" ? "• Positie 3 = 3 punten" : "• Position 3 = 3 points"}</li>
+              <li>{language === "nl" ? "• Positie 4 = 2 punten" : "• Position 4 = 2 points"}</li>
+              <li>{language === "nl" ? "• Positie 5 = 1 punt" : "• Position 5 = 1 point"}</li>
+            </ul>
+            <p className="mt-2 text-muted-foreground">
+              {language === "nl"
+                ? "Elk kantoor geeft een top 5 op. De punten worden opgeteld per maatschappij. 'In Top 3' toont hoe vaak een maatschappij in de top 3 van een kantoor stond."
+                : "Chaque bureau fournit un top 5. Les points sont additionnés par compagnie. 'Dans le Top 3' indique combien de fois une compagnie figurait dans le top 3 d'un bureau."}
+            </p>
+          </PopoverContent>
+        </Popover>
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         {[
           { title: t("field.companies_nonlife", language), ranking: nonLifeRanking },
