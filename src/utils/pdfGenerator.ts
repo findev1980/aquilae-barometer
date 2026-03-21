@@ -761,8 +761,8 @@ export function generateGroupPDF(
     { label: lang === "nl" ? "Aantal kantoren" : "Nombre de bureaux", value: String(data.length) },
     { label: lang === "nl" ? "Gem. totale commissie" : "Commission totale moy.", value: fmtCur(avg(comms)) },
     { label: lang === "nl" ? "Mediaan totale commissie" : "Médiane commission totale", value: fmtCur(med(comms)) },
-    { label: lang === "nl" ? "Gem. VTE" : "ETP moyen", value: avg(ftes)?.toFixed(1) ?? "—" },
-    { label: lang === "nl" ? "Gem. commissie/VTE" : "Commission/ETP moy.", value: fmtCur(avg(efficiencies)) },
+    { label: lang === "nl" ? "Gem. FTE" : "ETP moyen", value: avg(ftes)?.toFixed(1) ?? "—" },
+    { label: lang === "nl" ? "Gem. commissie/FTE" : "Commission/ETP moy.", value: fmtCur(avg(efficiencies)) },
     { label: lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy.", value: avg(sats) !== null ? `${avg(sats)!.toFixed(2)}/3` : "—" },
   ];
 
@@ -796,7 +796,7 @@ export function generateGroupPDF(
   y = lastAutoTableFinalY(doc, y) + 10;
 
   // Top 5 efficiency
-  y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/VTE)" : "Top 5 efficacité (commission/ETP)", y);
+  y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/FTE)" : "Top 5 efficacité (commission/ETP)", y);
   const top5Eff = [...data]
     .map((r) => ({ ...r, eff: getComputed(r).commission_per_fte }))
     .filter((r) => r.eff !== null)
@@ -927,7 +927,7 @@ export function generateGroupPDF(
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.avgFte, groupValue: null })), {
       x: 115, y, w: chartW, h: chartH,
-      title: lang === "nl" ? "Gem. VTE" : "ETP moyen",
+      title: lang === "nl" ? "Gem. FTE" : "ETP moyen",
       formatFn: (v) => v.toFixed(1),
       color: [76, 175, 80],
     });
@@ -955,7 +955,7 @@ export function generateGroupPDF(
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
       startY: y,
-      head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. VTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
+      head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. FTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
       body: evolutionData.map((d) => [
         String(d.year),
         String(d.count),
