@@ -172,45 +172,6 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
           </ResponsiveContainer>
         </SectionCard>
 
-        <SectionCard title={`${t("field.total_commission", language)} vs ${t("kpi.avg_fte", language)}`}>
-          <ResponsiveContainer width="100%" height={350}>
-            <ScatterChart margin={{ bottom: 20, left: 10, right: 20, top: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
-              <XAxis dataKey="x" name="FTE" tick={{ fontSize: 11 }} label={{ value: "FTE", position: "bottom", fontSize: 11 }} />
-              <YAxis dataKey="y" name="Commission" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-              <Tooltip content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0].payload;
-                return (
-                  <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
-                    <p className="font-semibold">{d.name}</p>
-                    <p className="text-muted-foreground">FTE: {d.x}</p>
-                    <p className="text-muted-foreground">Commissie: {formatCurrency(d.y)}</p>
-                  </div>
-                );
-              }} />
-              <Scatter data={scatterData} fill="hsl(262,30%,53%)">
-                {scatterData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Scatter>
-            </ScatterChart>
-          </ResponsiveContainer>
-        </SectionCard>
-      </div>
-
-      <SectionCard title={`${t("field.pct_private", language)} vs ${t("field.pct_sme", language)}`}>
-        <ResponsiveContainer width="100%" height={Math.max(300, privateSmeData.length * 26)}>
-          <BarChart data={privateSmeData} layout="vertical" margin={{ left: 10, right: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
-            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-            <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
-            <Tooltip />
-            <Bar dataKey="private" stackId="a" fill="hsl(262,30%,53%)" name={t("field.pct_private", language)} />
-            <Bar dataKey="sme" stackId="a" fill="hsl(262,40%,78%)" name={t("field.pct_sme", language)} radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </SectionCard>
 
       {/* Summary table */}
       <SectionCard title={`${t("nav.group", language)} — ${t("group.financial", language)}`}>
