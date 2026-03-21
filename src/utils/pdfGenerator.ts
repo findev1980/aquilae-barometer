@@ -80,6 +80,9 @@ export function generateOfficePDF(
   lang: Language,
   allYearsData?: OfficeRecord[]
 ): jsPDF {
+  // Use the office's own language for the PDF content
+  const officeLang: Language = (office.source_language === "fr" ? "fr" : "nl");
+  lang = officeLang;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
