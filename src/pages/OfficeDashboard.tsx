@@ -201,7 +201,7 @@ export default function OfficeDashboard() {
                 const avgFte = (() => { const v = data.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
                 const avgCommPerFte = (() => { const v = data.map(r => getComputed(r).commission_per_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
                 const rows = [
-                  { label: t("field.managers", language), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? String(v) : "—" },
+                  { label: t("field.managers", language), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
                   { label: t("field.employees", language), value: office.num_employees_fte, groupAvg: avgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
                   { label: "Total FTE", value: benchmarks?.computed.total_fte ?? null, groupAvg: avgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
                   { label: t("field.commission_per_fte", language), value: benchmarks?.computed.commission_per_fte ?? null, groupAvg: avgCommPerFte, fmt: (v: number | null) => formatCurrency(v) },
