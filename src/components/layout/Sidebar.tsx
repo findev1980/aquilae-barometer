@@ -3,7 +3,6 @@ import { t } from "@/i18n/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, BarChart3, Building2, Download, Upload, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
 import aquilaeLogo from "@/assets/aquilae-logo.png";
-import { useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 const navItems = [
@@ -15,10 +14,14 @@ const navItems = [
   { path: "/settings", icon: Settings, labelKey: "nav.settings" },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { language } = useBarometerStore();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -30,7 +33,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between border-b border-border px-3 py-4">
           {!collapsed && <img src={aquilaeLogo} alt="Aquilae" className="h-8 w-auto ml-2" />}
           <button
-            onClick={() => setCollapsed((c) => !c)}
+            onClick={onToggle}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors active:scale-95 mx-auto"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
