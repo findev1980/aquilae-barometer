@@ -89,6 +89,9 @@ export default function OfficeDashboard() {
             ))}
           </SelectContent>
         </Select>
+        {office && selectedYear && (
+          <ExportPDFButton office={office} data={data} allData={allData} language={language} year={selectedYear} />
+        )}
       </div>
 
       {!office ? (
