@@ -39,10 +39,10 @@ function cellStr(value: unknown): string | null {
 
 async function readSheet(file: File, sheetName: string): Promise<unknown[][] | null> {
   try {
-    const sheets = await readXlsxFile(file, { getSheets: true });
-    const match = sheets.find((s) => s.name.toUpperCase() === sheetName.toUpperCase());
+    const names = await readSheetNames(file);
+    const match = names.find((n) => n.toUpperCase() === sheetName.toUpperCase());
     if (!match) return null;
-    const sheetIndex = sheets.indexOf(match) + 1;
+    const sheetIndex = names.indexOf(match) + 1;
     const rows = await readXlsxFile(file, { sheet: sheetIndex });
     return rows as unknown[][];
   } catch {
