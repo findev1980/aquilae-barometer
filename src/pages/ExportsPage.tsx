@@ -69,7 +69,7 @@ export default function ExportsPage() {
         const doc = generateOfficePDF(office, data, language, allData);
         const pdfBlob = doc.output("blob");
         zip.file(generateOfficeFileName(office.office_name, selectedYear), pdfBlob);
-        setProgress(Math.round(((i + 1) / data.length) * 100));
+        setProgress(Math.round((i + 1) / data.length * 100));
         await new Promise((r) => setTimeout(r, 10));
       }
 
@@ -100,32 +100,32 @@ export default function ExportsPage() {
           </div>
           <div className="flex-1">
             <h2 className="text-base font-semibold">{language === "nl" ? "Groepsrapport" : "Rapport de groupe"}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {language === "nl"
-                ? "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends"
-                : "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
+            <p className="mt-1 text-sm text-muted-foreground my-0">
+              {language === "nl" ?
+              "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends" :
+              "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{language === "nl" ? "Taal:" : "Langue :"}</span>
-              {(["all", "nl", "fr"] as const).map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setGroupLangFilter(opt)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                    groupLangFilter === opt
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-background hover:bg-muted"
-                  }`}
-                >
+              {(["all", "nl", "fr"] as const).map((opt) =>
+              <button
+                key={opt}
+                onClick={() => setGroupLangFilter(opt)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                groupLangFilter === opt ?
+                "bg-primary text-primary-foreground" :
+                "border border-border bg-background hover:bg-muted"}`
+                }>
+                
                   {opt === "all" ? "NL + FR" : opt.toUpperCase()}
                 </button>
-              ))}
+              )}
             </div>
             <button
               onClick={handleExportGroup}
               disabled={groupExporting || data.length === 0}
-              className="mt-4 flex items-center gap-2 rounded-lg border-2 border-primary px-5 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50"
-            >
+              className="mt-4 flex items-center gap-2 rounded-lg border-2 border-primary px-5 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50">
+              
               {groupExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               {language === "nl" ? "Download groepsrapport" : "Télécharger rapport de groupe"}
             </button>
@@ -145,8 +145,8 @@ export default function ExportsPage() {
               {data.length} {t("common.offices", language)} + {language === "nl" ? "groepsrapport" : "rapport de groupe"} — {selectedYear}
             </p>
 
-            {exporting && (
-              <div className="mt-3">
+            {exporting &&
+            <div className="mt-3">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                   <span>{progress}%</span>
@@ -155,20 +155,20 @@ export default function ExportsPage() {
                   <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
                 </div>
               </div>
-            )}
+            }
 
-            {done && !exporting && (
-              <div className="mt-3 flex items-center gap-2 text-sm font-medium text-accent-green">
+            {done && !exporting &&
+            <div className="mt-3 flex items-center gap-2 text-sm font-medium text-accent-green">
                 <CheckCircle2 className="h-4 w-4" />
                 {data.length} PDFs + {language === "nl" ? "groepsrapport" : "rapport de groupe"} — ZIP {language === "nl" ? "gedownload" : "téléchargé"}
               </div>
-            )}
+            }
 
             <button
               onClick={handleExportAll}
               disabled={exporting || data.length === 0}
-              className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform active:scale-[0.97] disabled:opacity-50"
-            >
+              className="mt-4 flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform active:scale-[0.97] disabled:opacity-50">
+              
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               {t("export.zip", language)}
             </button>
@@ -182,36 +182,36 @@ export default function ExportsPage() {
           <h2 className="text-sm font-semibold">{t("export.pdf_single", language)}</h2>
         </div>
         <div className="max-h-[480px] overflow-y-auto">
-          {data.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-muted-foreground">{t("status.no_data", language)}</p>
-          ) : (
-            <ul className="divide-y divide-border/50">
-              {data
-                .sort((a, b) => a.office_name.localeCompare(b.office_name))
-                .map((r) => (
-                  <li key={r.office_name} className="flex items-center justify-between px-5 py-2.5 hover:bg-muted/50 transition-colors">
+          {data.length === 0 ?
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">{t("status.no_data", language)}</p> :
+
+          <ul className="divide-y divide-border/50">
+              {data.
+            sort((a, b) => a.office_name.localeCompare(b.office_name)).
+            map((r) =>
+            <li key={r.office_name} className="flex items-center justify-between px-5 py-2.5 hover:bg-muted/50 transition-colors">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{r.office_name}</p>
                       <p className="text-xs text-muted-foreground">{r.source_language.toUpperCase()}</p>
                     </div>
                     <button
-                      onClick={() => handleExportSingle(r.office_name)}
-                      disabled={singleExporting === r.office_name}
-                      className="ml-3 flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50"
-                    >
-                      {singleExporting === r.office_name ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Download className="h-3 w-3" />
-                      )}
+                onClick={() => handleExportSingle(r.office_name)}
+                disabled={singleExporting === r.office_name}
+                className="ml-3 flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-all hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50">
+                
+                      {singleExporting === r.office_name ?
+                <Loader2 className="h-3 w-3 animate-spin" /> :
+
+                <Download className="h-3 w-3" />
+                }
                       PDF
                     </button>
                   </li>
-                ))}
+            )}
             </ul>
-          )}
+          }
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
