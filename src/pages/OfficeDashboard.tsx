@@ -129,16 +129,14 @@ export default function OfficeDashboard() {
     <div className="space-y-6">
       <div className="flex items-center gap-4 animate-fade-in">
         <h1 className="text-2xl font-bold">{t("nav.office", language)}</h1>
-        <Select value={selectedOffice || ""} onValueChange={setSelectedOffice}>
-          <SelectTrigger className="w-72">
-            <SelectValue placeholder={t("office.select", language)} />
-          </SelectTrigger>
-          <SelectContent>
-            {offices.map((name) => (
-              <SelectItem key={name} value={name}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <OfficeSearchCombobox
+          offices={offices}
+          selectedOffice={selectedOffice}
+          onSelect={setSelectedOffice}
+          placeholder={t("office.select", language)}
+          searchPlaceholder={language === "nl" ? "Zoek een kantoor..." : "Rechercher un bureau..."}
+          emptyLabel={language === "nl" ? "Geen kantoor gevonden" : "Aucun bureau trouvé"}
+        />
         {office && selectedYear && (
           <ExportPDFButton office={office} data={data} allData={allData} language={language} year={selectedYear} />
         )}
