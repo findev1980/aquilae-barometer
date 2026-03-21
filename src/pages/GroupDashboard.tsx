@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
@@ -12,7 +12,8 @@ import {
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
-import { X, Info } from "lucide-react";
+import { X, Info, Download, Loader2 } from "lucide-react";
+import { generateComparePDF, type CompareInsight } from "@/utils/pdfGenerator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution", "compare"] as const;
@@ -895,8 +896,10 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
 const COMPARE_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)", "hsl(200,70%,50%)", "hsl(45,90%,50%)", "hsl(310,50%,55%)"];
 
 function CompareTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { selectedYear } = useBarometerStore();
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
   const filtered = useMemo(() => {
@@ -947,6 +950,75 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
     });
   }, [selectedData, data, language]);
 
+  // Compute insights for both UI and PDF
+  const insights: CompareInsight[] = useMemo(() => {
+    if (selectedData.length < 2) return [];
+    const nl = language === "nl";
+    const results: CompareInsight[] = [];
+    const allComms2 = data.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
+    const groupAvgComm = allComms2.length ? allComms2.reduce((a, b) => a + b, 0) / allComms2.length : 0;
+    const allEff2 = data.map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
+    const groupAvgEff = allEff2.length ? allEff2.reduce((a, b) => a + b, 0) / allEff2.length : 0;
+    const commSorted = [...selectedData].sort((a, b) => (b.computed.total_commission ?? 0) - (a.computed.total_commission ?? 0));
+    const best = commSorted[0]; const worst = commSorted[commSorted.length - 1];
+    if (best.computed.total_commission && worst.computed.total_commission && best.computed.total_commission > 0) {
+      const diff = best.computed.total_commission - worst.computed.total_commission;
+      const pct = ((diff / worst.computed.total_commission) * 100).toFixed(0);
+      results.push({ icon: "📊", text: nl ? `${best.record.office_name} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${worst.record.office_name}.` : `${best.record.office_name} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${worst.record.office_name}.`, type: "neutral" });
+    }
+    const effSorted = [...selectedData].filter((d) => d.computed.commission_per_fte !== null).sort((a, b) => (b.computed.commission_per_fte ?? 0) - (a.computed.commission_per_fte ?? 0));
+    if (effSorted.length >= 2) {
+      const bestEff = effSorted[0]; const worstEff = effSorted[effSorted.length - 1];
+      results.push({ icon: "⚡", text: nl ? `${bestEff.record.office_name} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${worstEff.record.office_name} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.` : `${bestEff.record.office_name} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${worstEff.record.office_name} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`, type: "neutral" });
+    }
+    selectedData.forEach(({ record, computed }) => {
+      if (computed.total_commission !== null && groupAvgComm > 0) {
+        const pctVsGroup = ((computed.total_commission / groupAvgComm - 1) * 100).toFixed(0);
+        const above = computed.total_commission >= groupAvgComm;
+        results.push({ icon: above ? "✅" : "⚠️", text: nl ? `${record.office_name} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.` : `${record.office_name} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`, type: above ? "positive" : "negative" });
+      }
+    });
+    selectedData.forEach(({ record, computed }) => {
+      if (computed.commission_per_fte !== null && groupAvgEff > 0) {
+        const pctVsGroup = ((computed.commission_per_fte / groupAvgEff - 1) * 100).toFixed(0);
+        const above = computed.commission_per_fte >= groupAvgEff;
+        results.push({ icon: above ? "🎯" : "📉", text: nl ? `${record.office_name} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).` : `${record.office_name} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`, type: above ? "positive" : "negative" });
+      }
+    });
+    const fteSorted = [...selectedData].filter((d) => d.computed.total_fte !== null).sort((a, b) => (b.computed.total_fte ?? 0) - (a.computed.total_fte ?? 0));
+    if (fteSorted.length >= 2) {
+      const largest = fteSorted[0]; const smallest = fteSorted[fteSorted.length - 1];
+      if (largest.computed.total_fte && smallest.computed.total_fte) {
+        const ratio = (largest.computed.total_fte / smallest.computed.total_fte).toFixed(1);
+        results.push({ icon: "👥", text: nl ? `${largest.record.office_name} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${smallest.record.office_name} (${smallest.computed.total_fte} FTE).` : `${largest.record.office_name} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${smallest.record.office_name} (${smallest.computed.total_fte} ETP).`, type: "neutral" });
+      }
+    }
+    selectedData.forEach(({ record }) => {
+      if (record.pct_private !== null && record.pct_sme !== null) {
+        const dominant = record.pct_private > record.pct_sme ? (nl ? "particulier" : "particulier") : (nl ? "KMO" : "PME");
+        const pct = Math.max(record.pct_private, record.pct_sme ?? 0);
+        results.push({ icon: "🏢", text: nl ? `${record.office_name} richt zich voornamelijk op ${dominant} (${pct}%).` : `${record.office_name} se concentre principalement sur ${dominant} (${pct}%).`, type: "neutral" });
+      }
+    });
+    return results;
+  }, [selectedData, data, language]);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!selectedYear || selectedData.length < 2) return;
+    setPdfExporting(true);
+    await new Promise((r) => requestAnimationFrame(r));
+    try {
+      const records = selectedData.map((d) => d.record);
+      const { allData: storeAllData } = useBarometerStore.getState();
+      const doc = generateComparePDF(records, storeAllData, language, selectedYear, insights);
+      const names = records.map((r) => r.office_name.slice(0, 12).replace(/\s+/g, "_")).join("_vs_");
+      doc.save(`Aquilae_Vergelijking_${selectedYear}_${names}.pdf`);
+    } catch (err) {
+      console.error("Compare PDF generation failed:", err);
+    }
+    setPdfExporting(false);
+  }, [selectedYear, selectedData, language, insights]);
+
   return (
     <div className="space-y-6">
       {/* Office selector */}
@@ -985,7 +1057,17 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
         </div>
       ) : (
         <>
-          {/* Radar chart */}
+          {/* Export button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleExportPDF}
+              disabled={pdfExporting}
+              className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-transform active:scale-[0.97] disabled:opacity-50"
+            >
+              {pdfExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {language === "nl" ? "Exporteer als PDF" : "Exporter en PDF"}
+            </button>
+          </div>
           {radarData.length > 0 && (
             <SectionCard title={t("compare.radar_title", language)}>
               <ResponsiveContainer width="100%" height={350}>
@@ -1053,7 +1135,25 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
 
           {/* Analysis */}
           <SectionCard title={language === "nl" ? "Analyse" : "Analyse"}>
-            <CompareAnalysis selectedData={selectedData} selected={selected} data={data} language={language} />
+            {insights.length === 0 ? null : (
+              <div className="space-y-3">
+                {insights.map((insight, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
+                      insight.type === "positive"
+                        ? "border-accent-green/30 bg-accent-green/5"
+                        : insight.type === "negative"
+                        ? "border-accent-orange/30 bg-accent-orange/5"
+                        : "border-border bg-muted/30"
+                    }`}
+                  >
+                    <span className="text-base shrink-0">{insight.icon}</span>
+                    <p className="text-foreground/90">{insight.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </SectionCard>
 
           {/* Bar comparison */}
