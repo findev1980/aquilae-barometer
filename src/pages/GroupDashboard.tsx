@@ -192,6 +192,56 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
         </SectionCard>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard title={`${t("field.pct_private", language)} / ${t("field.pct_sme", language)}`}>
+          <ResponsiveContainer width="100%" height={Math.max(300, privateSmeData.length * 26)}>
+            <BarChart data={privateSmeData} layout="vertical" margin={{ left: 10, right: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
+                    <p className="font-semibold mb-1">{d.fullName}</p>
+                    <p className="text-muted-foreground">{t("field.pct_private", language)}: {d.private}%</p>
+                    <p className="text-muted-foreground">{t("field.pct_sme", language)}: {d.sme}%</p>
+                  </div>
+                );
+              }} />
+              <Bar dataKey="private" stackId="ps" fill="hsl(262,30%,53%)" name={t("field.pct_private", language)} />
+              <Bar dataKey="sme" stackId="ps" fill="hsl(262,40%,78%)" name={t("field.pct_sme", language)} radius={[0, 4, 4, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title={`${t("field.pct_life", language)} / ${t("field.pct_nonlife", language)}`}>
+          <ResponsiveContainer width="100%" height={Math.max(300, lifeNonlifeData.length * 26)}>
+            <BarChart data={lifeNonlifeData} layout="vertical" margin={{ left: 10, right: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
+                    <p className="font-semibold mb-1">{d.fullName}</p>
+                    <p className="text-muted-foreground">{t("field.pct_life", language)}: {d.life}%</p>
+                    <p className="text-muted-foreground">{t("field.pct_nonlife", language)}: {d.nonlife}%</p>
+                  </div>
+                );
+              }} />
+              <Bar dataKey="nonlife" stackId="ln" fill="hsl(14,80%,55%)" name={t("field.pct_nonlife", language)} />
+              <Bar dataKey="life" stackId="ln" fill="hsl(45,85%,55%)" name={t("field.pct_life", language)} radius={[0, 4, 4, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+      </div>
+
 
       {/* Summary table */}
       <SectionCard title={`${t("nav.group", language)} — ${t("group.financial", language)}`}>
