@@ -703,29 +703,6 @@ export function generateOfficePDF(
     doc.text(lang === "nl"
       ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
-    y += 12;
-
-    y = sectionTitle(doc, lang === "nl" ? "Samenvatting" : "Resume", y);
-    const c = getComputed(office);
-    const commBm = calcBenchmark(allData.map((r) => r.commission_insurance), office.commission_insurance);
-
-    const summaryPoints = [
-      `${t("field.commission_ins", lang)}: ${fmtCur(office.commission_insurance)} (P${commBm.percentile ?? "—"})`,
-      `FTE: ${c.total_fte?.toFixed(1) ?? "—"}`,
-      `${t("field.commission_per_fte", lang)}: ${fmtCur(c.commission_per_fte)}`,
-      `${t("field.satisfaction", lang)}: ${office.satisfaction_aquilae || "—"}`,
-      `${t("field.recommend", lang)}: ${office.recommend_aquilae || "—"}`,
-      `${t("field.priorities", lang)}: ${office.priorities.slice(0, 3).join("; ")}`,
-    ];
-
-    doc.setFontSize(9);
-    doc.setTextColor(...DARK);
-    doc.setFont("helvetica", "normal");
-    for (const point of summaryPoints) {
-      const lines = doc.splitTextToSize("\u2022 " + point, w - 30);
-      doc.text(lines, 15, y);
-      y += lines.length * 4.5 + 2;
-    }
   }
 
   addFooter(doc, year, 5, totalPages, lang);
