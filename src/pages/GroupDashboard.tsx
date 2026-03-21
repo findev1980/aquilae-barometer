@@ -455,7 +455,7 @@ function StrategyTab({ data, language }: { data: import("@/types/barometer").Off
               return (
                 <div key={d.label} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium truncate mr-2">{d.label}</span>
+                    <span className="font-medium truncate mr-2" title={d.label}>{d.label}</span>
                     <span className="shrink-0 tabular-nums text-muted-foreground">
                       {d.count} ({pct.toFixed(0)}%)
                     </span>
