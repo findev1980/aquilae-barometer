@@ -71,6 +71,34 @@ export default function OfficeDashboard() {
   const nonLifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_nonlife").slice(0, 5), [data]);
   const lifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_life").slice(0, 5), [data]);
 
+  // Evolution data: gather this office across all available years
+  const evolutionData = useMemo(() => {
+    if (!selectedOffice || meta.available_years.length < 2) return [];
+    return meta.available_years
+      .map((year) => {
+        const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+        const rec = yearData.find((r) => r.office_name === selectedOffice);
+        if (!rec) return null;
+        const c = getComputed(rec);
+        const groupComm = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
+        const groupFte = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
+        const groupSat = yearData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+        return {
+          year,
+          commIns: rec.commission_insurance,
+          commBank: rec.commission_bank,
+          totalComm: c.total_commission,
+          totalFte: c.total_fte,
+          commPerFte: c.commission_per_fte,
+          satisfaction: satisfactionScore(rec.satisfaction_aquilae),
+          groupCommMean: groupComm.length > 0 ? groupComm.reduce((a, b) => a + b, 0) / groupComm.length : null,
+          groupFteMean: groupFte.length > 0 ? groupFte.reduce((a, b) => a + b, 0) / groupFte.length : null,
+          groupSatMean: groupSat.length > 0 ? groupSat.reduce((a, b) => a + b, 0) / groupSat.length : null,
+        };
+      })
+      .filter(Boolean);
+  }, [selectedOffice, allData, meta.available_years, sourceLanguageFilter]);
+
   if (data.length === 0) {
     return <div className="flex items-center justify-center py-24 text-muted-foreground animate-fade-in">{t("status.no_data", language)}</div>;
   }
