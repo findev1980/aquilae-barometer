@@ -20,7 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
     "field.commission_ins": "Commissie verzekeringen",
     "field.commission_bank": "Commissie bank",
     "field.total_commission": "Totale commissie",
-    "field.commission_per_fte": "Commissie per VTE",
+    "field.commission_per_fte": "Commissie per FTE",
     "field.pct_private": "% Particulier",
     "field.pct_sme": "% KMO",
     "field.pct_life": "% Leven",
