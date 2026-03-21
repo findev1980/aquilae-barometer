@@ -100,8 +100,8 @@ export default function ExportsPage() {
             <h2 className="text-base font-semibold">{language === "nl" ? "Groepsrapport" : "Rapport de groupe"}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {language === "nl"
-                ? "3 pagina's: kerncijfers, maatschappijen & engagement, evolutietrends"
-                : "3 pages : chiffres clés, compagnies & engagement, tendances d'évolution"}
+                ? "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends"
+                : "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
             </p>
             <button
               onClick={handleExportGroup}
