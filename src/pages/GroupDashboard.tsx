@@ -12,7 +12,8 @@ import {
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
-import { X, Info } from "lucide-react";
+import { X, Info, Download, Loader2 } from "lucide-react";
+import { generateComparePDF, type CompareInsight } from "@/utils/pdfGenerator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution", "compare"] as const;
