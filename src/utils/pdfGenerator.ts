@@ -1,5 +1,11 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import autoTablePlugin from "jspdf-autotable";
+
+type AutoTableDoc = jsPDF & {
+  autoTable: (options: Record<string, unknown>) => jsPDF;
+  lastAutoTable: { finalY: number };
+};
 import type { OfficeRecord } from "@/types/barometer";
 import type { Language } from "@/i18n/translations";
 import { t } from "@/i18n/translations";
