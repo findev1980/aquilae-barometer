@@ -489,25 +489,25 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
   );
 
   const sections = [
-    { topKey: "group.top10_commission_ins", bottomKey: "group.bottom10_commission_ins", items: rankings.withCommIns },
-    { topKey: "group.top10_commission_bank", bottomKey: "group.bottom10_commission_bank", items: rankings.withCommBank },
-    { topKey: "group.top10_commission_total", bottomKey: "group.bottom10_commission_total", items: rankings.withTotal },
-    { topKey: "group.top10_efficiency", bottomKey: "group.bottom10_efficiency", items: rankings.withEff },
+    { topKey: "group.top10_commission_ins", bottomKey: "group.bottom10_commission_ins", items: rankings.withCommIns, count: 10 },
+    { topKey: "group.top10_commission_bank", bottomKey: "group.bottom10_commission_bank", items: rankings.withCommBank, count: 5 },
+    { topKey: "group.top10_commission_total", bottomKey: "group.bottom10_commission_total", items: rankings.withTotal, count: 10 },
+    { topKey: "group.top10_efficiency", bottomKey: "group.bottom10_efficiency", items: rankings.withEff, count: 10 },
   ];
 
   return (
     <div className="space-y-6">
-      {sections.map(({ topKey, bottomKey, items }) => {
-        const top10 = items.slice(0, 10);
-        const bottom10 = items.slice(-10).reverse();
-        const maxVal = top10[0]?.value || 1;
+      {sections.map(({ topKey, bottomKey, items, count }) => {
+        const topItems = items.slice(0, count);
+        const bottomItems = items.slice(-count).reverse();
+        const maxVal = topItems[0]?.value || 1;
         return (
           <div key={topKey} className="grid gap-6 lg:grid-cols-2">
             <SectionCard title={t(topKey, language)}>
-              <RankingList items={top10} maxValue={maxVal} color="primary" />
+              <RankingList items={topItems} maxValue={maxVal} color="primary" />
             </SectionCard>
             <SectionCard title={t(bottomKey, language)}>
-              <RankingList items={bottom10} maxValue={maxVal} color="orange" />
+              <RankingList items={bottomItems} maxValue={maxVal} color="orange" />
             </SectionCard>
           </div>
         );
