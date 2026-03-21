@@ -497,9 +497,9 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
 
   return (
     <div className="space-y-6">
-      {sections.map(({ topKey, bottomKey, items }) => {
-        const top10 = items.slice(0, 10);
-        const bottom10 = items.slice(-10).reverse();
+      {sections.map(({ topKey, bottomKey, items, count }) => {
+        const topItems = items.slice(0, count);
+        const bottomItems = items.slice(-count).reverse();
         const maxVal = top10[0]?.value || 1;
         return (
           <div key={topKey} className="grid gap-6 lg:grid-cols-2">
