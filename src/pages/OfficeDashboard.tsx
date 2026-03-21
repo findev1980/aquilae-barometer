@@ -33,9 +33,9 @@ function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string 
   );
 }
 
-function BenchmarkRow({ label, value, mean, median, percentile, quartile, formatFn }: {
+function BenchmarkRow({ label, value, mean, median, percentile, formatFn }: {
   label: string; value: number | null; mean: number | null; median: number | null;
-  percentile: number | null; quartile: number | null; formatFn: (v: number | null) => string;
+  percentile: number | null; formatFn: (v: number | null) => string;
 }) {
   return (
     <tr className="border-b border-border/50">
@@ -43,8 +43,7 @@ function BenchmarkRow({ label, value, mean, median, percentile, quartile, format
       <td className="py-2 pr-3 text-right text-sm tabular-nums font-semibold">{formatFn(value)}</td>
       <td className="py-2 pr-3 text-right text-sm tabular-nums text-muted-foreground">{formatFn(mean)}</td>
       <td className="py-2 pr-3 text-right text-sm tabular-nums text-muted-foreground">{formatFn(median)}</td>
-      <td className="py-2 pr-3 text-right text-sm tabular-nums">{percentile !== null ? `P${percentile}` : "—"}</td>
-      <td className="py-2 text-right text-sm tabular-nums">{quartile !== null ? `Q${quartile}` : "—"}</td>
+      <td className="py-2 text-right text-sm tabular-nums">{percentile !== null ? `P${percentile}` : "—"}</td>
     </tr>
   );
 }
