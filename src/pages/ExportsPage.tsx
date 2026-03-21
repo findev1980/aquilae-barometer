@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import { filterByYear, filterBySourceLang } from "@/utils/benchmarkCalc";
-import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
-import { Download, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { generateOfficePDF, generateOfficeFileName, generateGroupPDF } from "@/utils/pdfGenerator";
+import { Download, FileText, Loader2, CheckCircle2, Users } from "lucide-react";
 import JSZip from "jszip";
 
 export default function ExportsPage() {
@@ -12,6 +12,7 @@ export default function ExportsPage() {
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [singleExporting, setSingleExporting] = useState<string | null>(null);
+  const [groupExporting, setGroupExporting] = useState(false);
 
   const data = useMemo(
     () => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter),
@@ -23,7 +24,6 @@ export default function ExportsPage() {
     if (!office || !selectedYear) return;
 
     setSingleExporting(officeName);
-    // Use requestAnimationFrame to let the UI update
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
@@ -35,6 +35,20 @@ export default function ExportsPage() {
     setSingleExporting(null);
   };
 
+  const handleExportGroup = async () => {
+    if (!selectedYear) return;
+    setGroupExporting(true);
+    await new Promise((r) => requestAnimationFrame(r));
+
+    try {
+      const doc = generateGroupPDF(allData, language, selectedYear, sourceLanguageFilter);
+      doc.save(`Aquilae_Barometer_${selectedYear}_Groepsrapport.pdf`);
+    } catch (err) {
+      console.error("Group PDF generation failed:", err);
+    }
+    setGroupExporting(false);
+  };
+
   const handleExportAll = async () => {
     if (!selectedYear) return;
     setExporting(true);
@@ -44,13 +58,16 @@ export default function ExportsPage() {
     try {
       const zip = new JSZip();
 
+      // Add group report first
+      const groupDoc = generateGroupPDF(allData, language, selectedYear, sourceLanguageFilter);
+      zip.file(`Aquilae_Barometer_${selectedYear}_Groepsrapport.pdf`, groupDoc.output("blob"));
+
       for (let i = 0; i < data.length; i++) {
         const office = data[i];
         const doc = generateOfficePDF(office, data, language, allData);
         const pdfBlob = doc.output("blob");
         zip.file(generateOfficeFileName(office.office_name, selectedYear), pdfBlob);
         setProgress(Math.round(((i + 1) / data.length) * 100));
-        // Yield to UI
         await new Promise((r) => setTimeout(r, 10));
       }
 
@@ -73,8 +90,33 @@ export default function ExportsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-2xl font-bold animate-fade-in">{t("nav.export", language)}</h1>
 
+      {/* Group report */}
+      <div className="rounded-xl border border-border bg-card p-6 card-shadow animate-fade-in" style={{ animationDelay: "40ms" }}>
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Users className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-semibold">{language === "nl" ? "Groepsrapport" : "Rapport de groupe"}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {language === "nl"
+                ? "3 pagina's: kerncijfers, maatschappijen & engagement, evolutietrends"
+                : "3 pages : chiffres clés, compagnies & engagement, tendances d'évolution"}
+            </p>
+            <button
+              onClick={handleExportGroup}
+              disabled={groupExporting || data.length === 0}
+              className="mt-4 flex items-center gap-2 rounded-lg border-2 border-primary px-5 py-2.5 text-sm font-medium text-primary transition-all hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50"
+            >
+              {groupExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {language === "nl" ? "Download groepsrapport" : "Télécharger rapport de groupe"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Bulk export */}
-      <div className="rounded-xl border border-border bg-card p-6 card-shadow animate-fade-in" style={{ animationDelay: "60ms" }}>
+      <div className="rounded-xl border border-border bg-card p-6 card-shadow animate-fade-in" style={{ animationDelay: "80ms" }}>
         <div className="flex items-start gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <FileText className="h-6 w-6 text-primary" />
@@ -82,7 +124,7 @@ export default function ExportsPage() {
           <div className="flex-1">
             <h2 className="text-base font-semibold">{t("export.pdf_all", language)}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data.length} {t("common.offices", language)} — {selectedYear}
+              {data.length} {t("common.offices", language)} + {language === "nl" ? "groepsrapport" : "rapport de groupe"} — {selectedYear}
             </p>
 
             {exporting && (
@@ -100,7 +142,7 @@ export default function ExportsPage() {
             {done && !exporting && (
               <div className="mt-3 flex items-center gap-2 text-sm font-medium text-accent-green">
                 <CheckCircle2 className="h-4 w-4" />
-                {data.length} PDFs — ZIP {language === "nl" ? "gedownload" : "telecharge"}
+                {data.length} PDFs + {language === "nl" ? "groepsrapport" : "rapport de groupe"} — ZIP {language === "nl" ? "gedownload" : "téléchargé"}
               </div>
             )}
 
