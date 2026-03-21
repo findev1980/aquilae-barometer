@@ -500,14 +500,14 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
       {sections.map(({ topKey, bottomKey, items, count }) => {
         const topItems = items.slice(0, count);
         const bottomItems = items.slice(-count).reverse();
-        const maxVal = top10[0]?.value || 1;
+        const maxVal = topItems[0]?.value || 1;
         return (
           <div key={topKey} className="grid gap-6 lg:grid-cols-2">
             <SectionCard title={t(topKey, language)}>
-              <RankingList items={top10} maxValue={maxVal} color="primary" />
+              <RankingList items={topItems} maxValue={maxVal} color="primary" />
             </SectionCard>
             <SectionCard title={t(bottomKey, language)}>
-              <RankingList items={bottom10} maxValue={maxVal} color="orange" />
+              <RankingList items={bottomItems} maxValue={maxVal} color="orange" />
             </SectionCard>
           </div>
         );
