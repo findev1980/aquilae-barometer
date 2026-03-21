@@ -127,10 +127,40 @@ export function generateOfficePDF(
   y += 6;
 
   y = sectionTitle(doc, t("office.personnel", lang), y);
-  y = labelValue(doc, t("field.managers", lang), String(office.num_managers ?? "—"), 15, y);
-  y = labelValue(doc, t("field.employees", lang), String(office.num_employees_fte ?? "—"), 15, y);
-  y = labelValue(doc, "Total FTE", computed.total_fte !== null ? computed.total_fte.toFixed(1) : "—", 15, y);
-  y += 6;
+  {
+    const avgManagers = (() => { const v = allData.map(r => r.num_managers).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+    const avgEmployees = (() => { const v = allData.map(r => r.num_employees_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+    const avgFte = (() => { const v = allData.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+    const avgCommPerFte = (() => { const v = allData.map(r => getComputed(r).commission_per_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+
+    const persRows = [
+      { label: t("field.managers", lang), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: t("field.employees", lang), value: office.num_employees_fte, groupAvg: avgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: "Total FTE", value: computed.total_fte, groupAvg: avgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: t("field.commission_per_fte", lang), value: computed.commission_per_fte, groupAvg: avgCommPerFte, fmt: (v: number | null) => fmtCur(v) },
+    ];
+
+    const officeLabel = lang === "nl" ? "Kantoor" : "Bureau";
+    const groupLabel = lang === "nl" ? "Groepsgemiddelde" : "Moyenne groupe";
+    const diffLabel = lang === "nl" ? "Verschil" : "Différence";
+
+    autoTable(doc, {
+      startY: y,
+      head: [["", officeLabel, groupLabel, diffLabel]],
+      body: persRows.map(({ label, value, groupAvg, fmt }) => {
+        const diff = value !== null && groupAvg !== null ? value - groupAvg : null;
+        const diffStr = diff !== null ? `${diff >= 0 ? "+" : ""}${fmt(diff)}` : "—";
+        return [label, fmt(value), groupAvg !== null ? fmt(groupAvg) : "—", diffStr];
+      }),
+      theme: "grid",
+      headStyles: { fillColor: [...PRIMARY], fontSize: 8, fontStyle: "bold", textColor: [...WHITE] },
+      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+      margin: { left: 15, right: 15 },
+      styles: { cellPadding: 2 },
+    });
+    y = lastAutoTableFinalY(doc, y) + 8;
+  }
 
   y = sectionTitle(doc, t("field.activities", lang), y);
   doc.setFontSize(9);
@@ -181,64 +211,110 @@ export function generateOfficePDF(
 
   y = lastAutoTableFinalY(doc, y) + 10;
 
-  // Ratio comparison
+  // Portfolio distribution - styled like app with bars + group marker
   y = sectionTitle(doc, `${t("field.pct_private", lang)} / ${t("field.pct_sme", lang)}`, y);
-  const allPctPrivate = allData.map((r) => r.pct_private).filter((v): v is number => v !== null);
-  const groupAvgPrivate = allPctPrivate.length > 0 ? allPctPrivate.reduce((s, v) => s + v, 0) / allPctPrivate.length : null;
+  {
+    const allPctPrivate = allData.map((r) => r.pct_private).filter((v): v is number => v !== null);
+    const avgPrivate = allPctPrivate.length > 0 ? allPctPrivate.reduce((s, v) => s + v, 0) / allPctPrivate.length : null;
+    const allPctSme = allData.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+    const avgSme = allPctSme.length > 0 ? allPctSme.reduce((s, v) => s + v, 0) / allPctSme.length : null;
+    const barMaxW = w - 60;
 
-  if (office.pct_private !== null) {
-    // Office bar
-    doc.setFillColor(...PRIMARY);
-    const barW = (office.pct_private / 100) * (w - 80);
-    doc.roundedRect(15, y, barW, 6, 1, 1, "F");
-    doc.setFontSize(7);
-    doc.setTextColor(...WHITE);
-    doc.text(`${office.pct_private}%`, 17, y + 4.5);
-    doc.setTextColor(...DARK);
-    doc.text(t("benchmark.office", lang), w - 60, y + 4.5);
-    y += 10;
-
-    // Group bar
-    if (groupAvgPrivate !== null) {
-      doc.setFillColor(...PRIMARY_LIGHT);
-      const gBarW = (groupAvgPrivate / 100) * (w - 80);
-      doc.roundedRect(15, y, gBarW, 6, 1, 1, "F");
-      doc.setFontSize(7);
-      doc.setTextColor(...PRIMARY);
-      doc.text(`${Math.round(groupAvgPrivate)}%`, 17, y + 4.5);
+    const drawPortfolioBar = (label: string, officeVal: number | null, groupAvg: number | null, yPos: number): number => {
+      doc.setFontSize(8);
+      doc.setTextColor(...DARK);
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 15, yPos);
+      doc.setFont("helvetica", "normal");
+      if (officeVal !== null) {
+        doc.text(`${officeVal}%`, w - 40, yPos, { align: "right" });
+      }
+      yPos += 3;
+      // Background bar
+      doc.setFillColor(235, 235, 240);
+      doc.roundedRect(15, yPos, barMaxW, 5, 1.5, 1.5, "F");
+      // Office bar
+      if (officeVal !== null && officeVal > 0) {
+        doc.setFillColor(...PRIMARY);
+        doc.roundedRect(15, yPos, Math.max((officeVal / 100) * barMaxW, 2), 5, 1.5, 1.5, "F");
+      }
+      // Group average marker line
+      if (groupAvg !== null) {
+        const markerX = 15 + (groupAvg / 100) * barMaxW;
+        doc.setDrawColor(80, 80, 90);
+        doc.setLineWidth(0.6);
+        doc.line(markerX, yPos - 0.5, markerX, yPos + 5.5);
+      }
+      yPos += 7;
+      // Legend
+      doc.setFontSize(6);
       doc.setTextColor(...GREY);
-      doc.text(t("benchmark.group", lang), w - 60, y + 4.5);
-    }
+      doc.setFillColor(...PRIMARY);
+      doc.rect(15, yPos, 4, 2, "F");
+      doc.text(lang === "nl" ? "Kantoor" : "Bureau", 21, yPos + 1.5);
+      if (groupAvg !== null) {
+        doc.setDrawColor(80, 80, 90);
+        doc.setLineWidth(0.6);
+        doc.line(50, yPos, 50, yPos + 2);
+        doc.text(`${lang === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"} (${Math.round(groupAvg * 10) / 10}%)`, 53, yPos + 1.5);
+      }
+      return yPos + 6;
+    };
+
+    y = drawPortfolioBar(t("field.pct_private", lang), office.pct_private, avgPrivate, y);
+    y = drawPortfolioBar(t("field.pct_sme", lang), office.pct_sme, avgSme, y);
   }
 
-  y += 16;
+  y += 6;
 
-  // Life/Non-life ratio
+  // Life / BOAR distribution
   y = sectionTitle(doc, `${t("field.pct_life", lang)} / ${t("field.pct_nonlife", lang)}`, y);
-  const allPctLife = allData.map((r) => r.pct_life).filter((v): v is number => v !== null);
-  const groupAvgLife = allPctLife.length > 0 ? allPctLife.reduce((s, v) => s + v, 0) / allPctLife.length : null;
+  {
+    const allPctLife = allData.map((r) => r.pct_life).filter((v): v is number => v !== null);
+    const avgLife = allPctLife.length > 0 ? allPctLife.reduce((s, v) => s + v, 0) / allPctLife.length : null;
+    const allPctNonlife = allData.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
+    const avgNonlife = allPctNonlife.length > 0 ? allPctNonlife.reduce((s, v) => s + v, 0) / allPctNonlife.length : null;
+    const barMaxW = w - 60;
 
-  if (office.pct_life !== null) {
-    doc.setFillColor(...PRIMARY);
-    const barW = (office.pct_life / 100) * (w - 80);
-    doc.roundedRect(15, y, Math.max(barW, 2), 6, 1, 1, "F");
-    doc.setFontSize(7);
-    doc.setTextColor(office.pct_life > 10 ? 255 : 45, office.pct_life > 10 ? 255 : 45, office.pct_life > 10 ? 255 : 63);
-    doc.text(`${office.pct_life}%`, 17, y + 4.5);
-    doc.setTextColor(...DARK);
-    doc.text(t("benchmark.office", lang), w - 60, y + 4.5);
-    y += 10;
-
-    if (groupAvgLife !== null) {
-      doc.setFillColor(...PRIMARY_LIGHT);
-      const gBarW = (groupAvgLife / 100) * (w - 80);
-      doc.roundedRect(15, y, Math.max(gBarW, 2), 6, 1, 1, "F");
-      doc.setFontSize(7);
-      doc.setTextColor(...PRIMARY);
-      doc.text(`${Math.round(groupAvgLife)}%`, 17, y + 4.5);
+    const drawBar = (label: string, officeVal: number | null, groupAvg: number | null, yPos: number): number => {
+      doc.setFontSize(8);
+      doc.setTextColor(...DARK);
+      doc.setFont("helvetica", "bold");
+      doc.text(label, 15, yPos);
+      doc.setFont("helvetica", "normal");
+      if (officeVal !== null) {
+        doc.text(`${officeVal}%`, w - 40, yPos, { align: "right" });
+      }
+      yPos += 3;
+      doc.setFillColor(235, 235, 240);
+      doc.roundedRect(15, yPos, barMaxW, 5, 1.5, 1.5, "F");
+      if (officeVal !== null && officeVal > 0) {
+        doc.setFillColor(...PRIMARY);
+        doc.roundedRect(15, yPos, Math.max((officeVal / 100) * barMaxW, 2), 5, 1.5, 1.5, "F");
+      }
+      if (groupAvg !== null) {
+        const markerX = 15 + (groupAvg / 100) * barMaxW;
+        doc.setDrawColor(80, 80, 90);
+        doc.setLineWidth(0.6);
+        doc.line(markerX, yPos - 0.5, markerX, yPos + 5.5);
+      }
+      yPos += 7;
+      doc.setFontSize(6);
       doc.setTextColor(...GREY);
-      doc.text(t("benchmark.group", lang), w - 60, y + 4.5);
-    }
+      doc.setFillColor(...PRIMARY);
+      doc.rect(15, yPos, 4, 2, "F");
+      doc.text(lang === "nl" ? "Kantoor" : "Bureau", 21, yPos + 1.5);
+      if (groupAvg !== null) {
+        doc.setDrawColor(80, 80, 90);
+        doc.setLineWidth(0.6);
+        doc.line(50, yPos, 50, yPos + 2);
+        doc.text(`${lang === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"} (${Math.round(groupAvg * 10) / 10}%)`, 53, yPos + 1.5);
+      }
+      return yPos + 6;
+    };
+
+    y = drawBar(t("field.pct_nonlife", lang), office.pct_nonlife, avgNonlife, y);
+    y = drawBar(t("field.pct_life", lang), office.pct_life, avgLife, y);
   }
 
   addFooter(doc, year, 2, totalPages, lang);
@@ -248,87 +324,120 @@ export function generateOfficePDF(
   addHeader(doc, office.office_name, 3);
   y = 28;
 
-  // Non-life ranking
-  const groupNonLife = calcWeightedRanking(allData, "ranking_nonlife").slice(0, 5);
-  y = sectionTitle(doc, t("field.companies_nonlife", lang), y);
+  // Companies - styled like app with numbered list and group position badges
+  const groupNonLife = calcWeightedRanking(allData, "ranking_nonlife").slice(0, 10);
+  const groupLife = calcWeightedRanking(allData, "ranking_life").slice(0, 10);
 
-  const nlBody = office.ranking_nonlife.slice(0, 5).map((c, i) => {
-    const groupEntry = groupNonLife.find((g) => g.company === c);
-    return [String(i + 1), c, groupEntry ? `#${groupEntry.rank} (${groupEntry.totalPoints} pts)` : "—"];
-  });
+  const drawCompanyList = (title: string, officeList: string[], groupRanking: ReturnType<typeof calcWeightedRanking>, yPos: number): number => {
+    yPos = sectionTitle(doc, title, yPos);
+    for (let i = 0; i < Math.min(officeList.length, 5); i++) {
+      const company = officeList[i];
+      const groupEntry = groupRanking.find((g) => g.company === company);
+      const groupPos = groupEntry?.rank;
+      const inGroupTop5 = groupPos !== undefined && groupPos <= 5;
 
-  autoTable(doc, {
-    startY: y,
-    head: [["#", t("benchmark.office", lang), t("benchmark.group", lang) + " ranking"]],
-    body: nlBody,
-    theme: "grid",
-    headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-    bodyStyles: { fontSize: 8, textColor: [...DARK] },
-    alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
-    margin: { left: 15, right: 15 },
-    styles: { cellPadding: 2 },
-    columnStyles: { 0: { cellWidth: 10 } },
-  });
-  y = lastAutoTableFinalY(doc, y) + 10;
-
-  // Life ranking
-  const groupLife = calcWeightedRanking(allData, "ranking_life").slice(0, 5);
-  y = sectionTitle(doc, t("field.companies_life", lang), y);
-
-  const lifeBody = office.ranking_life.slice(0, 5).map((c, i) => {
-    const groupEntry = groupLife.find((g) => g.company === c);
-    return [String(i + 1), c, groupEntry ? `#${groupEntry.rank} (${groupEntry.totalPoints} pts)` : "—"];
-  });
-
-  autoTable(doc, {
-    startY: y,
-    head: [["#", t("benchmark.office", lang), t("benchmark.group", lang) + " ranking"]],
-    body: lifeBody,
-    theme: "grid",
-    headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-    bodyStyles: { fontSize: 8, textColor: [...DARK] },
-    alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
-    margin: { left: 15, right: 15 },
-    styles: { cellPadding: 2 },
-    columnStyles: { 0: { cellWidth: 10 } },
-  });
-  y = lastAutoTableFinalY(doc, y) + 10;
-
-  // Priorities
-  const groupTopPriorities = calcFrequency(allData, "priorities").slice(0, 5).map((p) => p.label);
-  y = sectionTitle(doc, t("field.priorities", lang), y);
-
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  for (const p of office.priorities) {
-    const isGroupTop = groupTopPriorities.includes(p);
-    if (isGroupTop) {
-      doc.setTextColor(...PRIMARY);
+      // Number circle
+      if (i < 3) {
+        doc.setFillColor(...PRIMARY_LIGHT);
+      } else {
+        doc.setFillColor(235, 235, 240);
+      }
+      doc.circle(19, yPos + 0.5, 3, "F");
+      doc.setFontSize(7);
+      doc.setTextColor(i < 3 ? PRIMARY[0] : GREY[0], i < 3 ? PRIMARY[1] : GREY[1], i < 3 ? PRIMARY[2] : GREY[2]);
       doc.setFont("helvetica", "bold");
-    } else {
-      doc.setTextColor(...DARK);
-      doc.setFont("helvetica", "normal");
+      doc.text(String(i + 1), 19, yPos + 1.5, { align: "center" });
+
+      // Company name
+      doc.setFontSize(8);
+      if (inGroupTop5) {
+        doc.setTextColor(...PRIMARY);
+        doc.setFont("helvetica", "bold");
+      } else {
+        doc.setTextColor(...DARK);
+        doc.setFont("helvetica", "normal");
+      }
+      doc.text(company, 25, yPos + 1.5);
+
+      // Group position badge
+      if (groupPos !== undefined) {
+        const badgeText = `${lang === "nl" ? "Groep" : "Groupe"} #${groupPos}`;
+        const badgeW = doc.getTextWidth(badgeText) + 5;
+        const badgeX = w - 15 - badgeW;
+        if (inGroupTop5) {
+          doc.setFillColor(...PRIMARY_LIGHT);
+          doc.setTextColor(...PRIMARY);
+        } else {
+          doc.setFillColor(235, 235, 240);
+          doc.setTextColor(...GREY);
+        }
+        doc.roundedRect(badgeX, yPos - 1.5, badgeW, 5, 1.5, 1.5, "F");
+        doc.setFontSize(6);
+        doc.text(badgeText, badgeX + 2.5, yPos + 1.5);
+      }
+      yPos += 7;
     }
-    const bullet = isGroupTop ? "\u2605 " : "\u2022 ";
-    const lines = doc.splitTextToSize(bullet + p, w - 30);
-    doc.text(lines, 15, y);
-    y += lines.length * 4 + 2;
-  }
+    // Note
+    doc.setFontSize(6);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      lang === "nl"
+        ? "Paars = in groep top 5. Groepspositie op gewogen puntensysteem."
+        : "Violet = dans le top 5 du groupe. Position basée sur points pondérés.",
+      15, yPos + 1
+    );
+    return yPos + 6;
+  };
+
+  y = drawCompanyList(t("field.companies_nonlife", lang), office.ranking_nonlife, groupNonLife, y);
+  y += 4;
+  y = drawCompanyList(t("field.companies_life", lang), office.ranking_life, groupLife, y);
   y += 6;
 
-  // Strengths & Challenges
+  // Strategy - styled like app with pill badges
+  y = sectionTitle(doc, t("office.strategy", lang), y);
+
+  // Priorities as pill badges
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "normal");
+  let pillX = 15;
+  const pillY = y;
+  let currentPillY = pillY;
+  for (const p of office.priorities) {
+    const tw = doc.getTextWidth(p) + 6;
+    if (pillX + tw > w - 15) {
+      pillX = 15;
+      currentPillY += 7;
+    }
+    doc.setFillColor(...PRIMARY_LIGHT);
+    doc.roundedRect(pillX, currentPillY - 3, tw, 5.5, 2, 2, "F");
+    doc.setTextColor(...PRIMARY);
+    doc.text(p, pillX + 3, currentPillY);
+    pillX += tw + 2;
+  }
+  y = currentPillY + 8;
+
   if (office.strengths_text) {
-    y = sectionTitle(doc, t("field.strengths", lang), y);
+    doc.setFontSize(7);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "bold");
+    doc.text(t("field.strengths", lang), 15, y);
+    y += 4;
     doc.setFontSize(8);
     doc.setTextColor(...DARK);
     doc.setFont("helvetica", "normal");
     const sLines = doc.splitTextToSize(office.strengths_text, w - 30);
     doc.text(sLines, 15, y);
-    y += sLines.length * 4 + 6;
+    y += sLines.length * 4 + 4;
   }
 
   if (office.challenges_text) {
-    y = sectionTitle(doc, t("field.challenges", lang), y);
+    doc.setFontSize(7);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "bold");
+    doc.text(t("field.challenges", lang), 15, y);
+    y += 4;
     doc.setFontSize(8);
     doc.setTextColor(...DARK);
     doc.setFont("helvetica", "normal");
@@ -594,29 +703,6 @@ export function generateOfficePDF(
     doc.text(lang === "nl"
       ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
-    y += 12;
-
-    y = sectionTitle(doc, lang === "nl" ? "Samenvatting" : "Resume", y);
-    const c = getComputed(office);
-    const commBm = calcBenchmark(allData.map((r) => r.commission_insurance), office.commission_insurance);
-
-    const summaryPoints = [
-      `${t("field.commission_ins", lang)}: ${fmtCur(office.commission_insurance)} (P${commBm.percentile ?? "—"})`,
-      `FTE: ${c.total_fte?.toFixed(1) ?? "—"}`,
-      `${t("field.commission_per_fte", lang)}: ${fmtCur(c.commission_per_fte)}`,
-      `${t("field.satisfaction", lang)}: ${office.satisfaction_aquilae || "—"}`,
-      `${t("field.recommend", lang)}: ${office.recommend_aquilae || "—"}`,
-      `${t("field.priorities", lang)}: ${office.priorities.slice(0, 3).join("; ")}`,
-    ];
-
-    doc.setFontSize(9);
-    doc.setTextColor(...DARK);
-    doc.setFont("helvetica", "normal");
-    for (const point of summaryPoints) {
-      const lines = doc.splitTextToSize("\u2022 " + point, w - 30);
-      doc.text(lines, 15, y);
-      y += lines.length * 4.5 + 2;
-    }
   }
 
   addFooter(doc, year, 5, totalPages, lang);
