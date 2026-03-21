@@ -56,9 +56,10 @@ function sectionTitle(doc: jsPDF, title: string, y: number): number {
   doc.setTextColor(...PRIMARY);
   doc.setFont("helvetica", "bold");
   doc.text(title, 15, y);
+  const titleWidth = doc.getTextWidth(title);
   doc.setDrawColor(...PRIMARY);
   doc.setLineWidth(0.5);
-  doc.line(15, y + 2, 80, y + 2);
+  doc.line(15, y + 2, 15 + titleWidth, y + 2);
   return y + 10;
 }
 
