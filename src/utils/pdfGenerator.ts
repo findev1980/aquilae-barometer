@@ -1,11 +1,5 @@
 import jsPDF from "jspdf";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import autoTablePlugin from "jspdf-autotable";
-
-type AutoTableDoc = jsPDF & {
-  autoTable: (options: Record<string, unknown>) => jsPDF;
-  lastAutoTable: { finalY: number };
-};
+import { autoTable } from "jspdf-autotable";
 import type { OfficeRecord } from "@/types/barometer";
 import type { Language } from "@/i18n/translations";
 import { t } from "@/i18n/translations";
@@ -20,6 +14,12 @@ const PRIMARY_LIGHT = [237, 232, 245] as const;
 const DARK = [45, 45, 63] as const;
 const GREY = [102, 102, 119] as const;
 const WHITE = [255, 255, 255] as const;
+
+type DocWithLastAutoTable = jsPDF & { lastAutoTable?: { finalY?: number } };
+
+function lastAutoTableFinalY(doc: jsPDF, fallbackY: number): number {
+  return (doc as DocWithLastAutoTable).lastAutoTable?.finalY ?? fallbackY;
+}
 
 function fmtCur(v: number | null): string {
   if (v === null) return "—";
@@ -164,7 +164,7 @@ export function generateOfficePDF(
     ];
   });
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [[
       "", t("office.value", lang), t("benchmark.mean", lang),
@@ -179,7 +179,7 @@ export function generateOfficePDF(
     styles: { cellPadding: 2 },
   });
 
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Ratio comparison
   y = sectionTitle(doc, `${t("field.pct_private", lang)} / ${t("field.pct_sme", lang)}`, y);
@@ -257,7 +257,7 @@ export function generateOfficePDF(
     return [String(i + 1), c, groupEntry ? `#${groupEntry.rank} (${groupEntry.totalPoints} pts)` : "—"];
   });
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["#", t("benchmark.office", lang), t("benchmark.group", lang) + " ranking"]],
     body: nlBody,
@@ -269,7 +269,7 @@ export function generateOfficePDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Life ranking
   const groupLife = calcWeightedRanking(allData, "ranking_life").slice(0, 5);
@@ -280,7 +280,7 @@ export function generateOfficePDF(
     return [String(i + 1), c, groupEntry ? `#${groupEntry.rank} (${groupEntry.totalPoints} pts)` : "—"];
   });
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["#", t("benchmark.office", lang), t("benchmark.group", lang) + " ranking"]],
     body: lifeBody,
@@ -292,7 +292,7 @@ export function generateOfficePDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Priorities
   const groupTopPriorities = calcFrequency(allData, "priorities").slice(0, 5).map((p) => p.label);
@@ -357,7 +357,7 @@ export function generateOfficePDF(
     [t("field.recommend", lang), office.recommend_aquilae || "—", recScore !== null ? `${recScore}/3` : "—", avgRec !== null ? `${avgRec.toFixed(2)}/3` : "—"],
   ];
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["", t("benchmark.office", lang), "Score", t("benchmark.group", lang) + " avg"]],
     body: engBody,
@@ -368,7 +368,7 @@ export function generateOfficePDF(
     margin: { left: 15, right: 15 },
     styles: { cellPadding: 2 },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Alignment scores
   y = sectionTitle(doc, `${t("field.mission", lang)} / ${t("field.vision", lang)} / ${t("field.values", lang)} / ${t("field.charter", lang)}`, y);
@@ -388,7 +388,7 @@ export function generateOfficePDF(
     return [label, officeVal || "—", officeScore !== null ? `${officeScore}/4` : "—", groupAvg !== null ? `${groupAvg.toFixed(2)}/4` : "—"];
   });
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["", t("benchmark.office", lang), "Score", t("benchmark.group", lang) + " avg"]],
     body: alignBody,
@@ -399,7 +399,7 @@ export function generateOfficePDF(
     margin: { left: 15, right: 15 },
     styles: { cellPadding: 2 },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Reasons for membership
   if (office.reasons_membership) {
@@ -434,7 +434,7 @@ export function generateOfficePDF(
       ];
     });
 
-    (doc as AutoTableDoc).autoTable({
+    autoTable(doc, {
       startY: y,
       head: [[t("filter.year", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang), t("field.satisfaction", lang)]],
       body: evoBody,
@@ -445,7 +445,7 @@ export function generateOfficePDF(
       margin: { left: 15, right: 15 },
       styles: { cellPadding: 2 },
     });
-    y = (doc as AutoTableDoc).lastAutoTable.finalY + 12;
+    y = lastAutoTableFinalY(doc, y) + 12;
 
     // Prepare chart data
     const chartYears = officeAllYears.map((r) => r.survey_year);
@@ -779,7 +779,7 @@ export function generateGroupPDF(
     .sort((a, b) => b.commission_insurance! - a.commission_insurance!)
     .slice(0, 5);
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["#", t("field.office_name", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang)]],
     body: top5.map((r, i) => {
@@ -794,7 +794,7 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Top 5 efficiency
   y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/VTE)" : "Top 5 efficacité (commission/ETP)", y);
@@ -804,7 +804,7 @@ export function generateGroupPDF(
     .sort((a, b) => b.eff! - a.eff!)
     .slice(0, 5);
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["#", t("field.office_name", lang), t("field.commission_per_fte", lang), t("field.total_commission", lang)]],
     body: top5Eff.map((r, i) => {
@@ -832,7 +832,7 @@ export function generateGroupPDF(
   const lifeRanking = calcWeightedRanking(data, "ranking_life").slice(0, 10);
 
   y = sectionTitle(doc, t("field.companies_nonlife", lang), y);
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [[t("common.rank", lang), t("common.company", lang), t("common.points", lang), t("common.in_top3", lang)]],
     body: nonLifeRanking.map((r) => [String(r.rank), r.company, String(r.totalPoints), String(r.inTop3)]),
@@ -844,10 +844,10 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   y = sectionTitle(doc, t("field.companies_life", lang), y);
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [[t("common.rank", lang), t("common.company", lang), t("common.points", lang), t("common.in_top3", lang)]],
     body: lifeRanking.map((r) => [String(r.rank), r.company, String(r.totalPoints), String(r.inTop3)]),
@@ -859,7 +859,7 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = (doc as AutoTableDoc).lastAutoTable.finalY + 10;
+  y = lastAutoTableFinalY(doc, y) + 10;
 
   // Engagement scores
   y = sectionTitle(doc, t("office.engagement", lang), y);
@@ -879,7 +879,7 @@ export function generateGroupPDF(
     return [label, `${avgScore?.toFixed(2) ?? "—"}/${max}`, `${medScore?.toFixed(2) ?? "—"}/${max}`, String(scores.length)];
   });
 
-  (doc as AutoTableDoc).autoTable({
+  autoTable(doc, {
     startY: y,
     head: [["", t("benchmark.mean", lang), t("benchmark.median", lang), "n"]],
     body: engRows,
@@ -954,7 +954,7 @@ export function generateGroupPDF(
 
     // Evolution data table
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
-    (doc as AutoTableDoc).autoTable({
+    autoTable(doc, {
       startY: y,
       head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. VTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
       body: evolutionData.map((d) => [
