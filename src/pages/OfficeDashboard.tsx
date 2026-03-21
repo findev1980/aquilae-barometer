@@ -188,6 +188,9 @@ export default function OfficeDashboard() {
             </div>
           )}
 
+          {/* Portfolio distribution */}
+          {office && <PortfolioDistribution office={office} data={data} language={language} />}
+
           {/* Personnel + Companies */}
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
@@ -394,5 +397,89 @@ function ExportPDFButton({ office, data, allData, language, year }: {
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
       {t("export.pdf_single", language)}
     </button>
+  );
+}
+
+function PortfolioDistribution({ office, data, language }: { office: OfficeRecord; data: OfficeRecord[]; language: "nl" | "fr" }) {
+  const avgPrivate = useMemo(() => {
+    const vals = data.map((r) => r.pct_private).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgSme = useMemo(() => {
+    const vals = data.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgLife = useMemo(() => {
+    const vals = data.map((r) => r.pct_life).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+  const avgNonlife = useMemo(() => {
+    const vals = data.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  }, [data]);
+
+  const hasPrivateSme = office.pct_private !== null || office.pct_sme !== null;
+  const hasLifeNonlife = office.pct_life !== null || office.pct_nonlife !== null;
+
+  if (!hasPrivateSme && !hasLifeNonlife) return null;
+
+  const barData = [
+    ...(hasPrivateSme ? [{
+      category: `${t("field.pct_private", language)} / ${t("field.pct_sme", language)}`,
+      items: [
+        { label: t("field.pct_private", language), office: office.pct_private ?? 0, group: Math.round(avgPrivate * 10) / 10 },
+        { label: t("field.pct_sme", language), office: office.pct_sme ?? 0, group: Math.round(avgSme * 10) / 10 },
+      ],
+    }] : []),
+    ...(hasLifeNonlife ? [{
+      category: `${t("field.pct_life", language)} / ${t("field.pct_nonlife", language)}`,
+      items: [
+        { label: t("field.pct_nonlife", language), office: office.pct_nonlife ?? 0, group: Math.round(avgNonlife * 10) / 10 },
+        { label: t("field.pct_life", language), office: office.pct_life ?? 0, group: Math.round(avgLife * 10) / 10 },
+      ],
+    }] : []),
+  ];
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {barData.map(({ category, items }) => (
+        <div key={category} className="rounded-xl border border-border bg-card p-5 card-shadow">
+          <h3 className="mb-4 text-sm font-semibold">{category}</h3>
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div key={item.label} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">{item.label}</span>
+                  <span className="tabular-nums">{item.office}%</span>
+                </div>
+                {/* Office bar */}
+                <div className="relative h-5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(item.office, 100)}%` }}
+                  />
+                  {/* Group average marker */}
+                  <div
+                    className="absolute top-0 h-full w-0.5 bg-foreground/70"
+                    style={{ left: `${Math.min(item.group, 100)}%` }}
+                    title={`${language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}: ${item.group}%`}
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-sm bg-primary" />
+                    {language === "nl" ? "Kantoor" : "Bureau"}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2 w-0.5 bg-foreground/70" />
+                    {language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"} ({item.group}%)
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
