@@ -556,7 +556,19 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
         <div className="space-y-3">
           {avgScores.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="w-40 text-sm text-muted-foreground">{item.label}</span>
+              <span className="w-40 text-sm text-muted-foreground flex items-center gap-1">
+                {item.label}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="inline-flex items-center justify-center rounded-full text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" className="text-xs max-w-[220px] p-2">
+                    {item.info}
+                  </PopoverContent>
+                </Popover>
+              </span>
               <div className="flex-1 h-6 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-primary transition-all"
