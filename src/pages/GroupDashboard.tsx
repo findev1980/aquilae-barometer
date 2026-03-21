@@ -5,7 +5,7 @@ import { t } from "@/i18n/translations";
 import {
   filterByYear, filterBySourceLang, getComputed, formatCurrency,
   calcWeightedRanking, calcFrequency, satisfactionScore, recommendScore,
-  alignmentScore, calcBenchmark
+  alignmentScore, calcBenchmark, isOutlier
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
