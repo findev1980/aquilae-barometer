@@ -170,6 +170,17 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
+        <SectionCard title={t("field.commission_bank", language)}>
+          <ResponsiveContainer width="100%" height={Math.max(300, commBankData.length * 28)}>
+            <BarChart data={commBankData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
+              <Tooltip formatter={(v: number) => formatCurrency(v)} />
+              <Bar dataKey="value" fill="hsl(221,50%,55%)" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
       </div>
 
 
