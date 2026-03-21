@@ -85,6 +85,15 @@ export default function Header() {
         >
           {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive active:scale-[0.95]"
+          aria-label="Logout"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
     </header>
   );
