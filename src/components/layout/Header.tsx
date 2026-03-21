@@ -1,7 +1,8 @@
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t, type Language } from "@/i18n/translations";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 function useTheme() {
