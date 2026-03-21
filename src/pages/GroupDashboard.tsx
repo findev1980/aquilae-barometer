@@ -248,25 +248,41 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
     [data]
   );
 
-  const managerDist = useMemo(() => {
-    const counts: Record<number, number> = {};
-    data.forEach((r) => {
-      if (r.num_managers !== null) counts[r.num_managers] = (counts[r.num_managers] || 0) + 1;
-    });
-    return Object.entries(counts).map(([k, v]) => ({ managers: k, count: v })).sort((a, b) => Number(a.managers) - Number(b.managers));
-  }, [data]);
+  const fteData = useMemo(() =>
+    data
+      .map((r) => {
+        const c = getComputed(r);
+        return { name: r.office_name.slice(0, 25), fullName: r.office_name, fte: c.total_fte, managers: r.num_managers ?? 0, employees: r.num_employees_fte ?? 0 };
+      })
+      .filter((d) => d.fte !== null)
+      .sort((a, b) => b.fte! - a.fte!) as { name: string; fullName: string; fte: number; managers: number; employees: number }[],
+    [data]
+  );
 
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title={t("field.managers", language)}>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={managerDist}>
+        <SectionCard title={`${t("kpi.avg_fte", language)} ${language === "nl" ? "per kantoor" : "par bureau"}`}>
+          <ResponsiveContainer width="100%" height={Math.max(300, fteData.length * 28)}>
+            <BarChart data={fteData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
-              <XAxis dataKey="managers" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="count" fill="hsl(262,30%,53%)" radius={[4, 4, 0, 0]} />
+              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 9 }} />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
+                    <p className="font-semibold mb-1">{d.fullName}</p>
+                    <p className="text-muted-foreground">{t("field.managers", language)}: {d.managers}</p>
+                    <p className="text-muted-foreground">{t("field.employees", language)}: {d.employees}</p>
+                    <p className="font-medium mt-1">Total FTE: {d.fte}</p>
+                  </div>
+                );
+              }} />
+              <Bar dataKey="managers" stackId="fte" fill="hsl(262,30%,53%)" name={t("field.managers", language)} />
+              <Bar dataKey="employees" stackId="fte" fill="hsl(262,40%,78%)" name={t("field.employees", language)} radius={[0, 4, 4, 0]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
