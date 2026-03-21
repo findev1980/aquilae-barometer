@@ -139,7 +139,7 @@ export default function ExportsPage() {
           <div className="flex-1">
             <h2 className="text-base font-semibold">{t("export.pdf_all", language)}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data.length} {t("common.offices", language)} + {language === "nl" ? "groepsrapport" : "rapport de groupe"} — {selectedYear}
+              {data.length} {t("common.offices", language)} + {language === "nl" ? "groepsrapport" : "rapport de groupe"}
             </p>
 
             {exporting &&
