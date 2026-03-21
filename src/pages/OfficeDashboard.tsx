@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
@@ -6,12 +6,14 @@ import {
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
   alignmentScore
 } from "@/utils/benchmarkCalc";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Download, Info, Loader2, TrendingUp } from "lucide-react";
+import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
   return (
