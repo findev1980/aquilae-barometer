@@ -796,7 +796,7 @@ export function generateGroupPDF(
   y = lastAutoTableFinalY(doc, y) + 10;
 
   // Top 5 efficiency
-  y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/VTE)" : "Top 5 efficacité (commission/ETP)", y);
+  y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/FTE)" : "Top 5 efficacité (commission/ETP)", y);
   const top5Eff = [...data]
     .map((r) => ({ ...r, eff: getComputed(r).commission_per_fte }))
     .filter((r) => r.eff !== null)
