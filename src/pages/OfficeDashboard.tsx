@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
@@ -6,12 +6,14 @@ import {
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
   alignmentScore
 } from "@/utils/benchmarkCalc";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Download, Info, Loader2, TrendingUp } from "lucide-react";
+import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
   return (
@@ -45,6 +47,57 @@ function BenchmarkRow({ label, value, mean, median, percentile, formatFn }: {
       <td className="py-2 pr-3 text-right text-sm tabular-nums text-muted-foreground">{formatFn(median)}</td>
       <td className="py-2 text-right text-sm tabular-nums">{percentile !== null ? `P${percentile}` : "—"}</td>
     </tr>
+  );
+}
+
+function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, searchPlaceholder, emptyLabel }: {
+  offices: string[];
+  selectedOffice: string | null;
+  onSelect: (name: string) => void;
+  placeholder: string;
+  searchPlaceholder: string;
+  emptyLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          role="combobox"
+          aria-expanded={open}
+          className="flex h-9 w-72 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <span className={cn("truncate", !selectedOffice && "text-muted-foreground")}>
+            {selectedOffice || placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command>
+          <CommandInput placeholder={searchPlaceholder} />
+          <CommandList>
+            <CommandEmpty>{emptyLabel}</CommandEmpty>
+            <CommandGroup>
+              {offices.map((name) => (
+                <CommandItem
+                  key={name}
+                  value={name}
+                  onSelect={() => {
+                    onSelect(name);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", selectedOffice === name ? "opacity-100" : "opacity-0")} />
+                  {name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -127,16 +180,14 @@ export default function OfficeDashboard() {
     <div className="space-y-6">
       <div className="flex items-center gap-4 animate-fade-in">
         <h1 className="text-2xl font-bold">{t("nav.office", language)}</h1>
-        <Select value={selectedOffice || ""} onValueChange={setSelectedOffice}>
-          <SelectTrigger className="w-72">
-            <SelectValue placeholder={t("office.select", language)} />
-          </SelectTrigger>
-          <SelectContent>
-            {offices.map((name) => (
-              <SelectItem key={name} value={name}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <OfficeSearchCombobox
+          offices={offices}
+          selectedOffice={selectedOffice}
+          onSelect={setSelectedOffice}
+          placeholder={t("office.select", language)}
+          searchPlaceholder={language === "nl" ? "Zoek een kantoor..." : "Rechercher un bureau..."}
+          emptyLabel={language === "nl" ? "Geen kantoor gevonden" : "Aucun bureau trouvé"}
+        />
         {office && selectedYear && (
           <ExportPDFButton office={office} data={data} allData={allData} language={language} year={selectedYear} />
         )}
