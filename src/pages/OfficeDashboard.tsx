@@ -88,8 +88,8 @@ export default function OfficeDashboard() {
     });
   }, [office, data, language]);
 
-  const nonLifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_nonlife").slice(0, 5), [data]);
-  const lifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_life").slice(0, 5), [data]);
+  const nonLifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_nonlife"), [data]);
+  const lifeRanking = useMemo(() => calcWeightedRanking(data, "ranking_life"), [data]);
 
   // Evolution data: gather this office across all available years
   const evolutionData = useMemo(() => {
@@ -205,26 +205,43 @@ export default function OfficeDashboard() {
             {/* Companies */}
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
               <h3 className="mb-3 text-sm font-semibold">{t("office.companies", language)}</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">{t("field.companies_nonlife", language)}</p>
-                  <ol className="space-y-0.5">
-                    {office.ranking_nonlife.slice(0, 5).map((c, i) => {
-                      const inGroupTop5 = nonLifeRanking.some((r) => r.company === c);
-                      return <li key={i} className={`text-xs ${inGroupTop5 ? "font-semibold text-primary" : ""}`}>{i + 1}. {c}</li>;
-                    })}
-                  </ol>
-                </div>
-                <div>
-                  <p className="mb-1 text-xs font-medium text-muted-foreground">{t("field.companies_life", language)}</p>
-                  <ol className="space-y-0.5">
-                    {office.ranking_life.slice(0, 5).map((c, i) => {
-                      const inGroupTop5 = lifeRanking.some((r) => r.company === c);
-                      return <li key={i} className={`text-xs ${inGroupTop5 ? "font-semibold text-primary" : ""}`}>{i + 1}. {c}</li>;
-                    })}
-                  </ol>
-                </div>
+              <div className="space-y-5">
+                {[
+                  { title: t("field.companies_nonlife", language), officeList: office.ranking_nonlife, groupRanking: nonLifeRanking },
+                  { title: t("field.companies_life", language), officeList: office.ranking_life, groupRanking: lifeRanking },
+                ].map(({ title, officeList, groupRanking }) => (
+                  <div key={title}>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">{title}</p>
+                    <div className="space-y-1.5">
+                      {officeList.slice(0, 5).map((company, i) => {
+                        const groupEntry = groupRanking.find((r) => r.company === company);
+                        const groupPos = groupEntry?.rank;
+                        const inGroupTop5 = groupPos !== undefined && groupPos <= 5;
+                        return (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${i < 3 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                              {i + 1}
+                            </span>
+                            <span className={`flex-1 truncate ${inGroupTop5 ? "font-semibold text-primary" : ""}`}>{company}</span>
+                            {groupPos !== undefined ? (
+                              <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${inGroupTop5 ? "bg-primary/10 text-primary font-medium" : "bg-muted text-muted-foreground"}`}>
+                                {language === "nl" ? "Groep" : "Groupe"} #{groupPos}
+                              </span>
+                            ) : (
+                              <span className="shrink-0 text-[10px] text-muted-foreground/50">—</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
+              <p className="mt-3 text-[10px] text-muted-foreground">
+                {language === "nl"
+                  ? "Paars gemarkeerd = in groep top 5. Groepspositie gebaseerd op gewogen puntensysteem."
+                  : "Marqué en violet = dans le top 5 du groupe. Position basée sur un système de points pondérés."}
+              </p>
             </div>
           </div>
 
