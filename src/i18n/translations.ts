@@ -96,7 +96,7 @@ const translations: Record<Language, Record<string, string>> = {
     "compare.radar_title": "Financiële vergelijking",
     "compare.remove": "Verwijder",
     "group.avg_commission_trend": "Gemiddelde commissie per jaar",
-    "group.avg_fte_trend": "Gemiddelde VTE per jaar",
+    "group.avg_fte_trend": "Gemiddelde FTE per jaar",
     "group.avg_satisfaction_trend": "Gemiddelde tevredenheid per jaar",
     "group.office_count_trend": "Aantal deelnemende kantoren",
     "group.top10_commission_ins": "Top 10 commissie verzekeringen",
