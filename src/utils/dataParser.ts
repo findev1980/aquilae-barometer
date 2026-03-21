@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import readXlsxFile from "read-excel-file";
 import type { OfficeRecord, ValidationResult } from "@/types/barometer";
 
 function parseRatio(value: string | null | undefined): [number | null, number | null] {
@@ -29,44 +29,64 @@ function parseNum(value: unknown): number | null {
 
 function cleanString(value: unknown): string {
   if (value === null || value === undefined) return "";
-  return String(value).replace(/<br\/?>/gi, "\n").replace(/;$/,"").trim();
+  return String(value).replace(/<br\/?>/gi, "\n").replace(/;$/, "").trim();
 }
 
-export function parseExcelFile(
-  data: ArrayBuffer,
+function cellStr(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return String(value);
+}
+
+async function readSheet(file: File, sheetName: string): Promise<unknown[][] | null> {
+  try {
+    const sheets = await readXlsxFile(file, { getSheets: true });
+    const match = sheets.find((s) => s.name.toUpperCase() === sheetName.toUpperCase());
+    if (!match) return null;
+    const sheetIndex = sheets.indexOf(match) + 1;
+    const rows = await readXlsxFile(file, { sheet: sheetIndex });
+    return rows as unknown[][];
+  } catch {
+    return null;
+  }
+}
+
+export async function parseExcelFile(
+  file: File,
   surveyYear: number
-): { records: OfficeRecord[]; validation: ValidationResult } {
-  const wb = XLSX.read(data, { type: "array" });
+): Promise<{ records: OfficeRecord[]; validation: ValidationResult }> {
   const errors: string[] = [];
   const warnings: string[] = [];
   const emptyFieldCounts: Record<string, number> = {};
   const records: OfficeRecord[] = [];
 
-  const hasNL = wb.SheetNames.some((n) => n.toUpperCase() === "NL");
-  const hasFR = wb.SheetNames.some((n) => n.toUpperCase() === "FR");
+  const allSheets = await readXlsxFile(file, { getSheets: true });
+  const sheetNames = allSheets.map((s) => s.name);
+
+  const hasNL = sheetNames.some((n) => n.toUpperCase() === "NL");
+  const hasFR = sheetNames.some((n) => n.toUpperCase() === "FR");
 
   if (!hasNL) errors.push("Tabblad 'NL' ontbreekt / Onglet 'NL' manquant");
   if (!hasFR) errors.push("Tabblad 'FR' ontbreekt / Onglet 'FR' manquant");
 
   const sheets: { name: string; lang: "nl" | "fr" }[] = [];
-  if (hasNL) sheets.push({ name: wb.SheetNames.find((n) => n.toUpperCase() === "NL")!, lang: "nl" });
-  if (hasFR) sheets.push({ name: wb.SheetNames.find((n) => n.toUpperCase() === "FR")!, lang: "fr" });
+  if (hasNL) sheets.push({ name: sheetNames.find((n) => n.toUpperCase() === "NL")!, lang: "nl" });
+  if (hasFR) sheets.push({ name: sheetNames.find((n) => n.toUpperCase() === "FR")!, lang: "fr" });
 
   for (const { name, lang } of sheets) {
-    const ws = wb.Sheets[name];
-    const rows: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-    if (rows.length < 2) {
+    const rows = await readSheet(file, name);
+    if (!rows || rows.length < 2) {
       warnings.push(`Tabblad ${lang.toUpperCase()} is leeg`);
       continue;
     }
 
-    const dataRows = rows.slice(1); // skip header
     const colCount = rows[0].length;
     if (colCount !== 21) {
       warnings.push(`Tabblad ${lang.toUpperCase()} heeft ${colCount} kolommen (verwacht: 21)`);
     }
 
+    const dataRows = rows.slice(1);
     const names = new Set<string>();
+
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
       if (!row || row.length === 0) continue;
@@ -81,14 +101,14 @@ export function parseExcelFile(
       }
       names.add(officeName);
 
-      const [pctPrivate, pctSme] = parseRatio(row[6] as string);
-      const [pctLife, pctNonlife] = parseRatio(row[7] as string);
+      const [pctPrivate, pctSme] = parseRatio(cellStr(row[6]));
+      const [pctLife, pctNonlife] = parseRatio(cellStr(row[7]));
 
       const record: OfficeRecord = {
         office_name: officeName,
         source_language: lang,
         survey_year: surveyYear,
-        activities: splitSemicolon(row[1] as string),
+        activities: splitSemicolon(cellStr(row[1])),
         num_managers: parseNum(row[2]),
         num_employees_fte: parseNum(row[3]),
         commission_insurance: parseNum(row[4]),
@@ -97,12 +117,12 @@ export function parseExcelFile(
         pct_sme: pctSme,
         pct_life: pctLife,
         pct_nonlife: pctNonlife,
-        ranking_nonlife: splitSemicolon(row[8] as string),
-        ranking_life: splitSemicolon(row[9] as string),
-        growth_phase: splitSemicolon(row[10] as string),
+        ranking_nonlife: splitSemicolon(cellStr(row[8])),
+        ranking_life: splitSemicolon(cellStr(row[9])),
+        growth_phase: splitSemicolon(cellStr(row[10])),
         strengths_text: cleanString(row[11]),
         challenges_text: cleanString(row[12]),
-        priorities: splitSemicolon(row[13] as string),
+        priorities: splitSemicolon(cellStr(row[13])),
         satisfaction_aquilae: cleanString(row[14]),
         recommend_aquilae: cleanString(row[15]),
         reasons_membership: cleanString(row[16]),
@@ -112,7 +132,6 @@ export function parseExcelFile(
         values_alignment: cleanString(row[20]),
       };
 
-      // Track empty fields
       const fields = ["commission_insurance", "commission_bank", "pct_private", "pct_life"] as const;
       for (const f of fields) {
         if (record[f] === null) {
