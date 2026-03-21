@@ -9,10 +9,10 @@ import {
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  ScatterChart, Scatter, Cell, PieChart, Pie
+  ScatterChart, Scatter, Cell, PieChart, Pie, LineChart, Line, Legend
 } from "recharts";
 
-const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom"] as const;
+const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_KEYS: Record<Tab, string> = {
   financial: "group.financial",
@@ -21,12 +21,13 @@ const TAB_KEYS: Record<Tab, string> = {
   strategy: "group.strategy",
   engagement: "group.engagement",
   topbottom: "group.top_bottom",
+  evolution: "group.evolution",
 };
 
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
 
 export default function GroupDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, allData, meta } = useBarometerStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "financial";
 
@@ -68,6 +69,7 @@ export default function GroupDashboard() {
         {activeTab === "strategy" && <StrategyTab data={data} language={language} />}
         {activeTab === "engagement" && <EngagementTab data={data} language={language} />}
         {activeTab === "topbottom" && <TopBottomTab data={data} language={language} />}
+        {activeTab === "evolution" && <EvolutionTab allData={allData} meta={meta} sourceLanguageFilter={sourceLanguageFilter} language={language} />}
       </div>
     </div>
   );
@@ -526,6 +528,97 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
               </p>
             </div>
           )}
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
+  allData: import("@/types/barometer").OfficeRecord[];
+  meta: { available_years: number[] };
+  sourceLanguageFilter: "nl" | "fr" | "all";
+  language: "nl" | "fr";
+}) {
+  const evolutionData = useMemo(() => {
+    return meta.available_years.map((year) => {
+      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      const n = yearData.length;
+      if (n === 0) return null;
+
+      const comms = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
+      const ftes = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
+      const sats = yearData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+
+      const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+      return {
+        year,
+        avgComm: avg(comms),
+        avgFte: avg(ftes),
+        avgSat: avg(sats),
+        officeCount: n,
+      };
+    }).filter(Boolean);
+  }, [allData, meta.available_years, sourceLanguageFilter]);
+
+  if (evolutionData.length < 2) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 card-shadow text-center">
+        <p className="text-sm text-muted-foreground">{t("evolution.no_history", language)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SectionCard title={t("group.avg_commission_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => [formatCurrency(v), t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Line type="monotone" dataKey="avgComm" name={t("benchmark.mean", language)} stroke="hsl(262,30%,53%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(262,30%,53%)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title={t("group.avg_fte_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip formatter={(v: number) => [v?.toFixed(1) ?? "—", t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Line type="monotone" dataKey="avgFte" name={t("benchmark.mean", language)} stroke="hsl(122,39%,49%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(122,39%,49%)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title={t("group.avg_satisfaction_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
+              <Tooltip formatter={(v: number) => [v?.toFixed(2) ?? "—", t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Line type="monotone" dataKey="avgSat" name={t("benchmark.mean", language)} stroke="hsl(35,90%,55%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(35,90%,55%)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title={t("group.office_count_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+              <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Bar dataKey="officeCount" fill="hsl(262,30%,53%)" radius={[4, 4, 0, 0]} name={t("common.offices", language)} />
+            </BarChart>
+          </ResponsiveContainer>
         </SectionCard>
       </div>
     </div>
