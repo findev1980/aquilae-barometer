@@ -85,6 +85,15 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 function FinancialTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  type SortCol = "office_name" | "commission_ins" | "commission_bank" | "total_commission" | "commission_per_fte";
+  const [sortCol, setSortCol] = useState<SortCol>("commission_ins");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  const handleSort = (col: SortCol) => {
+    if (sortCol === col) setSortAsc(!sortAsc);
+    else { setSortCol(col); setSortAsc(col === "office_name"); }
+  };
+
   const commData = useMemo(() =>
     data
       .filter((r) => r.commission_insurance !== null)
@@ -109,6 +118,39 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
       .map((r) => ({ name: r.office_name.slice(0, 20), private: r.pct_private!, sme: r.pct_sme || 0 }))
       .sort((a, b) => b.private - a.private),
     [data]
+  );
+
+  const sortedData = useMemo(() => {
+    const withComputed = data.map((r) => ({ record: r, computed: getComputed(r) }));
+    const dir = sortAsc ? 1 : -1;
+    return withComputed.sort((a, b) => {
+      let va: number | string, vb: number | string;
+      switch (sortCol) {
+        case "office_name": va = a.record.office_name.toLowerCase(); vb = b.record.office_name.toLowerCase(); return va < vb ? -dir : va > vb ? dir : 0;
+        case "commission_ins": va = a.record.commission_insurance ?? -Infinity; vb = b.record.commission_insurance ?? -Infinity; break;
+        case "commission_bank": va = a.record.commission_bank ?? -Infinity; vb = b.record.commission_bank ?? -Infinity; break;
+        case "total_commission": va = a.computed.total_commission ?? -Infinity; vb = b.computed.total_commission ?? -Infinity; break;
+        case "commission_per_fte": va = a.computed.commission_per_fte ?? -Infinity; vb = b.computed.commission_per_fte ?? -Infinity; break;
+        default: return 0;
+      }
+      return ((va as number) - (vb as number)) * dir;
+    });
+  }, [data, sortCol, sortAsc]);
+
+  const SortHeader = ({ col, label, align }: { col: SortCol; label: string; align?: string }) => (
+    <th
+      className={`pb-2 pr-4 font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors ${align === "right" ? "text-right" : "text-left"}`}
+      onClick={() => handleSort(col)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {sortCol === col ? (
+          <span className="text-primary text-[10px]">{sortAsc ? "▲" : "▼"}</span>
+        ) : (
+          <span className="text-muted-foreground/40 text-[10px]">⇅</span>
+        )}
+      </span>
+    </th>
   );
 
   return (
@@ -161,27 +203,24 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="pb-2 pr-4 font-medium text-muted-foreground">{t("field.office_name", language)}</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t("field.commission_ins", language)}</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t("field.commission_bank", language)}</th>
-                <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t("field.total_commission", language)}</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">{t("field.commission_per_fte", language)}</th>
+              <tr className="border-b border-border">
+                <SortHeader col="office_name" label={t("field.office_name", language)} />
+                <SortHeader col="commission_ins" label={t("field.commission_ins", language)} align="right" />
+                <SortHeader col="commission_bank" label={t("field.commission_bank", language)} align="right" />
+                <SortHeader col="total_commission" label={t("field.total_commission", language)} align="right" />
+                <SortHeader col="commission_per_fte" label={t("field.commission_per_fte", language)} align="right" />
               </tr>
             </thead>
             <tbody>
-              {data.sort((a, b) => (b.commission_insurance || 0) - (a.commission_insurance || 0)).map((r, i) => {
-                const c = getComputed(r);
-                return (
-                  <tr key={r.office_name} className={`border-b border-border/50 ${i % 2 === 0 ? "bg-primary-light/30" : ""}`}>
-                    <td className="py-2 pr-4 font-medium">{r.office_name}</td>
-                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_insurance)}</td>
-                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_bank)}</td>
-                    <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(c.total_commission)}</td>
-                    <td className="py-2 text-right tabular-nums">{formatCurrency(c.commission_per_fte)}</td>
-                  </tr>
-                );
-              })}
+              {sortedData.map(({ record: r, computed: c }, i) => (
+                <tr key={r.office_name} className={`border-b border-border/50 ${i % 2 === 0 ? "bg-primary-light/30" : ""}`}>
+                  <td className="py-2 pr-4 font-medium">{r.office_name}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_insurance)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_bank)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(c.total_commission)}</td>
+                  <td className="py-2 text-right tabular-nums">{formatCurrency(c.commission_per_fte)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
