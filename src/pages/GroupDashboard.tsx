@@ -174,7 +174,17 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
               <XAxis dataKey="x" name="FTE" tick={{ fontSize: 11 }} label={{ value: "FTE", position: "bottom", fontSize: 11 }} />
               <YAxis dataKey="y" name="Commission" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ""} />
+              <Tooltip content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
+                    <p className="font-semibold">{d.name}</p>
+                    <p className="text-muted-foreground">FTE: {d.x}</p>
+                    <p className="text-muted-foreground">Commissie: {formatCurrency(d.y)}</p>
+                  </div>
+                );
+              }} />
               <Scatter data={scatterData} fill="hsl(262,30%,53%)">
                 {scatterData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
