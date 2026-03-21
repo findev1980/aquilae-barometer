@@ -489,10 +489,10 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
   );
 
   const sections = [
-    { topKey: "group.top10_commission_ins", bottomKey: "group.bottom10_commission_ins", items: rankings.withCommIns },
-    { topKey: "group.top10_commission_bank", bottomKey: "group.bottom10_commission_bank", items: rankings.withCommBank },
-    { topKey: "group.top10_commission_total", bottomKey: "group.bottom10_commission_total", items: rankings.withTotal },
-    { topKey: "group.top10_efficiency", bottomKey: "group.bottom10_efficiency", items: rankings.withEff },
+    { topKey: "group.top10_commission_ins", bottomKey: "group.bottom10_commission_ins", items: rankings.withCommIns, count: 10 },
+    { topKey: "group.top10_commission_bank", bottomKey: "group.bottom10_commission_bank", items: rankings.withCommBank, count: 5 },
+    { topKey: "group.top10_commission_total", bottomKey: "group.bottom10_commission_total", items: rankings.withTotal, count: 10 },
+    { topKey: "group.top10_efficiency", bottomKey: "group.bottom10_efficiency", items: rankings.withEff, count: 10 },
   ];
 
   return (
