@@ -5,14 +5,14 @@ import { t } from "@/i18n/translations";
 import {
   filterByYear, filterBySourceLang, getComputed, formatCurrency,
   calcWeightedRanking, calcFrequency, satisfactionScore, recommendScore,
-  alignmentScore, calcBenchmark
+  alignmentScore, calcBenchmark, isOutlier
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   ScatterChart, Scatter, Cell, PieChart, Pie
 } from "recharts";
 
-const TABS = ["financial", "personnel", "companies", "strategy", "engagement"] as const;
+const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_KEYS: Record<Tab, string> = {
   financial: "group.financial",
@@ -20,6 +20,7 @@ const TAB_KEYS: Record<Tab, string> = {
   companies: "group.companies",
   strategy: "group.strategy",
   engagement: "group.engagement",
+  topbottom: "group.top_bottom",
 };
 
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
@@ -66,6 +67,7 @@ export default function GroupDashboard() {
         {activeTab === "companies" && <CompaniesTab data={data} language={language} />}
         {activeTab === "strategy" && <StrategyTab data={data} language={language} />}
         {activeTab === "engagement" && <EngagementTab data={data} language={language} />}
+        {activeTab === "topbottom" && <TopBottomTab data={data} language={language} />}
       </div>
     </div>
   );
@@ -388,6 +390,144 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
           ))}
         </div>
       </SectionCard>
+    </div>
+  );
+}
+
+function TopBottomTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { top5Comm, bottom5Comm, top5Eff, outliers } = useMemo(() => {
+    const withComm = data
+      .filter((r) => r.commission_insurance !== null)
+      .map((r) => ({ name: r.office_name, commission: r.commission_insurance!, lang: r.source_language }))
+      .sort((a, b) => b.commission - a.commission);
+
+    const withEff = data
+      .map((r) => {
+        const c = getComputed(r);
+        return { name: r.office_name, efficiency: c.commission_per_fte, lang: r.source_language };
+      })
+      .filter((d) => d.efficiency !== null)
+      .sort((a, b) => b.efficiency! - a.efficiency!) as { name: string; efficiency: number; lang: string }[];
+
+    // Outlier detection on commission_insurance
+    const commValues = withComm.map((d) => d.commission);
+    const sorted = [...commValues].sort((a, b) => a - b);
+    const q1Idx = Math.floor(sorted.length * 0.25);
+    const q3Idx = Math.floor(sorted.length * 0.75);
+    const q1 = sorted[q1Idx] ?? 0;
+    const q3 = sorted[q3Idx] ?? 0;
+
+    const outlierList = withComm.filter((d) => isOutlier(d.commission, q1, q3));
+
+    return {
+      top5Comm: withComm.slice(0, 5),
+      bottom5Comm: withComm.slice(-5).reverse(),
+      top5Eff: withEff.slice(0, 5),
+      outliers: outlierList,
+    };
+  }, [data]);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Top 5 Commission */}
+        <SectionCard title={t("group.top5_commission", language)}>
+          <div className="space-y-2">
+            {top5Comm.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium truncate">{d.name}</span>
+                    <span className="ml-2 text-sm font-semibold tabular-nums">{formatCurrency(d.commission)}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(d.commission / (top5Comm[0]?.commission || 1)) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{d.lang.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* Bottom 5 Commission */}
+        <SectionCard title={t("group.bottom5_commission", language)}>
+          <div className="space-y-2">
+            {bottom5Comm.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-orange/10 text-xs font-bold text-accent-orange">{data.filter((r) => r.commission_insurance !== null).length - i}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium truncate">{d.name}</span>
+                    <span className="ml-2 text-sm font-semibold tabular-nums">{formatCurrency(d.commission)}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-accent-orange transition-all" style={{ width: `${(d.commission / (top5Comm[0]?.commission || 1)) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{d.lang.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Top 5 Efficiency */}
+        <SectionCard title={t("group.top5_efficiency", language)}>
+          <div className="space-y-2">
+            {top5Eff.map((d, i) => (
+              <div key={d.name} className="flex items-center gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-green/10 text-xs font-bold text-accent-green">{i + 1}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium truncate">{d.name}</span>
+                    <span className="ml-2 text-sm font-semibold tabular-nums">{formatCurrency(d.efficiency)}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-accent-green transition-all" style={{ width: `${(d.efficiency / (top5Eff[0]?.efficiency || 1)) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{d.lang.toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* Outliers */}
+        <SectionCard title={t("group.outliers", language)}>
+          {outliers.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              {language === "nl" ? "Geen uitschieters gedetecteerd (1,5× IQR)" : "Aucune valeur aberrante detectee (1,5x IQR)"}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {outliers.map((d) => {
+                const commValues = data.map((r) => r.commission_insurance).filter((v): v is number => v !== null);
+                const sorted = [...commValues].sort((a, b) => a - b);
+                const q3 = sorted[Math.floor(sorted.length * 0.75)] ?? 0;
+                const isHigh = d.commission > q3;
+                return (
+                  <div key={d.name} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isHigh ? "bg-accent-green/10 text-accent-green" : "bg-accent-orange/10 text-accent-orange"}`}>
+                      {isHigh ? "↑" : "↓"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm font-medium">{d.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{d.lang.toUpperCase()}</span>
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(d.commission)}</span>
+                  </div>
+                );
+              })}
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                {language === "nl" ? "Waarden > 1,5× IQR boven Q3 of onder Q1 voor commissie verzekeringen" : "Valeurs > 1,5x IQR au-dessus de Q3 ou en dessous de Q1 pour commission assurances"}
+              </p>
+            </div>
+          )}
+        </SectionCard>
+      </div>
     </div>
   );
 }
