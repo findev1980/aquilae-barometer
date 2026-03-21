@@ -1135,7 +1135,25 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
 
           {/* Analysis */}
           <SectionCard title={language === "nl" ? "Analyse" : "Analyse"}>
-            <CompareAnalysis selectedData={selectedData} selected={selected} data={data} language={language} />
+            {insights.length === 0 ? null : (
+              <div className="space-y-3">
+                {insights.map((insight, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${
+                      insight.type === "positive"
+                        ? "border-accent-green/30 bg-accent-green/5"
+                        : insight.type === "negative"
+                        ? "border-accent-orange/30 bg-accent-orange/5"
+                        : "border-border bg-muted/30"
+                    }`}
+                  >
+                    <span className="text-base shrink-0">{insight.icon}</span>
+                    <p className="text-foreground/90">{insight.text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </SectionCard>
 
           {/* Bar comparison */}
