@@ -716,7 +716,7 @@ export function generateGroupPDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 3;
+  const totalPages = 4;
 
   // Filter data for selected year
   const data = allData
@@ -725,6 +725,14 @@ export function generateGroupPDF(
 
   // Get all years for evolution
   const allYears = [...new Set(allData.map((r) => r.survey_year))].sort();
+
+  const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+  const med = (arr: number[]) => {
+    if (arr.length === 0) return null;
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
 
   // ===== PAGE 1 — Overview & KPIs =====
   addHeader(doc, "Groepsrapport", 1);
@@ -748,22 +756,29 @@ export function generateGroupPDF(
   const efficiencies = data.map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
   const sats = data.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
 
-  const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
-  const med = (arr: number[]) => {
-    if (arr.length === 0) return null;
-    const s = [...arr].sort((a, b) => a - b);
-    const m = Math.floor(s.length / 2);
-    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-  };
+  const commInsurance = data.map((r) => r.commission_insurance).filter((v): v is number => v !== null);
+  const commBank = data.map((r) => r.commission_bank).filter((v): v is number => v !== null);
+  const kantorMetBank = data.filter((r) => r.commission_bank !== null && r.commission_bank > 0).length;
+  const kantorZonderBank = data.length - kantorMetBank;
+  const pctPrivates = data.map((r) => r.pct_private).filter((v): v is number => v !== null);
+  const pctSmes = data.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+  const pctLifes = data.map((r) => r.pct_life).filter((v): v is number => v !== null);
+  const pctNonlifes = data.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
 
   y = sectionTitle(doc, lang === "nl" ? "Kerncijfers" : "Chiffres clés", y);
 
   const kpis = [
     { label: lang === "nl" ? "Aantal kantoren" : "Nombre de bureaux", value: String(data.length) },
+    { label: lang === "nl" ? "Kantoren met bank" : "Bureaux avec banque", value: String(kantorMetBank) },
+    { label: lang === "nl" ? "Kantoren zonder bank" : "Bureaux sans banque", value: String(kantorZonderBank) },
+    { label: lang === "nl" ? "Gem. commissie verzekeringen" : "Commission assurances moy.", value: fmtCur(avg(commInsurance)) },
+    { label: lang === "nl" ? "Gem. commissie bank" : "Commission banque moy.", value: fmtCur(avg(commBank)) },
     { label: lang === "nl" ? "Gem. totale commissie" : "Commission totale moy.", value: fmtCur(avg(comms)) },
     { label: lang === "nl" ? "Mediaan totale commissie" : "Médiane commission totale", value: fmtCur(med(comms)) },
     { label: lang === "nl" ? "Gem. FTE" : "ETP moyen", value: avg(ftes)?.toFixed(1) ?? "—" },
     { label: lang === "nl" ? "Gem. commissie/FTE" : "Commission/ETP moy.", value: fmtCur(avg(efficiencies)) },
+    { label: lang === "nl" ? "Gem. % Particulier / % KMO" : "Moy. % Particulier / % PME", value: `${avg(pctPrivates)?.toFixed(1) ?? "—"}% / ${avg(pctSmes)?.toFixed(1) ?? "—"}%` },
+    { label: lang === "nl" ? "Gem. % Leven / % BOAR" : "Moy. % Vie / % IARD", value: `${avg(pctLifes)?.toFixed(1) ?? "—"}% / ${avg(pctNonlifes)?.toFixed(1) ?? "—"}%` },
     { label: lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy.", value: avg(sats) !== null ? `${avg(sats)!.toFixed(2)}/3` : "—" },
   ];
 
@@ -772,17 +787,17 @@ export function generateGroupPDF(
   }
   y += 8;
 
-  // Top 5 commission table
-  y = sectionTitle(doc, lang === "nl" ? "Top 5 commissie verzekeringen" : "Top 5 commission assurances", y);
-  const top5 = [...data]
+  // Top 10 commission table
+  y = sectionTitle(doc, lang === "nl" ? "Top 10 commissie verzekeringen" : "Top 10 commission assurances", y);
+  const top10 = [...data]
     .filter((r) => r.commission_insurance !== null)
     .sort((a, b) => b.commission_insurance! - a.commission_insurance!)
-    .slice(0, 5);
+    .slice(0, 10);
 
   autoTable(doc, {
     startY: y,
     head: [["#", t("field.office_name", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang)]],
-    body: top5.map((r, i) => {
+    body: top10.map((r, i) => {
       const c = getComputed(r);
       return [String(i + 1), r.office_name, fmtCur(r.commission_insurance), c.total_fte?.toFixed(1) ?? "—", fmtCur(c.commission_per_fte)];
     }),
@@ -796,18 +811,18 @@ export function generateGroupPDF(
   });
   y = lastAutoTableFinalY(doc, y) + 10;
 
-  // Top 5 efficiency
-  y = sectionTitle(doc, lang === "nl" ? "Top 5 efficiëntie (commissie/FTE)" : "Top 5 efficacité (commission/ETP)", y);
-  const top5Eff = [...data]
+  // Top 10 efficiency
+  y = sectionTitle(doc, lang === "nl" ? "Top 10 efficiëntie (commissie/FTE)" : "Top 10 efficacité (commission/ETP)", y);
+  const top10Eff = [...data]
     .map((r) => ({ ...r, eff: getComputed(r).commission_per_fte }))
     .filter((r) => r.eff !== null)
     .sort((a, b) => b.eff! - a.eff!)
-    .slice(0, 5);
+    .slice(0, 10);
 
   autoTable(doc, {
     startY: y,
     head: [["#", t("field.office_name", lang), t("field.commission_per_fte", lang), t("field.total_commission", lang)]],
-    body: top5Eff.map((r, i) => {
+    body: top10Eff.map((r, i) => {
       const c = getComputed(r);
       return [String(i + 1), r.office_name, fmtCur(r.eff), fmtCur(c.total_commission)];
     }),
@@ -842,7 +857,7 @@ export function generateGroupPDF(
     alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
     margin: { left: 15, right: 15 },
     styles: { cellPadding: 2 },
-    columnStyles: { 0: { cellWidth: 10 } },
+    columnStyles: { 0: { cellWidth: 12, halign: "center" } },
   });
   y = lastAutoTableFinalY(doc, y) + 10;
 
@@ -857,12 +872,12 @@ export function generateGroupPDF(
     alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
     margin: { left: 15, right: 15 },
     styles: { cellPadding: 2 },
-    columnStyles: { 0: { cellWidth: 10 } },
+    columnStyles: { 0: { cellWidth: 12, halign: "center" } },
   });
   y = lastAutoTableFinalY(doc, y) + 10;
 
   // Engagement scores
-  y = sectionTitle(doc, t("office.engagement", lang), y);
+  y = sectionTitle(doc, lang === "nl" ? "Aquilae-engagement" : "Engagement Aquilae", y);
   const alignFields = [
     { key: "satisfaction_aquilae" as const, label: t("field.satisfaction", lang), scoreFn: satisfactionScore, max: 3 },
     { key: "recommend_aquilae" as const, label: t("field.recommend", lang), scoreFn: recommendScore, max: 3 },
@@ -893,9 +908,86 @@ export function generateGroupPDF(
 
   addFooter(doc, year, 2, totalPages, lang);
 
-  // ===== PAGE 3 — Evolution Trends =====
+  // ===== PAGE 3 — Groei en strategie =====
   doc.addPage();
   addHeader(doc, "Groepsrapport", 3);
+  y = 28;
+
+  y = sectionTitle(doc, lang === "nl" ? "Groei en strategie" : "Croissance et stratégie", y);
+
+  // Growth phase frequency
+  const growthFreq = calcFrequency(data, "growth_phase");
+  if (growthFreq.length > 0) {
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "bold");
+    doc.text(lang === "nl" ? "Groeifase" : "Phase de croissance", 15, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [[lang === "nl" ? "Groeifase" : "Phase de croissance", lang === "nl" ? "Aantal" : "Nombre", "%"]],
+      body: growthFreq.map((g) => [g.label, String(g.count), `${((g.count / data.length) * 100).toFixed(1)}%`]),
+      theme: "grid",
+      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
+      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+      margin: { left: 15, right: 15 },
+      styles: { cellPadding: 2 },
+    });
+    y = lastAutoTableFinalY(doc, y) + 10;
+  }
+
+  // Priorities frequency
+  const priorityFreq = calcFrequency(data, "priorities");
+  if (priorityFreq.length > 0) {
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "bold");
+    doc.text(lang === "nl" ? "Prioriteiten" : "Priorités", 15, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [[lang === "nl" ? "Prioriteit" : "Priorité", lang === "nl" ? "Aantal" : "Nombre", "%"]],
+      body: priorityFreq.slice(0, 15).map((p) => [p.label, String(p.count), `${((p.count / data.length) * 100).toFixed(1)}%`]),
+      theme: "grid",
+      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
+      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+      margin: { left: 15, right: 15 },
+      styles: { cellPadding: 2 },
+    });
+    y = lastAutoTableFinalY(doc, y) + 10;
+  }
+
+  // Activities frequency
+  const activityFreq = calcFrequency(data, "activities");
+  if (activityFreq.length > 0) {
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "bold");
+    doc.text(lang === "nl" ? "Activiteiten" : "Activités", 15, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [[lang === "nl" ? "Activiteit" : "Activité", lang === "nl" ? "Aantal" : "Nombre", "%"]],
+      body: activityFreq.map((a) => [a.label, String(a.count), `${((a.count / data.length) * 100).toFixed(1)}%`]),
+      theme: "grid",
+      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
+      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+      margin: { left: 15, right: 15 },
+      styles: { cellPadding: 2 },
+    });
+  }
+
+  addFooter(doc, year, 3, totalPages, lang);
+
+  // ===== PAGE 4 — Evolution Trends =====
+  doc.addPage();
+  addHeader(doc, "Groepsrapport", 4);
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie groepsgemiddelden" : "Évolution moyennes de groupe", y);
 
@@ -980,6 +1072,6 @@ export function generateGroupPDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
   }
 
-  addFooter(doc, year, 3, totalPages, lang);
+  addFooter(doc, year, 4, totalPages, lang);
   return doc;
 }
