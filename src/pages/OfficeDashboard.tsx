@@ -29,7 +29,7 @@ function BenchmarkRow({ label, value, mean, median, percentile, quartile, format
 }
 
 export default function OfficeDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData, selectedOffice, setSelectedOffice } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, allData, selectedOffice, setSelectedOffice, meta } = useBarometerStore();
 
   const data = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
   const office = useMemo(() => data.find((r) => r.office_name === selectedOffice), [data, selectedOffice]);
