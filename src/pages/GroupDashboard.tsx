@@ -171,6 +171,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
+      </div>
 
 
       {/* Summary table */}
