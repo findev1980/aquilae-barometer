@@ -26,21 +26,23 @@ export default function AdminPage() {
     setValidation(result);
     setSuccess(false);
 
-    // Check if year exists
     if (meta.available_years.includes(year) && result.validation.errors.length === 0) {
       setShowOverwrite(true);
     }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!validation) return;
     setImporting(true);
-    setTimeout(() => {
-      importData(validation.records, year);
-      setImporting(false);
+    try {
+      await importData(validation.records, year);
       setSuccess(true);
       setShowOverwrite(false);
-    }, 300);
+    } catch (err) {
+      console.error("Import failed:", err);
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
@@ -98,7 +100,6 @@ export default function AdminPage() {
       {/* Validation results */}
       {validation && (
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: "180ms" }}>
-          {/* Summary */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-lg border border-border bg-card p-3">
               <p className="text-muted-foreground">{t("admin.offices_nl", language)}</p>
@@ -110,7 +111,6 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Errors */}
           {validation.validation.errors.length > 0 && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-destructive">
@@ -123,7 +123,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Warnings */}
           {validation.validation.warnings.length > 0 && (
             <div className="rounded-lg border border-accent-orange/30 bg-accent-orange/5 p-4">
               <div className="mb-2 flex items-center gap-2 text-sm font-medium text-accent-orange">
@@ -136,7 +135,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Overwrite warning */}
           {showOverwrite && (
             <div className="rounded-lg border border-accent-orange/30 bg-accent-orange/5 p-4 text-sm">
               <p className="font-medium">{t("admin.overwrite_warning", language)}</p>
@@ -147,7 +145,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Import button */}
           {validation.validation.errors.length === 0 && !showOverwrite && !success && (
             <button
               onClick={handleImport}
@@ -158,7 +155,6 @@ export default function AdminPage() {
             </button>
           )}
 
-          {/* Success */}
           {success && (
             <div className="flex items-center gap-2 rounded-lg border border-accent-green/30 bg-accent-green/5 p-4 text-sm font-medium text-accent-green">
               <CheckCircle2 className="h-4 w-4" />

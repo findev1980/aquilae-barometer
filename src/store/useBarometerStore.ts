@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Language } from "@/i18n/translations";
 import type { OfficeRecord } from "@/types/barometer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BarometerMeta {
   available_years: number[];
@@ -14,27 +15,18 @@ interface BarometerState {
   sourceLanguageFilter: "nl" | "fr" | "all";
   allData: OfficeRecord[];
   meta: BarometerMeta;
+  loading: boolean;
 
   setLanguage: (lang: Language) => void;
   setSelectedYear: (year: number) => void;
   setSelectedOffice: (office: string | null) => void;
   setSourceLanguageFilter: (filter: "nl" | "fr" | "all") => void;
-  importData: (records: OfficeRecord[], year: number) => void;
-  deleteYear: (year: number) => void;
-  loadFromStorage: () => void;
+  importData: (records: OfficeRecord[], year: number) => Promise<void>;
+  deleteYear: (year: number) => Promise<void>;
+  loadData: () => Promise<void>;
 }
 
-const STORAGE_PREFIX = "barometer_data_";
-const META_KEY = "barometer_meta";
 const SETTINGS_KEY = "barometer_settings";
-
-function loadMeta(): BarometerMeta {
-  try {
-    const raw = localStorage.getItem(META_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
-  return { available_years: [], last_import: null };
-}
 
 function loadSettings(): { language: Language } {
   try {
@@ -44,24 +36,14 @@ function loadSettings(): { language: Language } {
   return { language: "nl" };
 }
 
-function loadAllData(years: number[]): OfficeRecord[] {
-  const all: OfficeRecord[] = [];
-  for (const year of years) {
-    try {
-      const raw = localStorage.getItem(STORAGE_PREFIX + year);
-      if (raw) all.push(...JSON.parse(raw));
-    } catch { /* ignore */ }
-  }
-  return all;
-}
-
 export const useBarometerStore = create<BarometerState>((set, get) => ({
   language: loadSettings().language,
   selectedYear: null,
   selectedOffice: null,
   sourceLanguageFilter: "all",
   allData: [],
-  meta: loadMeta(),
+  meta: { available_years: [], last_import: null },
+  loading: false,
 
   setLanguage: (lang) => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ language: lang }));
@@ -69,41 +51,91 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   },
 
   setSelectedYear: (year) => set({ selectedYear: year }),
-
   setSelectedOffice: (office) => set({ selectedOffice: office }),
-
   setSourceLanguageFilter: (filter) => set({ sourceLanguageFilter: filter }),
 
-  importData: (records, year) => {
-    const meta = get().meta;
-    const newYears = meta.available_years.includes(year)
-      ? meta.available_years
-      : [...meta.available_years, year].sort();
-    const newMeta = { available_years: newYears, last_import: new Date().toISOString().split("T")[0] };
+  importData: async (records, year) => {
+    // Delete existing records for this year
+    await supabase.from("office_records").delete().eq("survey_year", year);
 
-    localStorage.setItem(STORAGE_PREFIX + year, JSON.stringify(records));
-    localStorage.setItem(META_KEY, JSON.stringify(newMeta));
+    // Insert new records in batches of 100
+    for (let i = 0; i < records.length; i += 100) {
+      const batch = records.slice(i, i + 100).map((r) => ({
+        office_name: r.office_name,
+        source_language: r.source_language,
+        survey_year: r.survey_year,
+        activities: r.activities,
+        num_managers: r.num_managers,
+        num_employees_fte: r.num_employees_fte,
+        commission_insurance: r.commission_insurance,
+        commission_bank: r.commission_bank,
+        pct_private: r.pct_private,
+        pct_sme: r.pct_sme,
+        pct_life: r.pct_life,
+        pct_nonlife: r.pct_nonlife,
+        ranking_nonlife: r.ranking_nonlife,
+        ranking_life: r.ranking_life,
+        growth_phase: r.growth_phase,
+        strengths_text: r.strengths_text,
+        challenges_text: r.challenges_text,
+        priorities: r.priorities,
+        satisfaction_aquilae: r.satisfaction_aquilae,
+        recommend_aquilae: r.recommend_aquilae,
+        reasons_membership: r.reasons_membership,
+        participation_charter: r.participation_charter,
+        mission_alignment: r.mission_alignment,
+        vision_alignment: r.vision_alignment,
+        values_alignment: r.values_alignment,
+      }));
+      await supabase.from("office_records").insert(batch);
+    }
+
+    // Upsert import_meta
+    await supabase.from("import_meta").upsert(
+      { survey_year: year, record_count: records.length, imported_at: new Date().toISOString() },
+      { onConflict: "survey_year" }
+    );
 
     // Reload all data
-    const allData = loadAllData(newYears);
-    set({ meta: newMeta, allData, selectedYear: year });
+    await get().loadData();
+    set({ selectedYear: year });
   },
 
-  deleteYear: (year) => {
-    const meta = get().meta;
-    const newYears = meta.available_years.filter((y) => y !== year);
-    const newMeta = { ...meta, available_years: newYears };
-    localStorage.removeItem(STORAGE_PREFIX + year);
-    localStorage.setItem(META_KEY, JSON.stringify(newMeta));
-    const allData = loadAllData(newYears);
-    const selectedYear = get().selectedYear === year ? (newYears[newYears.length - 1] || null) : get().selectedYear;
-    set({ meta: newMeta, allData, selectedYear });
+  deleteYear: async (year) => {
+    await supabase.from("office_records").delete().eq("survey_year", year);
+    await supabase.from("import_meta").delete().eq("survey_year", year);
+    
+    const currentYear = get().selectedYear;
+    await get().loadData();
+    
+    if (currentYear === year) {
+      const meta = get().meta;
+      set({ selectedYear: meta.available_years[meta.available_years.length - 1] || null });
+    }
   },
 
-  loadFromStorage: () => {
-    const meta = loadMeta();
-    const allData = loadAllData(meta.available_years);
-    const selectedYear = meta.available_years.length > 0 ? meta.available_years[meta.available_years.length - 1] : null;
-    set({ meta, allData, selectedYear });
+  loadData: async () => {
+    set({ loading: true });
+
+    const [recordsRes, metaRes] = await Promise.all([
+      supabase.from("office_records").select("*").order("survey_year"),
+      supabase.from("import_meta").select("*").order("survey_year"),
+    ]);
+
+    const records = (recordsRes.data || []) as unknown as OfficeRecord[];
+    const metaRows = metaRes.data || [];
+
+    const available_years = metaRows.map((m: any) => m.survey_year).sort((a: number, b: number) => a - b);
+    const lastRow = metaRows.length > 0 ? metaRows[metaRows.length - 1] : null;
+    const last_import = lastRow ? (lastRow as any).imported_at?.split("T")[0] || null : null;
+
+    const selectedYear = available_years.length > 0 ? available_years[available_years.length - 1] : null;
+
+    set({
+      allData: records,
+      meta: { available_years, last_import },
+      selectedYear: get().selectedYear ?? selectedYear,
+      loading: false,
+    });
   },
 }));
