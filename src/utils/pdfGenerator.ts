@@ -761,8 +761,8 @@ export function generateGroupPDF(
     { label: lang === "nl" ? "Aantal kantoren" : "Nombre de bureaux", value: String(data.length) },
     { label: lang === "nl" ? "Gem. totale commissie" : "Commission totale moy.", value: fmtCur(avg(comms)) },
     { label: lang === "nl" ? "Mediaan totale commissie" : "Médiane commission totale", value: fmtCur(med(comms)) },
-    { label: lang === "nl" ? "Gem. VTE" : "ETP moyen", value: avg(ftes)?.toFixed(1) ?? "—" },
-    { label: lang === "nl" ? "Gem. commissie/VTE" : "Commission/ETP moy.", value: fmtCur(avg(efficiencies)) },
+    { label: lang === "nl" ? "Gem. FTE" : "ETP moyen", value: avg(ftes)?.toFixed(1) ?? "—" },
+    { label: lang === "nl" ? "Gem. commissie/FTE" : "Commission/ETP moy.", value: fmtCur(avg(efficiencies)) },
     { label: lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy.", value: avg(sats) !== null ? `${avg(sats)!.toFixed(2)}/3` : "—" },
   ];
 
