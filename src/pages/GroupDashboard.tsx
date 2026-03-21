@@ -448,16 +448,31 @@ function StrategyTab({ data, language }: { data: import("@/types/barometer").Off
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title={t("field.growth_phase", language)}>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={growthDist.map((d) => ({ ...d, name: d.label.slice(0, 40) }))} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, count }: { name: string; count: number }) => `${name.slice(0, 15)}… (${count})`} labelLine={false}>
-                {growthDist.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="space-y-3">
+            {growthDist.map((d, i) => {
+              const total = growthDist.reduce((s, g) => s + g.count, 0);
+              const pct = total > 0 ? (d.count / total) * 100 : 0;
+              return (
+                <div key={d.label} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium truncate mr-2">{d.label}</span>
+                    <span className="shrink-0 tabular-nums text-muted-foreground">
+                      {d.count} ({pct.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            <p className="pt-2 text-xs text-muted-foreground tabular-nums">
+              {language === "nl" ? "Totaal" : "Total"}: {growthDist.reduce((s, g) => s + g.count, 0)} {t("common.offices", language)}
+            </p>
+          </div>
         </SectionCard>
 
         <SectionCard title={t("field.priorities", language)}>
