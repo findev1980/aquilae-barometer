@@ -188,6 +188,9 @@ export default function OfficeDashboard() {
             </div>
           )}
 
+          {/* Portfolio distribution */}
+          {office && <PortfolioDistribution office={office} data={data} language={language} />}
+
           {/* Personnel + Companies */}
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
