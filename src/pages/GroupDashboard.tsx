@@ -118,9 +118,17 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
 
   const privateSmeData = useMemo(() =>
     data
-      .filter((r) => r.pct_private !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), private: r.pct_private!, sme: r.pct_sme || 0 }))
+      .filter((r) => r.pct_private !== null || r.pct_sme !== null)
+      .map((r) => ({ name: r.office_name.slice(0, 20), fullName: r.office_name, private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
       .sort((a, b) => b.private - a.private),
+    [data]
+  );
+
+  const lifeNonlifeData = useMemo(() =>
+    data
+      .filter((r) => r.pct_life !== null || r.pct_nonlife !== null)
+      .map((r) => ({ name: r.office_name.slice(0, 20), fullName: r.office_name, life: r.pct_life ?? 0, nonlife: r.pct_nonlife ?? 0 }))
+      .sort((a, b) => b.nonlife - a.nonlife),
     [data]
   );
 
