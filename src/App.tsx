@@ -19,8 +19,8 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppInit({ children }: { children: React.ReactNode }) {
-  const loadFromStorage = useBarometerStore((s) => s.loadFromStorage);
-  useEffect(() => { loadFromStorage(); }, [loadFromStorage]);
+  const loadData = useBarometerStore((s) => s.loadData);
+  useEffect(() => { loadData(); }, [loadData]);
   return <>{children}</>;
 }
 
