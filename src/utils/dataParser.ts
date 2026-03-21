@@ -1,4 +1,4 @@
-import readXlsxFile from "read-excel-file/browser";
+import readXlsxFile, { readSheetNames } from "read-excel-file/browser";
 import type { OfficeRecord, ValidationResult } from "@/types/barometer";
 
 function parseRatio(value: string | null | undefined): [number | null, number | null] {
