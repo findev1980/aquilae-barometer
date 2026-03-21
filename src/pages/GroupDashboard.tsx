@@ -12,7 +12,8 @@ import {
   Cell, PieChart, Pie, LineChart, Line, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
-import { X } from "lucide-react";
+import { X, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution", "compare"] as const;
 type Tab = (typeof TABS)[number];
