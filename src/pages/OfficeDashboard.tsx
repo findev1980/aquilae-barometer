@@ -152,10 +152,10 @@ export default function OfficeDashboard() {
                     <tr className="border-b border-border text-left">
                       <th className="pb-2 pr-3 text-xs font-medium text-muted-foreground" />
                       <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("office.value", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.mean", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.median", language)}</th>
-                      <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("benchmark.percentile", language)}</th>
-                      <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{t("benchmark.quartile", language)}</th>
+                      <HeaderWithTooltip label={t("benchmark.mean", language)} tooltip={t("benchmark.mean_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.median", language)} tooltip={t("benchmark.median_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.percentile", language)} tooltip={t("benchmark.percentile_tooltip", language)} />
+                      <HeaderWithTooltip label={t("benchmark.quartile", language)} tooltip={t("benchmark.quartile_tooltip", language)} />
                     </tr>
                   </thead>
                   <tbody>
