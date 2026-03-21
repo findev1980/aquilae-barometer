@@ -4,12 +4,16 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Home, BarChart3, Building2, Download, Upload, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
 import aquilaeLogo from "@/assets/aquilae-logo.png";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
-const navItems = [
+const publicNavItems = [
   { path: "/", icon: Home, labelKey: "nav.home" },
   { path: "/group", icon: BarChart3, labelKey: "nav.group" },
   { path: "/office", icon: Building2, labelKey: "nav.office" },
   { path: "/exports", icon: Download, labelKey: "nav.export" },
+];
+
+const adminNavItems = [
   { path: "/admin", icon: Upload, labelKey: "nav.admin" },
   { path: "/settings", icon: Settings, labelKey: "nav.settings" },
 ];
