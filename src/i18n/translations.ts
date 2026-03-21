@@ -16,7 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     "kpi.avg_recommend": "Gem. aanbevelingsscore",
     "field.office_name": "Kantoornaam",
     "field.managers": "Zaakvoerders",
-    "field.employees": "Bedienden (VTE)",
+    "field.employees": "Bedienden (FTE)",
     "field.commission_ins": "Commissie verzekeringen",
     "field.commission_bank": "Commissie bank",
     "field.total_commission": "Totale commissie",
