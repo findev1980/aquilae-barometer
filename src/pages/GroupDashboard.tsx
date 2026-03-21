@@ -503,13 +503,24 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
     const val = data.map((r) => alignmentScore(r.values_alignment)).filter((v): v is number => v !== null);
     const cha = data.map((r) => alignmentScore(r.participation_charter)).filter((v): v is number => v !== null);
     const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
+
+    const infoSat = language === "nl"
+      ? "Score van 1 (ontevreden) tot 3 (zeer tevreden) over de algemene tevredenheid met Aquilae."
+      : "Score de 1 (insatisfait) à 3 (très satisfait) sur la satisfaction générale envers Aquilae.";
+    const infoRec = language === "nl"
+      ? "Score van 1 (zou niet aanbevelen) tot 3 (zou zeker aanbevelen)."
+      : "Score de 1 (ne recommanderait pas) à 3 (recommanderait certainement).";
+    const infoAlignment = language === "nl"
+      ? "Score van 1 (helemaal niet akkoord) tot 4 (helemaal akkoord)."
+      : "Score de 1 (pas du tout d'accord) à 4 (tout à fait d'accord).";
+
     return [
-      { label: t("field.satisfaction", language), score: avg(sat), max: 3 },
-      { label: t("field.recommend", language), score: avg(rec), max: 3 },
-      { label: t("field.mission", language), score: avg(mis), max: 4 },
-      { label: t("field.vision", language), score: avg(vis), max: 4 },
-      { label: t("field.values", language), score: avg(val), max: 4 },
-      { label: t("field.charter", language), score: avg(cha), max: 4 },
+      { label: t("field.satisfaction", language), score: avg(sat), max: 3, info: infoSat },
+      { label: t("field.recommend", language), score: avg(rec), max: 3, info: infoRec },
+      { label: t("field.mission", language), score: avg(mis), max: 4, info: infoAlignment },
+      { label: t("field.vision", language), score: avg(vis), max: 4, info: infoAlignment },
+      { label: t("field.values", language), score: avg(val), max: 4, info: infoAlignment },
+      { label: t("field.charter", language), score: avg(cha), max: 4, info: infoAlignment },
     ];
   }, [data, language]);
 
@@ -545,7 +556,19 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
         <div className="space-y-3">
           {avgScores.map((item) => (
             <div key={item.label} className="flex items-center gap-3">
-              <span className="w-40 text-sm text-muted-foreground">{item.label}</span>
+              <span className="w-40 text-sm text-muted-foreground flex items-center gap-1">
+                {item.label}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="inline-flex items-center justify-center rounded-full text-muted-foreground/60 hover:text-muted-foreground transition-colors">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" className="text-xs max-w-[220px] p-2">
+                    {item.info}
+                  </PopoverContent>
+                </Popover>
+              </span>
               <div className="flex-1 h-6 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-primary transition-all"
