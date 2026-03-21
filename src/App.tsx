@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import AppLayout from "@/components/layout/AppLayout";
 import HomePage from "@/pages/HomePage";
 import GroupDashboard from "@/pages/GroupDashboard";
@@ -52,6 +53,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const isAdmin = useIsAdmin();
+  if (isAdmin === null) return null; // loading
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -66,8 +74,8 @@ const App = () => (
                 <Route path="/group" element={<GroupDashboard />} />
                 <Route path="/office" element={<OfficeDashboard />} />
                 <Route path="/exports" element={<ExportsPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route path="/settings" element={<AdminRoute><SettingsPage /></AdminRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
