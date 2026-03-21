@@ -30,11 +30,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           collapsed ? "w-16" : "w-60"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-border px-3 py-4">
+        <div className={`flex items-center border-b border-border px-3 py-4 ${collapsed ? "justify-center" : "justify-between"}`}>
           {!collapsed && <img src={aquilaeLogo} alt="Aquilae" className="h-8 w-auto ml-2" />}
           <button
             onClick={onToggle}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors active:scale-95 mx-auto"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors active:scale-95"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
