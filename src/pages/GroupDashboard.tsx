@@ -9,7 +9,7 @@ import {
 } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  Cell, PieChart, Pie, LineChart, Line, Legend,
+  Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 import { X, Info } from "lucide-react";
