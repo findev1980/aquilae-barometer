@@ -14,7 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      import_meta: {
+        Row: {
+          id: string
+          imported_at: string
+          record_count: number
+          survey_year: number
+        }
+        Insert: {
+          id?: string
+          imported_at?: string
+          record_count?: number
+          survey_year: number
+        }
+        Update: {
+          id?: string
+          imported_at?: string
+          record_count?: number
+          survey_year?: number
+        }
+        Relationships: []
+      }
+      office_records: {
+        Row: {
+          activities: string[]
+          challenges_text: string
+          commission_bank: number | null
+          commission_insurance: number | null
+          created_at: string
+          growth_phase: string[]
+          id: string
+          mission_alignment: string
+          num_employees_fte: number | null
+          num_managers: number | null
+          office_name: string
+          participation_charter: string
+          pct_life: number | null
+          pct_nonlife: number | null
+          pct_private: number | null
+          pct_sme: number | null
+          priorities: string[]
+          ranking_life: string[]
+          ranking_nonlife: string[]
+          reasons_membership: string
+          recommend_aquilae: string
+          satisfaction_aquilae: string
+          source_language: string
+          strengths_text: string
+          survey_year: number
+          values_alignment: string
+          vision_alignment: string
+        }
+        Insert: {
+          activities?: string[]
+          challenges_text?: string
+          commission_bank?: number | null
+          commission_insurance?: number | null
+          created_at?: string
+          growth_phase?: string[]
+          id?: string
+          mission_alignment?: string
+          num_employees_fte?: number | null
+          num_managers?: number | null
+          office_name: string
+          participation_charter?: string
+          pct_life?: number | null
+          pct_nonlife?: number | null
+          pct_private?: number | null
+          pct_sme?: number | null
+          priorities?: string[]
+          ranking_life?: string[]
+          ranking_nonlife?: string[]
+          reasons_membership?: string
+          recommend_aquilae?: string
+          satisfaction_aquilae?: string
+          source_language: string
+          strengths_text?: string
+          survey_year: number
+          values_alignment?: string
+          vision_alignment?: string
+        }
+        Update: {
+          activities?: string[]
+          challenges_text?: string
+          commission_bank?: number | null
+          commission_insurance?: number | null
+          created_at?: string
+          growth_phase?: string[]
+          id?: string
+          mission_alignment?: string
+          num_employees_fte?: number | null
+          num_managers?: number | null
+          office_name?: string
+          participation_charter?: string
+          pct_life?: number | null
+          pct_nonlife?: number | null
+          pct_private?: number | null
+          pct_sme?: number | null
+          priorities?: string[]
+          ranking_life?: string[]
+          ranking_nonlife?: string[]
+          reasons_membership?: string
+          recommend_aquilae?: string
+          satisfaction_aquilae?: string
+          source_language?: string
+          strengths_text?: string
+          survey_year?: number
+          values_alignment?: string
+          vision_alignment?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
