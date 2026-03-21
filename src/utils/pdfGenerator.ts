@@ -955,7 +955,7 @@ export function generateGroupPDF(
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
       startY: y,
-      head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. VTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
+      head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. FTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
       body: evolutionData.map((d) => [
         String(d.year),
         String(d.count),
