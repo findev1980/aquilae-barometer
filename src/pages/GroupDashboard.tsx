@@ -12,7 +12,7 @@ import {
   ScatterChart, Scatter, Cell, PieChart, Pie, LineChart, Line, Legend
 } from "recharts";
 
-const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom"] as const;
+const TABS = ["financial", "personnel", "companies", "strategy", "engagement", "topbottom", "evolution"] as const;
 type Tab = (typeof TABS)[number];
 const TAB_KEYS: Record<Tab, string> = {
   financial: "group.financial",
@@ -21,6 +21,7 @@ const TAB_KEYS: Record<Tab, string> = {
   strategy: "group.strategy",
   engagement: "group.engagement",
   topbottom: "group.top_bottom",
+  evolution: "group.evolution",
 };
 
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
