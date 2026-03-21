@@ -13,6 +13,26 @@ import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
 
+function HeaderWithTooltip({ label, tooltip }: { label: string; tooltip: string }) {
+  return (
+    <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">
+      <TooltipProvider delayDuration={200}>
+        <UITooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex cursor-help items-center gap-1">
+              {label}
+              <Info className="h-3 w-3 text-muted-foreground/60" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-xs leading-relaxed">
+            {tooltip}
+          </TooltipContent>
+        </UITooltip>
+      </TooltipProvider>
+    </th>
+  );
+}
+
 function BenchmarkRow({ label, value, mean, median, percentile, quartile, formatFn }: {
   label: string; value: number | null; mean: number | null; median: number | null;
   percentile: number | null; quartile: number | null; formatFn: (v: number | null) => string;
