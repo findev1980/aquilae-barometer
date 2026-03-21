@@ -253,9 +253,14 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
                     <p className="font-semibold mb-1">{d.fullName}</p>
                     <p className="text-muted-foreground">{t("field.pct_life", language)}: {d.life}%</p>
                     <p className="text-muted-foreground">{t("field.pct_nonlife", language)}: {d.nonlife}%</p>
+                    <hr className="my-1 border-border" />
+                    <p className="text-muted-foreground">{language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}:</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_life", language)}: {avgLife.toFixed(1)}%</p>
+                    <p className="text-muted-foreground">&nbsp;&nbsp;{t("field.pct_nonlife", language)}: {avgNonlife.toFixed(1)}%</p>
                   </div>
                 );
               }} />
+              <ReferenceLine x={avgNonlife} stroke="hsl(14,60%,40%)" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgNonlife.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(14,60%,40%)" }} />
               <Bar dataKey="nonlife" stackId="ln" fill="hsl(14,80%,55%)" name={t("field.pct_nonlife", language)} />
               <Bar dataKey="life" stackId="ln" fill="hsl(45,85%,55%)" name={t("field.pct_life", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
