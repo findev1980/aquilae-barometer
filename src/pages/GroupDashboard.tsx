@@ -693,3 +693,184 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
     </div>
   );
 }
+
+const COMPARE_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)", "hsl(200,70%,50%)", "hsl(45,90%,50%)", "hsl(310,50%,55%)"];
+
+function CompareTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+
+  const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
+  const filtered = useMemo(() => {
+    if (!search) return offices.filter((n) => !selected.includes(n));
+    return offices.filter((n) => !selected.includes(n) && n.toLowerCase().includes(search.toLowerCase()));
+  }, [offices, selected, search]);
+
+  const addOffice = (name: string) => {
+    setSelected((prev) => [...prev, name]);
+    setSearch("");
+  };
+  const removeOffice = (name: string) => setSelected((prev) => prev.filter((n) => n !== name));
+
+  const selectedData = useMemo(() =>
+    selected.map((name) => {
+      const r = data.find((d) => d.office_name === name)!;
+      const c = getComputed(r);
+      return { record: r, computed: c };
+    }),
+    [selected, data]
+  );
+
+  const radarData = useMemo(() => {
+    if (selectedData.length < 2) return [];
+    const allComm = data.map((r) => r.commission_insurance).filter((v): v is number => v !== null);
+    const allFte = data.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
+    const allEff = data.map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
+    const allSat = data.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+    const maxComm = Math.max(...allComm, 1);
+    const maxFte = Math.max(...allFte, 1);
+    const maxEff = Math.max(...allEff, 1);
+    const maxSat = Math.max(...allSat, 1);
+
+    const metrics = [
+      { key: "comm", label: t("field.commission_ins", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.commission_insurance, max: maxComm },
+      { key: "fte", label: t("kpi.avg_fte", language), getValue: (r: import("@/types/barometer").OfficeRecord) => getComputed(r).total_fte, max: maxFte },
+      { key: "eff", label: t("field.commission_per_fte", language), getValue: (r: import("@/types/barometer").OfficeRecord) => getComputed(r).commission_per_fte, max: maxEff },
+      { key: "sat", label: t("field.satisfaction", language), getValue: (r: import("@/types/barometer").OfficeRecord) => satisfactionScore(r.satisfaction_aquilae), max: maxSat },
+    ];
+
+    return metrics.map((m) => {
+      const point: Record<string, string | number> = { metric: m.label };
+      selectedData.forEach(({ record }, i) => {
+        const val = m.getValue(record);
+        point[`office_${i}`] = val !== null ? (val / m.max) * 100 : 0;
+      });
+      return point;
+    });
+  }, [selectedData, data, language]);
+
+  return (
+    <div className="space-y-6">
+      {/* Office selector */}
+      <SectionCard title={t("compare.select_offices", language)}>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {selected.map((name, i) => (
+            <span key={name} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white" style={{ backgroundColor: COMPARE_COLORS[i % COMPARE_COLORS.length] }}>
+              {name}
+              <button onClick={() => removeOffice(name)} className="hover:opacity-70 transition-opacity"><X className="h-3 w-3" /></button>
+            </span>
+          ))}
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("compare.add_office", language)}
+            className="w-full max-w-sm rounded-lg border border-border bg-background py-2 pl-3 pr-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          {search && filtered.length > 0 && (
+            <ul className="absolute z-10 mt-1 max-h-48 w-full max-w-sm overflow-auto rounded-lg border border-border bg-card shadow-lg">
+              {filtered.slice(0, 10).map((name) => (
+                <li key={name}>
+                  <button onClick={() => addOffice(name)} className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors">{name}</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </SectionCard>
+
+      {selectedData.length < 2 ? (
+        <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
+          {t("compare.no_selection", language)}
+        </div>
+      ) : (
+        <>
+          {/* Radar chart */}
+          {radarData.length > 0 && (
+            <SectionCard title={t("compare.radar_title", language)}>
+              <ResponsiveContainer width="100%" height={350}>
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={120}>
+                  <PolarGrid stroke="hsl(252,25%,90%)" />
+                  <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                  {selectedData.map((_, i) => (
+                    <Radar
+                      key={i}
+                      name={selected[i]}
+                      dataKey={`office_${i}`}
+                      stroke={COMPARE_COLORS[i % COMPARE_COLORS.length]}
+                      fill={COMPARE_COLORS[i % COMPARE_COLORS.length]}
+                      fillOpacity={0.15}
+                      strokeWidth={2}
+                    />
+                  ))}
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number) => `${v.toFixed(0)}%`} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </SectionCard>
+          )}
+
+          {/* Comparison table */}
+          <SectionCard title={`${t("group.compare", language)} — ${language === "nl" ? "Detail" : "Détail"}`}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="pb-2 pr-4 text-left font-medium text-muted-foreground" />
+                    {selectedData.map(({ record }, i) => (
+                      <th key={record.office_name} className="pb-2 pr-4 text-right font-medium" style={{ color: COMPARE_COLORS[i % COMPARE_COLORS.length] }}>
+                        {record.office_name.slice(0, 25)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: t("field.commission_ins", language), getValue: (r: import("@/types/barometer").OfficeRecord, c: import("@/types/barometer").ComputedFields) => formatCurrency(r.commission_insurance) },
+                    { label: t("field.commission_bank", language), getValue: (r: import("@/types/barometer").OfficeRecord, c: import("@/types/barometer").ComputedFields) => formatCurrency(r.commission_bank) },
+                    { label: t("field.total_commission", language), getValue: (_: import("@/types/barometer").OfficeRecord, c: import("@/types/barometer").ComputedFields) => formatCurrency(c.total_commission) },
+                    { label: t("field.commission_per_fte", language), getValue: (_: import("@/types/barometer").OfficeRecord, c: import("@/types/barometer").ComputedFields) => formatCurrency(c.commission_per_fte) },
+                    { label: t("field.managers", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.num_managers !== null ? String(r.num_managers) : "—" },
+                    { label: t("field.employees", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.num_employees_fte !== null ? String(r.num_employees_fte) : "—" },
+                    { label: t("kpi.avg_fte", language), getValue: (_: import("@/types/barometer").OfficeRecord, c: import("@/types/barometer").ComputedFields) => c.total_fte !== null ? String(c.total_fte) : "—" },
+                    { label: t("field.pct_private", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.pct_private !== null ? `${r.pct_private}%` : "—" },
+                    { label: t("field.pct_sme", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.pct_sme !== null ? `${r.pct_sme}%` : "—" },
+                    { label: t("field.satisfaction", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.satisfaction_aquilae || "—" },
+                    { label: t("field.recommend", language), getValue: (r: import("@/types/barometer").OfficeRecord) => r.recommend_aquilae || "—" },
+                  ].map((row) => (
+                    <tr key={row.label} className="border-b border-border/50">
+                      <td className="py-2 pr-4 font-medium text-muted-foreground">{row.label}</td>
+                      {selectedData.map(({ record, computed }) => (
+                        <td key={record.office_name} className="py-2 pr-4 text-right tabular-nums">{row.getValue(record, computed)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
+
+          {/* Bar comparison */}
+          <SectionCard title={t("field.commission_ins", language)}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={selectedData.map(({ record }, i) => ({ name: record.office_name.slice(0, 20), value: record.commission_insurance ?? 0, fill: COMPARE_COLORS[i % COMPARE_COLORS.length] }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => formatCurrency(v)} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {selectedData.map((_, i) => (
+                    <Cell key={i} fill={COMPARE_COLORS[i % COMPARE_COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </SectionCard>
+        </>
+      )}
+    </div>
+  );
+}
