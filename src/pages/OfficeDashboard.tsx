@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
@@ -7,7 +7,8 @@ import {
   alignmentScore
 } from "@/utils/benchmarkCalc";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2 } from "lucide-react";
+import { Building2, Download, Loader2 } from "lucide-react";
+import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
 
@@ -88,6 +89,9 @@ export default function OfficeDashboard() {
             ))}
           </SelectContent>
         </Select>
+        {office && selectedYear && (
+          <ExportPDFButton office={office} data={data} allData={allData} language={language} year={selectedYear} />
+        )}
       </div>
 
       {!office ? (
@@ -231,5 +235,35 @@ export default function OfficeDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+function ExportPDFButton({ office, data, allData, language, year }: {
+  office: OfficeRecord; data: OfficeRecord[]; allData: OfficeRecord[];
+  language: "nl" | "fr"; year: number;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleExport = async () => {
+    setLoading(true);
+    await new Promise((r) => requestAnimationFrame(r));
+    try {
+      const doc = generateOfficePDF(office, data, language, allData);
+      doc.save(generateOfficeFileName(office.office_name, year));
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <button
+      onClick={handleExport}
+      disabled={loading}
+      className="ml-auto flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium transition-all hover:border-primary/30 hover:bg-primary/5 active:scale-[0.97] disabled:opacity-50"
+    >
+      {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+      {t("export.pdf_single", language)}
+    </button>
   );
 }
