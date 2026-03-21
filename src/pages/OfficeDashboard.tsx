@@ -7,9 +7,9 @@ import {
   alignmentScore
 } from "@/utils/benchmarkCalc";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Download, Loader2 } from "lucide-react";
+import { Building2, Download, Loader2, TrendingUp } from "lucide-react";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
 import type { OfficeRecord } from "@/types/barometer";
 
 function BenchmarkRow({ label, value, mean, median, percentile, quartile, formatFn }: {
