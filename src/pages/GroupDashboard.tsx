@@ -791,6 +791,11 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
             </div>
           </SectionCard>
 
+          {/* Analysis */}
+          <SectionCard title={language === "nl" ? "Analyse" : "Analyse"}>
+            <CompareAnalysis selectedData={selectedData} selected={selected} data={data} language={language} />
+          </SectionCard>
+
           {/* Bar comparison */}
           <SectionCard title={t("field.commission_ins", language)}>
             <ResponsiveContainer width="100%" height={300}>
