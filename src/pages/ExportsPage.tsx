@@ -101,9 +101,6 @@ export default function ExportsPage() {
           <div className="flex-1">
             <h2 className="text-base font-semibold">{language === "nl" ? "Groepsrapport" : "Rapport de groupe"}</h2>
             <p className="mt-1 text-sm text-muted-foreground my-0">
-              {language === "nl" ?
-              "4 pagina's: kerncijfers, maatschappijen & engagement, groei & strategie, evolutietrends" :
-              "4 pages : chiffres clés, compagnies & engagement, croissance & stratégie, tendances d'évolution"}
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{language === "nl" ? "Taal:" : "Langue :"}</span>
