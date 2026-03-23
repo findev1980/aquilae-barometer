@@ -259,6 +259,7 @@ const translations: Record<Language, Record<string, string>> = {
     "office.value": "Valeur bureau",
     "office.group_mean": "Moyenne groupe",
     "office.group_median": "Médiane groupe",
+    "office.analysis": "Synthèse analytique",
     "settings.title": "Paramètres",
     "settings.language": "Langue",
     "settings.data_management": "Gestion des données",
