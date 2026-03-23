@@ -4,9 +4,9 @@ import { t } from "@/i18n/translations";
 import {
   filterByYear, filterBySourceLang, getComputed, formatCurrency,
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
-  alignmentScore
+  alignmentScore, formatNumber
 } from "@/utils/benchmarkCalc";
-import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown, FileText } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
@@ -238,6 +238,9 @@ export default function OfficeDashboard() {
               <p className="mt-2 text-xs text-muted-foreground">n = {benchmarks.commIns.n} {t("common.offices", language)}</p>
             </div>
           )}
+
+          {/* Analysis Summary */}
+          {benchmarks && <AnalysisSummary office={office} data={data} benchmarks={benchmarks} language={language} />}
 
           {/* Portfolio distribution */}
           {office && <PortfolioDistribution office={office} data={data} language={language} />}
@@ -471,6 +474,155 @@ export default function OfficeDashboard() {
           ) : null}
         </div>
       )}
+    </div>
+  );
+}
+
+function AnalysisSummary({ office, data, benchmarks, language }: {
+  office: OfficeRecord;
+  data: OfficeRecord[];
+  benchmarks: {
+    commIns: ReturnType<typeof calcBenchmark>;
+    commBank: ReturnType<typeof calcBenchmark>;
+    totalComm: ReturnType<typeof calcBenchmark>;
+    commPerFte: ReturnType<typeof calcBenchmark>;
+    computed: ReturnType<typeof getComputed>;
+  };
+  language: "nl" | "fr";
+}) {
+  const insights = useMemo(() => {
+    const nl = language === "nl";
+    const items: { icon: string; text: string; type: "positive" | "neutral" | "negative" }[] = [];
+
+    // 1. Total commission vs group
+    const tc = benchmarks.computed.total_commission;
+    const tcMean = benchmarks.totalComm.mean;
+    const tcPct = benchmarks.totalComm.percentile;
+    if (tc !== null && tcMean !== null && tcPct !== null) {
+      const diff = ((tc - tcMean) / tcMean) * 100;
+      const absDiff = Math.abs(Math.round(diff));
+      if (diff > 10) {
+        items.push({ icon: "📈", type: "positive", text: nl
+          ? `De totale commissie ligt ${absDiff}% boven het groepsgemiddelde (P${tcPct}).`
+          : `La commission totale est ${absDiff}% au-dessus de la moyenne du groupe (P${tcPct}).` });
+      } else if (diff < -10) {
+        items.push({ icon: "📉", type: "negative", text: nl
+          ? `De totale commissie ligt ${absDiff}% onder het groepsgemiddelde (P${tcPct}).`
+          : `La commission totale est ${absDiff}% en dessous de la moyenne du groupe (P${tcPct}).` });
+      } else {
+        items.push({ icon: "➡️", type: "neutral", text: nl
+          ? `De totale commissie ligt in lijn met het groepsgemiddelde (P${tcPct}).`
+          : `La commission totale est en ligne avec la moyenne du groupe (P${tcPct}).` });
+      }
+    }
+
+    // 2. Efficiency (commission per FTE)
+    const cfte = benchmarks.computed.commission_per_fte;
+    const cfteMean = benchmarks.commPerFte.mean;
+    const cftePct = benchmarks.commPerFte.percentile;
+    if (cfte !== null && cfteMean !== null && cftePct !== null) {
+      const diff = ((cfte - cfteMean) / cfteMean) * 100;
+      const absDiff = Math.abs(Math.round(diff));
+      if (diff > 15) {
+        items.push({ icon: "⚡", type: "positive", text: nl
+          ? `Hoge efficiëntie: commissie per FTE is ${absDiff}% hoger dan gemiddeld (P${cftePct}).`
+          : `Haute efficacité : commission par ETP ${absDiff}% supérieure à la moyenne (P${cftePct}).` });
+      } else if (diff < -15) {
+        items.push({ icon: "⚠️", type: "negative", text: nl
+          ? `De efficiëntie (commissie/FTE) ligt ${absDiff}% onder het groepsgemiddelde (P${cftePct}).`
+          : `L'efficacité (commission/ETP) est ${absDiff}% inférieure à la moyenne (P${cftePct}).` });
+      }
+    }
+
+    // 3. Scale (FTE)
+    const totalFte = benchmarks.computed.total_fte;
+    const avgFte = (() => { const v = data.map(r => getComputed(r).total_fte).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
+    if (totalFte !== null && avgFte !== null) {
+      const ratio = totalFte / avgFte;
+      if (ratio > 1.5) {
+        items.push({ icon: "🏢", type: "neutral", text: nl
+          ? `Groter kantoor: ${totalFte.toFixed(1)} FTE vs. groepsgemiddelde ${avgFte.toFixed(1)} FTE.`
+          : `Bureau plus grand : ${totalFte.toFixed(1)} ETP vs. moyenne groupe ${avgFte.toFixed(1)} ETP.` });
+      } else if (ratio < 0.6) {
+        items.push({ icon: "🏠", type: "neutral", text: nl
+          ? `Kleiner kantoor: ${totalFte.toFixed(1)} FTE vs. groepsgemiddelde ${avgFte.toFixed(1)} FTE.`
+          : `Bureau plus petit : ${totalFte.toFixed(1)} ETP vs. moyenne groupe ${avgFte.toFixed(1)} ETP.` });
+      }
+    }
+
+    // 4. Portfolio focus (private vs SME)
+    if (office.pct_private !== null && office.pct_sme !== null) {
+      const avgPri = (() => { const v = data.map(r => r.pct_private).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
+      if (avgPri !== null) {
+        const diff = office.pct_private - avgPri;
+        if (diff > 15) {
+          items.push({ icon: "👤", type: "neutral", text: nl
+            ? `Sterkere focus op particulieren (${office.pct_private}% vs. gem. ${Math.round(avgPri)}%).`
+            : `Orientation plus marquée vers les particuliers (${office.pct_private}% vs. moy. ${Math.round(avgPri)}%).` });
+        } else if (diff < -15) {
+          items.push({ icon: "🏭", type: "neutral", text: nl
+            ? `Sterkere focus op KMO (${office.pct_sme}% vs. gem. ${Math.round(100 - avgPri)}%).`
+            : `Orientation plus marquée vers les PME (${office.pct_sme}% vs. moy. ${Math.round(100 - avgPri)}%).` });
+        }
+      }
+    }
+
+    // 5. Insurance vs bank commission split
+    if (office.commission_insurance !== null && office.commission_bank !== null && tc !== null && tc > 0) {
+      const bankPct = (office.commission_bank / tc) * 100;
+      const groupBankPcts = data.map(r => {
+        const c = getComputed(r);
+        if (c.total_commission && c.total_commission > 0 && r.commission_bank !== null)
+          return (r.commission_bank / c.total_commission) * 100;
+        return null;
+      }).filter((v): v is number => v !== null);
+      const avgBankPct = groupBankPcts.length ? groupBankPcts.reduce((a,b) => a+b,0) / groupBankPcts.length : null;
+      if (avgBankPct !== null && bankPct > avgBankPct + 10) {
+        items.push({ icon: "🏦", type: "neutral", text: nl
+          ? `Hoger aandeel bankcommissie (${Math.round(bankPct)}% vs. gem. ${Math.round(avgBankPct)}%).`
+          : `Part plus élevée de commission bancaire (${Math.round(bankPct)}% vs. moy. ${Math.round(avgBankPct)}%).` });
+      }
+    }
+
+    // 6. Satisfaction
+    const satScore = satisfactionScore(office.satisfaction_aquilae);
+    const groupSat = data.map(r => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+    const avgSat = groupSat.length ? groupSat.reduce((a,b) => a+b,0) / groupSat.length : null;
+    if (satScore !== null && avgSat !== null) {
+      if (satScore >= 3) {
+        items.push({ icon: "😊", type: "positive", text: nl
+          ? `Zeer tevreden over Aquilae (score ${satScore}/3, gem. ${avgSat.toFixed(1)}/3).`
+          : `Très satisfait d'Aquilae (score ${satScore}/3, moy. ${avgSat.toFixed(1)}/3).` });
+      } else if (satScore < avgSat - 0.3) {
+        items.push({ icon: "😐", type: "negative", text: nl
+          ? `Tevredenheid lager dan gemiddeld (score ${satScore}/3, gem. ${avgSat.toFixed(1)}/3).`
+          : `Satisfaction inférieure à la moyenne (score ${satScore}/3, moy. ${avgSat.toFixed(1)}/3).` });
+      }
+    }
+
+    return items;
+  }, [office, data, benchmarks, language]);
+
+  if (insights.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 card-shadow">
+      <div className="mb-4 flex items-center gap-2">
+        <FileText className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-semibold">{t("office.analysis", language)}</h3>
+      </div>
+      <ul className="space-y-2.5">
+        {insights.map((item, i) => (
+          <li key={i} className={`flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-relaxed ${
+            item.type === "positive" ? "bg-accent-green/10 text-accent-green" :
+            item.type === "negative" ? "bg-accent-orange/10 text-accent-orange" :
+            "bg-muted/50 text-foreground"
+          }`}>
+            <span className="shrink-0 text-base">{item.icon}</span>
+            <span>{item.text}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
