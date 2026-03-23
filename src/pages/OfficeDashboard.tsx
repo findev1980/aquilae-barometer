@@ -4,9 +4,9 @@ import { t } from "@/i18n/translations";
 import {
   filterByYear, filterBySourceLang, getComputed, formatCurrency,
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
-  alignmentScore
+  alignmentScore, formatNumber
 } from "@/utils/benchmarkCalc";
-import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown } from "lucide-react";
+import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown, FileText } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateOfficePDF, generateOfficeFileName } from "@/utils/pdfGenerator";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, LineChart, Line } from "recharts";
