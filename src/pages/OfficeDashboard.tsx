@@ -239,6 +239,9 @@ export default function OfficeDashboard() {
             </div>
           )}
 
+          {/* Analysis Summary */}
+          {benchmarks && <AnalysisSummary office={office} data={data} benchmarks={benchmarks} language={language} />}
+
           {/* Portfolio distribution */}
           {office && <PortfolioDistribution office={office} data={data} language={language} />}
 
