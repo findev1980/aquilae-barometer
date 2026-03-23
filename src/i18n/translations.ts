@@ -117,6 +117,7 @@ const translations: Record<Language, Record<string, string>> = {
     "office.value": "Kantoorwaarde",
     "office.group_mean": "Groepsgemiddelde",
     "office.group_median": "Groepsmediaan",
+    "office.analysis": "Analysesamenvatting",
     "settings.title": "Instellingen",
     "settings.language": "Taal",
     "settings.data_management": "Databeheer",
