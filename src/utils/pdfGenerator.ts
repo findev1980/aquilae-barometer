@@ -710,6 +710,43 @@ export function generateOfficePDF(
 
   addFooter(doc, year, 5, totalPages, lang);
 
+  // ===== PAGE 6 — Analysis Summary =====
+  doc.addPage();
+  addHeader(doc, office.office_name, 6);
+  y = 28;
+  y = sectionTitle(doc, t("office.analysis", lang), y);
+
+  const analysisInsights = generateAnalysisInsights(office, allData, computed, lang);
+
+  if (analysisInsights.length > 0) {
+    for (const insight of analysisInsights) {
+      // Icon indicator (vector shape instead of emoji)
+      const isPositive = insight.type === "positive";
+      const isNegative = insight.type === "negative";
+      const indicatorColor: readonly [number, number, number] = isPositive ? [34, 139, 34] : isNegative ? [220, 120, 20] : [...GREY];
+
+      doc.setFillColor(indicatorColor[0], indicatorColor[1], indicatorColor[2]);
+      doc.circle(19, y + 1, 1.5, "F");
+
+      // Text
+      doc.setFontSize(8);
+      doc.setTextColor(...DARK);
+      doc.setFont("helvetica", "normal");
+      const lines = doc.splitTextToSize(insight.text, w - 40);
+      doc.text(lines, 25, y + 2);
+      y += lines.length * 4 + 5;
+
+      if (y > 270) break; // Safety: don't overflow page
+    }
+  } else {
+    doc.setFontSize(9);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "italic");
+    doc.text(lang === "nl" ? "Onvoldoende data voor analyse." : "Données insuffisantes pour l'analyse.", 15, y);
+  }
+
+  addFooter(doc, year, 6, totalPages, lang);
+
   return doc;
 }
 
