@@ -87,7 +87,7 @@ export function generateOfficePDF(
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
   const year = office.survey_year;
-  const totalPages = 5;
+  const totalPages = 6;
 
   // ===== PAGE 1 — Office Profile =====
   addHeader(doc, office.office_name, 1);
