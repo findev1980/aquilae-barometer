@@ -212,6 +212,11 @@ export default function OfficeDashboard() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{office.source_language.toUpperCase()}</span>
             <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">{selectedYear}</span>
+            {officeSize && (
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                {getOfficeSizeLabel(officeSize, language)}
+              </span>
+            )}
             {office.activities.map((a) => (
               <span key={a} className="rounded-full bg-muted px-3 py-1 text-xs">{a}</span>
             ))}
