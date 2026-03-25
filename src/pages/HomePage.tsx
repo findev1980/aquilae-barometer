@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
-import { filterByYear, filterBySourceLang, formatCurrency, getComputed, satisfactionScore, recommendScore } from "@/utils/benchmarkCalc";
+import { filterByYear, filterBySourceLang, filterBySize, formatCurrency, getComputed, satisfactionScore, recommendScore } from "@/utils/benchmarkCalc";
 import { Building2, TrendingUp, Users, ThumbsUp, Star, Search, BarChart3, Upload } from "lucide-react";
 
 function KpiCard({ icon: Icon, label, value, sub, delay }: { icon: React.ElementType; label: string; value: string; sub?: string; delay: number }) {
