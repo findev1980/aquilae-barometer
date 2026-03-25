@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Language } from "@/i18n/translations";
 import type { OfficeRecord } from "@/types/barometer";
+import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BarometerMeta {
@@ -13,6 +14,7 @@ interface BarometerState {
   selectedYear: number | null;
   selectedOffice: string | null;
   sourceLanguageFilter: "nl" | "fr" | "all";
+  sizeFilter: OfficeSize | "all";
   allData: OfficeRecord[];
   meta: BarometerMeta;
   loading: boolean;
@@ -21,6 +23,7 @@ interface BarometerState {
   setSelectedYear: (year: number) => void;
   setSelectedOffice: (office: string | null) => void;
   setSourceLanguageFilter: (filter: "nl" | "fr" | "all") => void;
+  setSizeFilter: (filter: OfficeSize | "all") => void;
   importData: (records: OfficeRecord[], year: number) => Promise<void>;
   deleteYear: (year: number) => Promise<void>;
   loadData: () => Promise<void>;
@@ -41,6 +44,7 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   selectedYear: null,
   selectedOffice: null,
   sourceLanguageFilter: "all",
+  sizeFilter: "all",
   allData: [],
   meta: { available_years: [], last_import: null },
   loading: false,
@@ -53,6 +57,7 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   setSelectedYear: (year) => set({ selectedYear: year }),
   setSelectedOffice: (office) => set({ selectedOffice: office }),
   setSourceLanguageFilter: (filter) => set({ sourceLanguageFilter: filter }),
+  setSizeFilter: (filter) => set({ sizeFilter: filter }),
 
   importData: async (records, year) => {
     // Delete existing records for this year

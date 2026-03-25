@@ -6,7 +6,7 @@ import { t } from "@/i18n/translations";
 import {
   getComputed, calcBenchmark, calcWeightedRanking,
   formatCurrency, satisfactionScore, recommendScore, alignmentScore,
-  calcFrequency
+  calcFrequency, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
 
 const PRIMARY = [121, 97, 171] as const; // #7961AB
@@ -169,9 +169,11 @@ export function generateOfficePDF(
   // Badge line
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
+  const officeSize = getOfficeSize(office);
   const badges = [
     office.source_language.toUpperCase(),
     String(year),
+    ...(officeSize ? [getOfficeSizeLabel(officeSize, lang)] : []),
     ...office.activities,
   ];
   let bx = 15;

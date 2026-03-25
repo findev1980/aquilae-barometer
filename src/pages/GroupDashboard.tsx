@@ -3,10 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
-  filterByYear, filterBySourceLang, getComputed, formatCurrency,
+  filterByYear, filterBySourceLang, filterBySize, getComputed, formatCurrency,
   calcWeightedRanking, calcFrequency, satisfactionScore, recommendScore,
-  alignmentScore, calcBenchmark
+  alignmentScore, calcBenchmark, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
+import type { OfficeSize } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
@@ -32,15 +33,30 @@ const TAB_KEYS: Record<Tab, string> = {
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
 
 export default function GroupDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "financial";
 
-  const data = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
+  const data = useMemo(() => filterBySize(filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), sizeFilter), [allData, selectedYear, sourceLanguageFilter, sizeFilter]);
 
   const setTab = (tab: Tab) => setSearchParams({ tab });
 
-  if (data.length === 0) {
+  // All data for current year (unfiltered by size, for KPI breakdown)
+  const allYearData = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
+
+  const sizeBreakdown = useMemo(() => {
+    const sizes: OfficeSize[] = ["klein", "middelgroot", "groot"];
+    return sizes.map((size) => {
+      const sizeData = filterBySize(allYearData, size);
+      const commVals = sizeData.map(r => getComputed(r).total_commission).filter((v): v is number => v !== null);
+      const fteVals = sizeData.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null);
+      const avgComm = commVals.length ? commVals.reduce((a, b) => a + b, 0) / commVals.length : null;
+      const avgFte = fteVals.length ? fteVals.reduce((a, b) => a + b, 0) / fteVals.length : null;
+      return { size, label: getOfficeSizeLabel(size, language), count: sizeData.length, avgComm, avgFte };
+    });
+  }, [allYearData, language]);
+
+  if (data.length === 0 && allYearData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-muted-foreground animate-fade-in">
         <p>{t("status.no_data", language)}</p>
@@ -51,6 +67,30 @@ export default function GroupDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold animate-fade-in">{t("nav.group", language)}</h1>
+
+      {/* Size breakdown KPIs */}
+      <div className="grid grid-cols-3 gap-4 animate-fade-in" style={{ animationDelay: "30ms" }}>
+        {sizeBreakdown.map(({ size, label, count, avgComm, avgFte }) => (
+          <button
+            key={size}
+            onClick={() => useBarometerStore.getState().setSizeFilter(sizeFilter === size ? "all" : size)}
+            className={`rounded-xl border p-4 text-left transition-all ${
+              sizeFilter === size
+                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                : "border-border bg-card hover:border-primary/30"
+            } card-shadow`}
+          >
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="mt-1 text-xl font-bold tabular-nums">{count} <span className="text-sm font-normal text-muted-foreground">{t("common.offices", language)}</span></p>
+            <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+              <span>{language === "nl" ? "Gem. commissie" : "Comm. moy."}: <span className="font-medium text-foreground">{avgComm !== null ? formatCurrency(avgComm) : "—"}</span></span>
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              <span>{language === "nl" ? "Gem. FTE" : "ETP moy."}: <span className="font-medium text-foreground">{avgFte !== null ? avgFte.toFixed(1) : "—"}</span></span>
+            </div>
+          </button>
+        ))}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 rounded-xl border border-border bg-muted p-1 animate-fade-in" style={{ animationDelay: "60ms" }}>

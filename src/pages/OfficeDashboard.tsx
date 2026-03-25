@@ -2,9 +2,9 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
-  filterByYear, filterBySourceLang, getComputed, formatCurrency,
+  filterByYear, filterBySourceLang, filterBySize, getComputed, formatCurrency,
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
-  alignmentScore, formatNumber
+  alignmentScore, formatNumber, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
 import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown, FileText } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -102,10 +102,18 @@ function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, 
 }
 
 export default function OfficeDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData, selectedOffice, setSelectedOffice, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, selectedOffice, setSelectedOffice, meta } = useBarometerStore();
 
   const data = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
   const office = useMemo(() => data.find((r) => r.office_name === selectedOffice), [data, selectedOffice]);
+
+  // Determine office size and filter benchmark data accordingly
+  const officeSize = useMemo(() => office ? getOfficeSize(office) : null, [office]);
+  const benchmarkData = useMemo(() => {
+    if (sizeFilter !== "all") return filterBySize(data, sizeFilter);
+    if (officeSize) return filterBySize(data, officeSize);
+    return data;
+  }, [data, sizeFilter, officeSize]);
 
   const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
 
@@ -113,13 +121,13 @@ export default function OfficeDashboard() {
     if (!office) return null;
     const c = getComputed(office);
     return {
-      commIns: calcBenchmark(data.map((r) => r.commission_insurance), office.commission_insurance),
-      commBank: calcBenchmark(data.map((r) => r.commission_bank), office.commission_bank),
-      totalComm: calcBenchmark(data.map((r) => getComputed(r).total_commission), c.total_commission),
-      commPerFte: calcBenchmark(data.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
+      commIns: calcBenchmark(benchmarkData.map((r) => r.commission_insurance), office.commission_insurance),
+      commBank: calcBenchmark(benchmarkData.map((r) => r.commission_bank), office.commission_bank),
+      totalComm: calcBenchmark(benchmarkData.map((r) => getComputed(r).total_commission), c.total_commission),
+      commPerFte: calcBenchmark(benchmarkData.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
       computed: c,
     };
-  }, [office, data]);
+  }, [office, benchmarkData]);
 
   const radarData = useMemo(() => {
     if (!office) return [];
@@ -204,6 +212,11 @@ export default function OfficeDashboard() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{office.source_language.toUpperCase()}</span>
             <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">{selectedYear}</span>
+            {officeSize && (
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                {getOfficeSizeLabel(officeSize, language)}
+              </span>
+            )}
             {office.activities.map((a) => (
               <span key={a} className="rounded-full bg-muted px-3 py-1 text-xs">{a}</span>
             ))}
@@ -235,7 +248,10 @@ export default function OfficeDashboard() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">n = {benchmarks.commIns.n} {t("common.offices", language)}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                n = {benchmarks.commIns.n} {t("common.offices", language)}
+                {officeSize && ` — ${t("size.benchmark_note", language)} (${getOfficeSizeLabel(officeSize, language)})`}
+              </p>
             </div>
           )}
 

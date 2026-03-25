@@ -22,7 +22,7 @@ function useTheme() {
 }
 
 export default function Header() {
-  const { language, setLanguage, selectedYear, setSelectedYear, sourceLanguageFilter, setSourceLanguageFilter, meta } = useBarometerStore();
+  const { language, setLanguage, selectedYear, setSelectedYear, sourceLanguageFilter, setSourceLanguageFilter, sizeFilter, setSizeFilter, meta } = useBarometerStore();
   const [dark, toggleDark] = useTheme();
 
   return (
@@ -45,6 +45,19 @@ export default function Header() {
             </button>
           ))}
         </div>
+
+        {/* Size filter */}
+        <Select value={sizeFilter} onValueChange={(v) => setSizeFilter(v as any)}>
+          <SelectTrigger className="h-8 w-44 text-xs">
+            <SelectValue placeholder={t("filter.size", language)} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filter.size_all", language)}</SelectItem>
+            <SelectItem value="klein">{t("filter.size_klein", language)}</SelectItem>
+            <SelectItem value="middelgroot">{t("filter.size_middelgroot", language)}</SelectItem>
+            <SelectItem value="groot">{t("filter.size_groot", language)}</SelectItem>
+          </SelectContent>
+        </Select>
 
         {/* Year selector */}
         {meta.available_years.length > 0 && (
