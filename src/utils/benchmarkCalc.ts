@@ -157,3 +157,28 @@ export function filterBySourceLang(data: OfficeRecord[], filter: "nl" | "fr" | "
   if (filter === "all") return data;
   return data.filter((r) => r.source_language === filter);
 }
+
+export type OfficeSize = "klein" | "middelgroot" | "groot";
+
+export function getOfficeSize(record: OfficeRecord): OfficeSize | null {
+  const fte = getComputed(record).total_fte;
+  if (fte === null) return null;
+  if (fte <= 4) return "klein";
+  if (fte <= 10) return "middelgroot";
+  return "groot";
+}
+
+export function getOfficeSizeLabel(size: OfficeSize | null, lang: "nl" | "fr"): string {
+  if (size === null) return "—";
+  const labels: Record<OfficeSize, Record<"nl" | "fr", string>> = {
+    klein: { nl: "Klein (0-4 FTE)", fr: "Petit (0-4 ETP)" },
+    middelgroot: { nl: "Middelgroot (4-10 FTE)", fr: "Moyen (4-10 ETP)" },
+    groot: { nl: "Groot (+10 FTE)", fr: "Grand (+10 ETP)" },
+  };
+  return labels[size][lang];
+}
+
+export function filterBySize(data: OfficeRecord[], size: OfficeSize | "all"): OfficeRecord[] {
+  if (size === "all") return data;
+  return data.filter((r) => getOfficeSize(r) === size);
+}
