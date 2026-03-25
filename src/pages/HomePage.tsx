@@ -23,14 +23,15 @@ function KpiCard({ icon: Icon, label, value, sub, delay }: { icon: React.Element
 }
 
 export default function HomePage() {
-  const { language, selectedYear, sourceLanguageFilter, allData, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const data = useMemo(() => {
     const yearly = filterByYear(allData, selectedYear);
-    return filterBySourceLang(yearly, sourceLanguageFilter);
-  }, [allData, selectedYear, sourceLanguageFilter]);
+    const byLang = filterBySourceLang(yearly, sourceLanguageFilter);
+    return filterBySize(byLang, sizeFilter);
+  }, [allData, selectedYear, sourceLanguageFilter, sizeFilter]);
 
   const stats = useMemo(() => {
     if (data.length === 0) return null;
