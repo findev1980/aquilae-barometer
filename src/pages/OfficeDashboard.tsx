@@ -248,7 +248,10 @@ export default function OfficeDashboard() {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">n = {benchmarks.commIns.n} {t("common.offices", language)}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                n = {benchmarks.commIns.n} {t("common.offices", language)}
+                {officeSize && ` — ${t("size.benchmark_note", language)} (${getOfficeSizeLabel(officeSize, language)})`}
+              </p>
             </div>
           )}
 
