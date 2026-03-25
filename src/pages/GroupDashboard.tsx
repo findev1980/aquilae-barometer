@@ -3,10 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import {
-  filterByYear, filterBySourceLang, getComputed, formatCurrency,
+  filterByYear, filterBySourceLang, filterBySize, getComputed, formatCurrency,
   calcWeightedRanking, calcFrequency, satisfactionScore, recommendScore,
-  alignmentScore, calcBenchmark
+  alignmentScore, calcBenchmark, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
+import type { OfficeSize } from "@/utils/benchmarkCalc";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
@@ -32,11 +33,11 @@ const TAB_KEYS: Record<Tab, string> = {
 const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
 
 export default function GroupDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, allData, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "financial";
 
-  const data = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
+  const data = useMemo(() => filterBySize(filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), sizeFilter), [allData, selectedYear, sourceLanguageFilter, sizeFilter]);
 
   const setTab = (tab: Tab) => setSearchParams({ tab });
 
