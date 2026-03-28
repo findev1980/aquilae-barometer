@@ -115,7 +115,7 @@ export default function GroupDashboard() {
         {activeTab === "strategy" && <StrategyTab data={data} language={language} />}
         {activeTab === "engagement" && <EngagementTab data={data} language={language} />}
         {activeTab === "topbottom" && <TopBottomTab data={data} language={language} />}
-        {activeTab === "evolution" && <EvolutionTab allData={allData} meta={meta} sourceLanguageFilter={sourceLanguageFilter} language={language} />}
+        {activeTab === "evolution" && <EvolutionTab allData={allData} meta={meta} sourceLanguageFilter={sourceLanguageFilter} sizeFilter={sizeFilter} language={language} />}
         {activeTab === "compare" && <CompareTab data={data} language={language} />}
       </div>
     </div>
@@ -706,15 +706,16 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
     </div>
   );
 }
-function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
+function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, language }: {
   allData: import("@/types/barometer").OfficeRecord[];
   meta: { available_years: number[] };
   sourceLanguageFilter: "nl" | "fr" | "all";
+  sizeFilter: OfficeSize | "all";
   language: "nl" | "fr";
 }) {
   const evolutionData = useMemo(() => {
     return meta.available_years.map((year) => {
-      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      const yearData = filterBySize(filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter), sizeFilter);
       const n = yearData.length;
       if (n === 0) return null;
 
