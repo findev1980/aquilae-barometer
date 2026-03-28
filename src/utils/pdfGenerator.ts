@@ -901,11 +901,15 @@ export function generateOfficePDF(
   y = 28;
   y = sectionTitle(doc, t("office.analysis", lang), y);
 
-  const analysisInsights = generateAnalysisInsights(office, allData, computed, lang);
-
-  if (analysisInsights.length > 0) {
-    for (const insight of analysisInsights) {
-      // Icon indicator (vector shape instead of emoji)
+  const renderInsights = (insights: AnalysisInsight[], subtitle?: string) => {
+    if (subtitle) {
+      doc.setFontSize(8);
+      doc.setTextColor(...GREY);
+      doc.setFont("helvetica", "bold");
+      doc.text(subtitle, 15, y);
+      y += 5;
+    }
+    for (const insight of insights) {
       const isPositive = insight.type === "positive";
       const isNegative = insight.type === "negative";
       const indicatorColor: readonly [number, number, number] = isPositive ? [34, 139, 34] : isNegative ? [220, 120, 20] : [...GREY];
@@ -913,7 +917,6 @@ export function generateOfficePDF(
       doc.setFillColor(indicatorColor[0], indicatorColor[1], indicatorColor[2]);
       doc.circle(19, y + 1, 1.5, "F");
 
-      // Text
       doc.setFontSize(8);
       doc.setTextColor(...DARK);
       doc.setFont("helvetica", "normal");
@@ -921,7 +924,20 @@ export function generateOfficePDF(
       doc.text(lines, 25, y + 2);
       y += lines.length * 4 + 5;
 
-      if (y > 270) break; // Safety: don't overflow page
+      if (y > 270) break;
+    }
+  };
+
+  const groupInsights = generateAnalysisInsights(office, allData, computed, lang);
+  const sizeInsights = bmSizeData && bmOfficeSize ? generateAnalysisInsights(office, bmSizeData, computed, lang) : [];
+
+  if (groupInsights.length > 0 || sizeInsights.length > 0) {
+    if (groupInsights.length > 0) {
+      renderInsights(groupInsights, lang === "nl" ? "Vergelijking t.o.v. alle kantoren" : "Comparaison avec tous les bureaux");
+    }
+    if (sizeInsights.length > 0) {
+      y += 4;
+      renderInsights(sizeInsights, `${lang === "nl" ? "Vergelijking t.o.v. kantoorgrootte" : "Comparaison par taille"} — ${getOfficeSizeLabel(bmOfficeSize!, lang)}`);
     }
   } else {
     doc.setFontSize(9);
