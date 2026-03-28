@@ -273,8 +273,8 @@ export function generateOfficePDF(
   addHeader(doc, office.office_name, 2);
   y = 28;
   // Group-wide benchmark
-  const officeSize = getOfficeSize(office);
-  const sizeData = officeSize ? filterBySize(allData, officeSize) : null;
+  const bmOfficeSize = getOfficeSize(office);
+  const bmSizeData = bmOfficeSize ? filterBySize(allData, bmOfficeSize) : null;
 
   const benchGroupLabel = lang === "nl" ? "Vergelijking t.o.v. alle kantoren" : "Comparaison avec tous les bureaux";
   y = sectionTitle(doc, benchGroupLabel, y);
