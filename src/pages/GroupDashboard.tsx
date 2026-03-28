@@ -8,6 +8,7 @@ import {
   alignmentScore, calcBenchmark, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
 import type { OfficeSize } from "@/utils/benchmarkCalc";
+import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
@@ -482,8 +483,8 @@ function CompaniesTab({ data, language }: { data: import("@/types/barometer").Of
 }
 
 function StrategyTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
-  const growthDist = useMemo(() => calcFrequency(data, "growth_phase"), [data]);
-  const priorityDist = useMemo(() => calcFrequency(data, "priorities").slice(0, 10), [data]);
+  const growthDist = useMemo(() => calcFrequencyTranslated(data, "growth_phase", GROWTH_PHASE_MAP, language), [data, language]);
+  const priorityDist = useMemo(() => calcFrequencyTranslated(data, "priorities", PRIORITIES_MAP, language).slice(0, 10), [data, language]);
 
   return (
     <div className="space-y-6">
