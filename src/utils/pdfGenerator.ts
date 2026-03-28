@@ -1173,13 +1173,28 @@ export function generateGroupPDF(
         .filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
       const yComms = yrData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
       const yFtes = yrData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
-      const ySats = yrData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+      const yCommPerFte = yrData.map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
+      const yPriv = yrData.map((r) => r.pct_private).filter((v): v is number => v !== null);
+      const ySme = yrData.map((r) => r.pct_sme).filter((v): v is number => v !== null);
+
+      // Size distribution
+      let klein = 0, middel = 0, groot = 0;
+      yrData.forEach((r) => {
+        const size = getOfficeSize(r);
+        if (size === "klein") klein++;
+        else if (size === "middelgroot") middel++;
+        else if (size === "groot") groot++;
+      });
+
       return {
         year: yr,
         avgComm: avg(yComms),
         avgFte: avg(yFtes),
-        avgSat: avg(ySats),
+        avgCommPerFte: avg(yCommPerFte),
+        avgPrivate: avg(yPriv),
+        avgSme: avg(ySme),
         count: yrData.length,
+        klein, middel, groot,
       };
     });
 
@@ -1202,12 +1217,11 @@ export function generateGroupPDF(
 
     y += chartH + 20;
 
-    drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.avgSat, groupValue: null })), {
+    drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.avgCommPerFte, groupValue: null })), {
       x: 25, y, w: chartW, h: chartH,
-      title: lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy.",
-      formatFn: (v) => v.toFixed(2),
-      color: [245, 166, 35],
-      maxOverride: 3,
+      title: lang === "nl" ? "Gem. commissie/FTE" : "Commission moy./ETP",
+      formatFn: (v) => `€${(v / 1000).toFixed(0)}k`,
+      color: [76, 175, 80],
     });
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.count, groupValue: null })), {
@@ -1219,21 +1233,33 @@ export function generateGroupPDF(
 
     y += chartH + 16;
 
-    // Evolution data table
+    // Evolution data table with new columns
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
       startY: y,
-      head: [[t("filter.year", lang), lang === "nl" ? "Kantoren" : "Bureaux", lang === "nl" ? "Gem. commissie" : "Commission moy.", lang === "nl" ? "Gem. FTE" : "ETP moy.", lang === "nl" ? "Gem. tevredenheid" : "Satisfaction moy."]],
+      head: [[
+        t("filter.year", lang),
+        lang === "nl" ? "Kantoren" : "Bureaux",
+        lang === "nl" ? "Gem. commissie" : "Commission moy.",
+        lang === "nl" ? "Gem. FTE" : "ETP moy.",
+        lang === "nl" ? "Gem. comm./FTE" : "Comm. moy./ETP",
+        lang === "nl" ? "% Part." : "% Part.",
+        lang === "nl" ? "% KMO" : "% PME",
+        lang === "nl" ? "K/M/G" : "P/M/G",
+      ]],
       body: evolutionData.map((d) => [
         String(d.year),
         String(d.count),
         fmtCur(d.avgComm),
         d.avgFte?.toFixed(1) ?? "—",
-        d.avgSat !== null ? `${d.avgSat.toFixed(2)}/3` : "—",
+        fmtCur(d.avgCommPerFte),
+        d.avgPrivate !== null ? `${d.avgPrivate.toFixed(1)}%` : "—",
+        d.avgSme !== null ? `${d.avgSme.toFixed(1)}%` : "—",
+        `${d.klein}/${d.middel}/${d.groot}`,
       ]),
       theme: "grid",
-      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      headStyles: { fillColor: [...PRIMARY], fontSize: 7, textColor: [...WHITE] },
+      bodyStyles: { fontSize: 7, textColor: [...DARK] },
       alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
       margin: { left: 15, right: 15 },
       styles: { cellPadding: 2 },
