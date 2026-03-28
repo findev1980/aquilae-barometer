@@ -328,7 +328,7 @@ export default function OfficeDashboard() {
           {benchmarks && <AnalysisSummary office={office} data={data} benchmarks={benchmarks} language={language} />}
 
           {/* Portfolio distribution */}
-          {office && <PortfolioDistribution office={office} data={data} language={language} />}
+          {office && <PortfolioDistribution office={office} data={data} sizeData={sizeBenchmarkData} officeSize={officeSize} language={language} />}
 
           {/* Personnel + Companies */}
           <div className="grid gap-6 lg:grid-cols-2">
@@ -742,23 +742,21 @@ function ExportPDFButton({ office, data, allData, language, year }: {
   );
 }
 
-function PortfolioDistribution({ office, data, language }: { office: OfficeRecord; data: OfficeRecord[]; language: "nl" | "fr" }) {
-  const avgPrivate = useMemo(() => {
-    const vals = data.map((r) => r.pct_private).filter((v): v is number => v !== null);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  }, [data]);
-  const avgSme = useMemo(() => {
-    const vals = data.map((r) => r.pct_sme).filter((v): v is number => v !== null);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  }, [data]);
-  const avgLife = useMemo(() => {
-    const vals = data.map((r) => r.pct_life).filter((v): v is number => v !== null);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  }, [data]);
-  const avgNonlife = useMemo(() => {
-    const vals = data.map((r) => r.pct_nonlife).filter((v): v is number => v !== null);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  }, [data]);
+function PortfolioDistribution({ office, data, sizeData, officeSize, language }: { office: OfficeRecord; data: OfficeRecord[]; sizeData: OfficeRecord[] | null; officeSize: import("@/utils/benchmarkCalc").OfficeSize | null; language: "nl" | "fr" }) {
+  const calcAvg = (records: OfficeRecord[], field: "pct_private" | "pct_sme" | "pct_life" | "pct_nonlife") => {
+    const vals = records.map((r) => r[field]).filter((v): v is number => v !== null);
+    return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : 0;
+  };
+
+  const avgPrivate = useMemo(() => calcAvg(data, "pct_private"), [data]);
+  const avgSme = useMemo(() => calcAvg(data, "pct_sme"), [data]);
+  const avgLife = useMemo(() => calcAvg(data, "pct_life"), [data]);
+  const avgNonlife = useMemo(() => calcAvg(data, "pct_nonlife"), [data]);
+
+  const sizeAvgPrivate = useMemo(() => sizeData ? calcAvg(sizeData, "pct_private") : null, [sizeData]);
+  const sizeAvgSme = useMemo(() => sizeData ? calcAvg(sizeData, "pct_sme") : null, [sizeData]);
+  const sizeAvgLife = useMemo(() => sizeData ? calcAvg(sizeData, "pct_life") : null, [sizeData]);
+  const sizeAvgNonlife = useMemo(() => sizeData ? calcAvg(sizeData, "pct_nonlife") : null, [sizeData]);
 
   const hasPrivateSme = office.pct_private !== null || office.pct_sme !== null;
   const hasLifeNonlife = office.pct_life !== null || office.pct_nonlife !== null;
@@ -769,18 +767,20 @@ function PortfolioDistribution({ office, data, language }: { office: OfficeRecor
     ...(hasPrivateSme ? [{
       category: `${t("field.pct_private", language)} / ${t("field.pct_sme", language)}`,
       items: [
-        { label: t("field.pct_private", language), office: office.pct_private ?? 0, group: Math.round(avgPrivate * 10) / 10 },
-        { label: t("field.pct_sme", language), office: office.pct_sme ?? 0, group: Math.round(avgSme * 10) / 10 },
+        { label: t("field.pct_private", language), office: office.pct_private ?? 0, group: avgPrivate, size: sizeAvgPrivate },
+        { label: t("field.pct_sme", language), office: office.pct_sme ?? 0, group: avgSme, size: sizeAvgSme },
       ],
     }] : []),
     ...(hasLifeNonlife ? [{
       category: `${t("field.pct_life", language)} / ${t("field.pct_nonlife", language)}`,
       items: [
-        { label: t("field.pct_nonlife", language), office: office.pct_nonlife ?? 0, group: Math.round(avgNonlife * 10) / 10 },
-        { label: t("field.pct_life", language), office: office.pct_life ?? 0, group: Math.round(avgLife * 10) / 10 },
+        { label: t("field.pct_nonlife", language), office: office.pct_nonlife ?? 0, group: avgNonlife, size: sizeAvgNonlife },
+        { label: t("field.pct_life", language), office: office.pct_life ?? 0, group: avgLife, size: sizeAvgLife },
       ],
     }] : []),
   ];
+
+  const sizeLabel = officeSize ? getOfficeSizeLabel(officeSize, language) : "";
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -806,8 +806,16 @@ function PortfolioDistribution({ office, data, language }: { office: OfficeRecor
                     style={{ left: `${Math.min(item.group, 100)}%` }}
                     title={`${language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}: ${item.group}%`}
                   />
+                  {/* Size average marker */}
+                  {item.size !== null && (
+                    <div
+                      className="absolute top-0 h-full w-0.5 bg-accent-orange"
+                      style={{ left: `${Math.min(item.size, 100)}%` }}
+                      title={`${sizeLabel}: ${item.size}%`}
+                    />
+                  )}
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
                     <span className="inline-block h-2 w-2 rounded-sm bg-primary" />
                     {language === "nl" ? "Kantoor" : "Bureau"}
@@ -816,6 +824,12 @@ function PortfolioDistribution({ office, data, language }: { office: OfficeRecor
                     <span className="inline-block h-2 w-0.5 bg-foreground/70" />
                     {language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"} ({item.group}%)
                   </span>
+                  {item.size !== null && (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="inline-block h-2 w-0.5 bg-accent-orange" />
+                      {sizeLabel} ({item.size}%)
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
