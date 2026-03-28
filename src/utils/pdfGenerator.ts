@@ -1039,7 +1039,7 @@ export function generateGroupPDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 4;
+  const totalPages = 5;
 
   // Filter data for selected year
   const data = allData
