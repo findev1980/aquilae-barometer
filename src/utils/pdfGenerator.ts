@@ -904,6 +904,133 @@ function drawMiniLineChart(
   }
 }
 
+function drawMiniStackedBar(
+  doc: jsPDF,
+  data: { year: number; values: { value: number; color: readonly [number, number, number]; label: string }[] }[],
+  opts: { x: number; y: number; w: number; h: number; title: string }
+) {
+  const { x, y, w, h, title } = opts;
+  doc.setFontSize(9);
+  doc.setTextColor(...PRIMARY);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, x, y);
+
+  const areaY = y + 4;
+  doc.setDrawColor(200, 200, 210);
+  doc.setLineWidth(0.3);
+  doc.line(x, areaY + h, x + w, areaY + h);
+
+  const maxTotal = Math.max(...data.map((d) => d.values.reduce((s, v) => s + v.value, 0)), 1);
+  const barW = Math.min(w / data.length * 0.6, 12);
+  const gap = w / data.length;
+
+  for (let i = 0; i < data.length; i++) {
+    const bx = x + i * gap + (gap - barW) / 2;
+    let by = areaY + h;
+    for (const seg of data[i].values) {
+      const segH = (seg.value / maxTotal) * h;
+      if (segH > 0) {
+        doc.setFillColor(...seg.color);
+        doc.rect(bx, by - segH, barW, segH, "F");
+        if (segH > 4) {
+          doc.setFontSize(5);
+          doc.setTextColor(...WHITE);
+          doc.text(String(seg.value), bx + barW / 2, by - segH / 2 + 1.5, { align: "center" });
+        }
+        by -= segH;
+      }
+    }
+    doc.setFontSize(5.5);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "normal");
+    doc.text(String(data[i].year), x + i * gap + gap / 2, areaY + h + 4, { align: "center" });
+  }
+
+  // Legend
+  const legendY = areaY + h + 8;
+  let lx = x;
+  const labels = data[0]?.values.map((v) => v.label) ?? [];
+  const colors = data[0]?.values.map((v) => v.color) ?? [];
+  doc.setFontSize(5);
+  for (let i = 0; i < labels.length; i++) {
+    doc.setFillColor(...colors[i]);
+    doc.rect(lx, legendY - 2, 3, 3, "F");
+    doc.setTextColor(...DARK);
+    doc.text(labels[i], lx + 4, legendY + 0.5);
+    lx += doc.getTextWidth(labels[i]) + 7;
+  }
+}
+
+function drawMiniMultiLineChart(
+  doc: jsPDF,
+  data: { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[],
+  opts: { x: number; y: number; w: number; h: number; title: string; formatFn: (v: number) => string }
+) {
+  const { x, y, w, h, title, formatFn } = opts;
+  doc.setFontSize(9);
+  doc.setTextColor(...PRIMARY);
+  doc.setFont("helvetica", "bold");
+  doc.text(title, x, y);
+
+  const areaY = y + 4;
+  doc.setDrawColor(200, 200, 210);
+  doc.setLineWidth(0.3);
+  doc.line(x, areaY, x, areaY + h);
+  doc.line(x, areaY + h, x + w, areaY + h);
+
+  const allVals = data.flatMap((d) => d.lines.map((l) => l.value)).filter((v): v is number => v !== null);
+  if (allVals.length === 0) return;
+
+  const maxVal = Math.max(...allVals) * 1.1;
+  const minVal = 0;
+  const range = maxVal - minVal || 1;
+  const toX = (i: number) => x + (i / Math.max(data.length - 1, 1)) * w;
+  const toY = (v: number) => areaY + h - ((v - minVal) / range) * h;
+
+  // Y-axis labels
+  doc.setFontSize(5.5);
+  doc.setTextColor(...GREY);
+  doc.setFont("helvetica", "normal");
+  doc.text(formatFn(maxVal), x - 1, areaY + 2, { align: "right" });
+  doc.text("0", x - 1, areaY + h, { align: "right" });
+
+  // X-axis labels
+  for (let i = 0; i < data.length; i++) {
+    doc.text(String(data[i].year), toX(i), areaY + h + 4, { align: "center" });
+  }
+
+  // Draw each line
+  const lineCount = data[0]?.lines.length ?? 0;
+  for (let li = 0; li < lineCount; li++) {
+    const color = data[0].lines[li].color;
+    const pts = data.map((d, i) => d.lines[li].value !== null ? { x: toX(i), y: toY(d.lines[li].value!) } : null).filter(Boolean) as { x: number; y: number }[];
+    if (pts.length > 1) {
+      doc.setDrawColor(...color);
+      doc.setLineWidth(0.6);
+      for (let i = 1; i < pts.length; i++) {
+        doc.line(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y);
+      }
+      doc.setFillColor(...color);
+      for (const pt of pts) doc.circle(pt.x, pt.y, 0.8, "F");
+    }
+  }
+
+  // Legend
+  const legendY = areaY + h + 8;
+  let lx = x;
+  doc.setFontSize(4.5);
+  for (let li = 0; li < lineCount; li++) {
+    const lbl = data[0].lines[li].label;
+    const col = data[0].lines[li].color;
+    doc.setFillColor(...col);
+    doc.rect(lx, legendY - 2, 3, 2, "F");
+    doc.setTextColor(...DARK);
+    const truncated = lbl.length > 18 ? lbl.substring(0, 16) + ".." : lbl;
+    doc.text(truncated, lx + 4, legendY);
+    lx += doc.getTextWidth(truncated) + 7;
+  }
+}
+
 export function generateGroupPDF(
   allData: OfficeRecord[],
   lang: Language,
@@ -912,7 +1039,7 @@ export function generateGroupPDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 4;
+  const totalPages = 5;
 
   // Filter data for selected year
   const data = allData
@@ -1231,9 +1358,42 @@ export function generateGroupPDF(
       color: PRIMARY,
     });
 
-    y += chartH + 16;
+    y += chartH + 20;
 
-    // Evolution data table with new columns
+    // Size distribution (stacked bar)
+    const sizeColors = {
+      klein: [41, 182, 246] as const,  // blue
+      middel: [245, 166, 35] as const, // orange
+      groot: [121, 97, 171] as const,  // purple
+    };
+    drawMiniStackedBar(doc, evolutionData.map((d) => ({
+      year: d.year,
+      values: [
+        { value: d.klein, color: sizeColors.klein, label: lang === "nl" ? "Klein" : "Petit" },
+        { value: d.middel, color: sizeColors.middel, label: lang === "nl" ? "Middelgr." : "Moyen" },
+        { value: d.groot, color: sizeColors.groot, label: lang === "nl" ? "Groot" : "Grand" },
+      ],
+    })), {
+      x: 25, y, w: chartW, h: chartH,
+      title: lang === "nl" ? "Kantoorgroottes" : "Tailles bureaux",
+    });
+
+    // Client segment (dual line)
+    drawMiniMultiLineChart(doc, evolutionData.map((d) => ({
+      year: d.year,
+      lines: [
+        { value: d.avgPrivate, label: lang === "nl" ? "% Particulieren" : "% Particuliers", color: PRIMARY },
+        { value: d.avgSme, label: lang === "nl" ? "% KMO" : "% PME", color: [76, 175, 80] as const },
+      ],
+    })), {
+      x: 115, y, w: chartW, h: chartH,
+      title: lang === "nl" ? "Gem. % Part. vs KMO" : "Moy. % Part. vs PME",
+      formatFn: (v) => `${v.toFixed(0)}%`,
+    });
+
+    y += chartH + 20;
+
+    // Evolution data table
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
       startY: y,
@@ -1274,6 +1434,73 @@ export function generateGroupPDF(
   }
 
   addFooter(doc, year, 4, totalPages, lang);
+
+  // ===== PAGE 5 — Company Evolution =====
+  doc.addPage();
+  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 5);
+  y = 28;
+  y = sectionTitle(doc, lang === "nl" ? "Evolutie top maatschappijen" : "Évolution top compagnies", y);
+
+  if (allYears.length >= 2) {
+    const COMPANY_COLORS: (readonly [number, number, number])[] = [
+      [121, 97, 171], [76, 175, 80], [245, 166, 35], [41, 182, 246], [233, 30, 99],
+    ];
+
+    // Non-life company evolution
+    const allFiltered = allData.filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+    const top5NonLife = calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
+
+    if (top5NonLife.length > 0) {
+      const compEvoNL = allYears.map((yr) => {
+        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+        if (yrData.length === 0) return null;
+        const ranking = calcWeightedRanking(yrData, "ranking_nonlife");
+        return {
+          year: yr,
+          lines: top5NonLife.map((c, i) => ({
+            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
+            label: c,
+            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
+          })),
+        };
+      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
+
+      drawMiniMultiLineChart(doc, compEvoNL, {
+        x: 15, y, w: 170, h: 55,
+        title: lang === "nl" ? "Top 5 maatschappijen niet-leven (punten)" : "Top 5 compagnies non-vie (points)",
+        formatFn: (v) => String(Math.round(v)),
+      });
+
+      y += 70;
+    }
+
+    // Life company evolution
+    const top5Life = calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
+
+    if (top5Life.length > 0) {
+      const compEvoLife = allYears.map((yr) => {
+        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+        if (yrData.length === 0) return null;
+        const ranking = calcWeightedRanking(yrData, "ranking_life");
+        return {
+          year: yr,
+          lines: top5Life.map((c, i) => ({
+            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
+            label: c,
+            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
+          })),
+        };
+      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
+
+      drawMiniMultiLineChart(doc, compEvoLife, {
+        x: 15, y, w: 170, h: 55,
+        title: lang === "nl" ? "Top 5 maatschappijen leven (punten)" : "Top 5 compagnies vie (points)",
+        formatFn: (v) => String(Math.round(v)),
+      });
+    }
+  }
+
+  addFooter(doc, year, 5, totalPages, lang);
   return doc;
 }
 
