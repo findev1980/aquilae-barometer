@@ -830,13 +830,12 @@ export function generateOfficePDF(
     const companyNonlife = buildCompanyEvolution("ranking_nonlife");
     const companyLife = buildCompanyEvolution("ranking_life");
 
-    // Check if we need a new page
-    if (y > 200) {
-      addFooter(doc, year, 5, totalPages, lang);
-      doc.addPage();
-      addHeader(doc, office.office_name, 5);
-      y = 28;
-    }
+    addFooter(doc, year, 5, totalPages, lang);
+
+    // === New page for company rankings ===
+    doc.addPage();
+    addHeader(doc, office.office_name, 6);
+    y = 28;
 
     // Company non-life table
     if (companyNonlife.length > 0) {
@@ -858,7 +857,7 @@ export function generateOfficePDF(
         margin: { left: 15, right: 15 },
         styles: { cellPadding: 1.5 },
       });
-      y = lastAutoTableFinalY(doc, y) + 10;
+      y = lastAutoTableFinalY(doc, y) + 12;
     }
 
     // Company life table
@@ -881,8 +880,11 @@ export function generateOfficePDF(
         margin: { left: 15, right: 15 },
         styles: { cellPadding: 1.5 },
       });
-      y = lastAutoTableFinalY(doc, y) + 8;
+      y = lastAutoTableFinalY(doc, y) + 12;
     }
+
+    // Analysis summary follows directly on this page
+    y += 6;
 
   } else {
     doc.setFontSize(9);
@@ -891,13 +893,13 @@ export function generateOfficePDF(
     doc.text(lang === "nl"
       ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
+    addFooter(doc, year, 5, totalPages, lang);
+    doc.addPage();
+    addHeader(doc, office.office_name, 6);
+    y = 28;
   }
 
-  addFooter(doc, year, 5, totalPages, lang);
-
-  // ===== PAGE 6 — Analysis Summary =====
-  doc.addPage();
-  addHeader(doc, office.office_name, 6);
+  // ===== Analysis Summary (continues on current page) =====
   y = 28;
   y = sectionTitle(doc, t("office.analysis", lang), y);
 
