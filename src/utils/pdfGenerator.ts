@@ -1111,8 +1111,8 @@ export function generateGroupPDF(
 
   y = sectionTitle(doc, lang === "nl" ? "Groei en strategie" : "Croissance et stratégie", y);
 
-  // Growth phase frequency
-  const growthFreq = calcFrequency(data, "growth_phase");
+  // Growth phase frequency (translated/merged)
+  const growthFreq = calcFrequencyTranslated(data, "growth_phase", GROWTH_PHASE_MAP, lang);
   if (growthFreq.length > 0) {
     doc.setFontSize(10);
     doc.setTextColor(...DARK);
@@ -1134,8 +1134,8 @@ export function generateGroupPDF(
     y = lastAutoTableFinalY(doc, y) + 10;
   }
 
-  // Priorities frequency
-  const priorityFreq = calcFrequency(data, "priorities");
+  // Priorities frequency (translated/merged)
+  const priorityFreq = calcFrequencyTranslated(data, "priorities", PRIORITIES_MAP, lang);
   if (priorityFreq.length > 0) {
     doc.setFontSize(10);
     doc.setTextColor(...DARK);
