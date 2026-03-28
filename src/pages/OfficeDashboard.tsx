@@ -4,7 +4,7 @@ import { t } from "@/i18n/translations";
 import {
   filterByYear, filterBySourceLang, filterBySize, getComputed, formatCurrency,
   calcBenchmark, calcWeightedRanking, satisfactionScore, recommendScore,
-  alignmentScore, formatNumber, getOfficeSize, getOfficeSizeLabel
+  alignmentScore, formatNumber, getOfficeSize, getOfficeSizeLabel, normalizeCompanyName
 } from "@/utils/benchmarkCalc";
 import { Building2, Download, Info, Loader2, TrendingUp, Search, Check, ChevronsUpDown, FileText } from "lucide-react";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -231,8 +231,7 @@ export default function OfficeDashboard() {
         for (let i = 0; i < Math.min(list.length, 5); i++) {
           const company = list[i]?.trim();
           if (!company) continue;
-          // Normalize company name
-          const normalized = company.toLowerCase() === "axa" ? "AXA Belgium" : company;
+          const normalized = normalizeCompanyName(company);
           if (!companyYearPoints[normalized]) companyYearPoints[normalized] = {};
           companyYearPoints[normalized][year] = (companyYearPoints[normalized][year] || 0) + (5 - i);
         }
@@ -454,7 +453,8 @@ export default function OfficeDashboard() {
                   <div key={title}>
                     <p className="mb-2 text-xs font-medium text-muted-foreground">{title}</p>
                     <div className="space-y-1.5">
-                      {officeList.slice(0, 5).map((company, i) => {
+                      {officeList.slice(0, 5).map((rawCompany, i) => {
+                        const company = normalizeCompanyName(rawCompany);
                         const groupEntry = groupRanking.find((r) => r.company === company);
                         const groupPos = groupEntry?.rank;
                         const inGroupTop5 = groupPos !== undefined && groupPos <= 5;
