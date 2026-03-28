@@ -364,27 +364,37 @@ export default function OfficeDashboard() {
                           <th className="pb-2 text-left text-xs font-medium text-muted-foreground" />
                           <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Kantoor" : "Bureau"}</th>
                           <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Groep" : "Groupe"}</th>
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Δ groep" : "Δ groupe"}</th>
                           {hasSizeCol && (
-                            <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{getOfficeSizeLabel(officeSize!, language)}</th>
+                            <>
+                              <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{getOfficeSizeLabel(officeSize!, language)}</th>
+                              <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Δ grootte" : "Δ taille"}</th>
+                            </>
                           )}
-                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Verschil (groep)" : "Diff. (groupe)"}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rows.map(({ label, value, groupAvg, sizeAvg, fmt }) => {
-                          const diff = value !== null && groupAvg !== null ? value - groupAvg : null;
-                          const isPositive = diff !== null && diff >= 0;
+                          const groupDiff = value !== null && groupAvg !== null ? value - groupAvg : null;
+                          const groupPos = groupDiff !== null && groupDiff >= 0;
+                          const sizeDiff = value !== null && sizeAvg !== null ? value - sizeAvg : null;
+                          const sizePos = sizeDiff !== null && sizeDiff >= 0;
                           return (
                             <tr key={label} className="border-b border-border/50">
                               <td className="py-2 pr-3 font-medium text-muted-foreground">{label}</td>
                               <td className="py-2 pr-3 text-right tabular-nums font-semibold">{fmt(value)}</td>
                               <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{groupAvg !== null ? fmt(groupAvg) : "—"}</td>
-                              {hasSizeCol && (
-                                <td className="py-2 pr-3 text-right tabular-nums text-accent-orange">{sizeAvg !== null ? fmt(sizeAvg) : "—"}</td>
-                              )}
-                              <td className={`py-2 text-right tabular-nums text-xs ${diff === null ? "text-muted-foreground" : isPositive ? "text-accent-green" : "text-accent-orange"}`}>
-                                {diff !== null ? `${isPositive ? "+" : ""}${fmt(diff)}` : "—"}
+                              <td className={`py-2 pr-3 text-right tabular-nums text-xs ${groupDiff === null ? "text-muted-foreground" : groupPos ? "text-accent-green" : "text-accent-orange"}`}>
+                                {groupDiff !== null ? `${groupPos ? "+" : ""}${fmt(groupDiff)}` : "—"}
                               </td>
+                              {hasSizeCol && (
+                                <>
+                                  <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{sizeAvg !== null ? fmt(sizeAvg) : "—"}</td>
+                                  <td className={`py-2 text-right tabular-nums text-xs ${sizeDiff === null ? "text-muted-foreground" : sizePos ? "text-accent-green" : "text-accent-orange"}`}>
+                                    {sizeDiff !== null ? `${sizePos ? "+" : ""}${fmt(sizeDiff)}` : "—"}
+                                  </td>
+                                </>
+                              )}
                             </tr>
                           );
                         })}
