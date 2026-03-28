@@ -563,7 +563,7 @@ export default function OfficeDashboard() {
   );
 }
 
-function AnalysisSummary({ office, data, benchmarks, language }: {
+function AnalysisSummary({ office, data, benchmarks, sizeBenchmarks, sizeData, officeSize, language }: {
   office: OfficeRecord;
   data: OfficeRecord[];
   benchmarks: {
@@ -573,89 +573,105 @@ function AnalysisSummary({ office, data, benchmarks, language }: {
     commPerFte: ReturnType<typeof calcBenchmark>;
     computed: ReturnType<typeof getComputed>;
   };
+  sizeBenchmarks: {
+    commIns: ReturnType<typeof calcBenchmark>;
+    commBank: ReturnType<typeof calcBenchmark>;
+    totalComm: ReturnType<typeof calcBenchmark>;
+    commPerFte: ReturnType<typeof calcBenchmark>;
+    computed: ReturnType<typeof getComputed>;
+  } | null;
+  sizeData: OfficeRecord[] | null;
+  officeSize: import("@/utils/benchmarkCalc").OfficeSize | null;
   language: "nl" | "fr";
 }) {
-  const insights = useMemo(() => {
+  const sizeLabel = officeSize ? getOfficeSizeLabel(officeSize, language) : "";
+
+  function generateInsights(
+    bm: typeof benchmarks,
+    refData: OfficeRecord[],
+    label: string,
+  ) {
     const nl = language === "nl";
     const items: { icon: string; text: string; type: "positive" | "neutral" | "negative" }[] = [];
 
-    // 1. Total commission vs group
-    const tc = benchmarks.computed.total_commission;
-    const tcMean = benchmarks.totalComm.mean;
-    const tcPct = benchmarks.totalComm.percentile;
+    // 1. Total commission
+    const tc = bm.computed.total_commission;
+    const tcMean = bm.totalComm.mean;
+    const tcPct = bm.totalComm.percentile;
     if (tc !== null && tcMean !== null && tcPct !== null) {
       const diff = ((tc - tcMean) / tcMean) * 100;
       const absDiff = Math.abs(Math.round(diff));
       if (diff > 10) {
         items.push({ icon: "📈", type: "positive", text: nl
-          ? `De totale commissie ligt ${absDiff}% boven het groepsgemiddelde (P${tcPct}).`
-          : `La commission totale est ${absDiff}% au-dessus de la moyenne du groupe (P${tcPct}).` });
+          ? `De totale commissie ligt ${absDiff}% boven het gemiddelde van ${label} (P${tcPct}).`
+          : `La commission totale est ${absDiff}% au-dessus de la moyenne ${label} (P${tcPct}).` });
       } else if (diff < -10) {
         items.push({ icon: "📉", type: "negative", text: nl
-          ? `De totale commissie ligt ${absDiff}% onder het groepsgemiddelde (P${tcPct}).`
-          : `La commission totale est ${absDiff}% en dessous de la moyenne du groupe (P${tcPct}).` });
+          ? `De totale commissie ligt ${absDiff}% onder het gemiddelde van ${label} (P${tcPct}).`
+          : `La commission totale est ${absDiff}% en dessous de la moyenne ${label} (P${tcPct}).` });
       } else {
         items.push({ icon: "➡️", type: "neutral", text: nl
-          ? `De totale commissie ligt in lijn met het groepsgemiddelde (P${tcPct}).`
-          : `La commission totale est en ligne avec la moyenne du groupe (P${tcPct}).` });
+          ? `De totale commissie ligt in lijn met het gemiddelde van ${label} (P${tcPct}).`
+          : `La commission totale est en ligne avec la moyenne ${label} (P${tcPct}).` });
       }
     }
 
-    // 2. Efficiency (commission per FTE)
-    const cfte = benchmarks.computed.commission_per_fte;
-    const cfteMean = benchmarks.commPerFte.mean;
-    const cftePct = benchmarks.commPerFte.percentile;
+    // 2. Efficiency
+    const cfte = bm.computed.commission_per_fte;
+    const cfteMean = bm.commPerFte.mean;
+    const cftePct = bm.commPerFte.percentile;
     if (cfte !== null && cfteMean !== null && cftePct !== null) {
       const diff = ((cfte - cfteMean) / cfteMean) * 100;
       const absDiff = Math.abs(Math.round(diff));
       if (diff > 15) {
         items.push({ icon: "⚡", type: "positive", text: nl
-          ? `Hoge efficiëntie: commissie per FTE is ${absDiff}% hoger dan gemiddeld (P${cftePct}).`
-          : `Haute efficacité : commission par ETP ${absDiff}% supérieure à la moyenne (P${cftePct}).` });
+          ? `Hoge efficiëntie: commissie per FTE is ${absDiff}% hoger dan gemiddeld in ${label} (P${cftePct}).`
+          : `Haute efficacité : commission par ETP ${absDiff}% supérieure à la moyenne ${label} (P${cftePct}).` });
       } else if (diff < -15) {
         items.push({ icon: "⚠️", type: "negative", text: nl
-          ? `De efficiëntie (commissie/FTE) ligt ${absDiff}% onder het groepsgemiddelde (P${cftePct}).`
-          : `L'efficacité (commission/ETP) est ${absDiff}% inférieure à la moyenne (P${cftePct}).` });
+          ? `De efficiëntie (commissie/FTE) ligt ${absDiff}% onder het gemiddelde van ${label} (P${cftePct}).`
+          : `L'efficacité (commission/ETP) est ${absDiff}% inférieure à la moyenne ${label} (P${cftePct}).` });
       }
     }
 
-    // 3. Scale (FTE)
-    const totalFte = benchmarks.computed.total_fte;
-    const avgFte = (() => { const v = data.map(r => getComputed(r).total_fte).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
+    // 3. Scale
+    const totalFte = bm.computed.total_fte;
+    const avgFte = (() => { const v = refData.map(r => getComputed(r).total_fte).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
     if (totalFte !== null && avgFte !== null) {
       const ratio = totalFte / avgFte;
       if (ratio > 1.5) {
         items.push({ icon: "🏢", type: "neutral", text: nl
-          ? `Groter kantoor: ${totalFte.toFixed(1)} FTE vs. groepsgemiddelde ${avgFte.toFixed(1)} FTE.`
-          : `Bureau plus grand : ${totalFte.toFixed(1)} ETP vs. moyenne groupe ${avgFte.toFixed(1)} ETP.` });
+          ? `Groter kantoor: ${totalFte.toFixed(1)} FTE vs. gemiddelde ${label} ${avgFte.toFixed(1)} FTE.`
+          : `Bureau plus grand : ${totalFte.toFixed(1)} ETP vs. moyenne ${label} ${avgFte.toFixed(1)} ETP.` });
       } else if (ratio < 0.6) {
         items.push({ icon: "🏠", type: "neutral", text: nl
-          ? `Kleiner kantoor: ${totalFte.toFixed(1)} FTE vs. groepsgemiddelde ${avgFte.toFixed(1)} FTE.`
-          : `Bureau plus petit : ${totalFte.toFixed(1)} ETP vs. moyenne groupe ${avgFte.toFixed(1)} ETP.` });
+          ? `Kleiner kantoor: ${totalFte.toFixed(1)} FTE vs. gemiddelde ${label} ${avgFte.toFixed(1)} FTE.`
+          : `Bureau plus petit : ${totalFte.toFixed(1)} ETP vs. moyenne ${label} ${avgFte.toFixed(1)} ETP.` });
       }
     }
 
-    // 4. Portfolio focus (private vs SME)
+    // 4. Portfolio focus
     if (office.pct_private !== null && office.pct_sme !== null) {
-      const avgPri = (() => { const v = data.map(r => r.pct_private).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
+      const avgPri = (() => { const v = refData.map(r => r.pct_private).filter((x): x is number => x !== null); return v.length ? v.reduce((a,b) => a+b,0)/v.length : null; })();
       if (avgPri !== null) {
         const diff = office.pct_private - avgPri;
         if (diff > 15) {
           items.push({ icon: "👤", type: "neutral", text: nl
-            ? `Sterkere focus op particulieren (${office.pct_private}% vs. gem. ${Math.round(avgPri)}%).`
-            : `Orientation plus marquée vers les particuliers (${office.pct_private}% vs. moy. ${Math.round(avgPri)}%).` });
+            ? `Sterkere focus op particulieren vs. ${label} (${office.pct_private}% vs. gem. ${Math.round(avgPri)}%).`
+            : `Orientation plus marquée vers les particuliers vs. ${label} (${office.pct_private}% vs. moy. ${Math.round(avgPri)}%).` });
         } else if (diff < -15) {
           items.push({ icon: "🏭", type: "neutral", text: nl
-            ? `Sterkere focus op KMO (${office.pct_sme}% vs. gem. ${Math.round(100 - avgPri)}%).`
-            : `Orientation plus marquée vers les PME (${office.pct_sme}% vs. moy. ${Math.round(100 - avgPri)}%).` });
+            ? `Sterkere focus op KMO vs. ${label} (${office.pct_sme}% vs. gem. ${Math.round(100 - avgPri)}%).`
+            : `Orientation plus marquée vers les PME vs. ${label} (${office.pct_sme}% vs. moy. ${Math.round(100 - avgPri)}%).` });
         }
       }
     }
 
-    // 5. Insurance vs bank commission split
-    if (office.commission_insurance !== null && office.commission_bank !== null && tc !== null && tc > 0) {
-      const bankPct = (office.commission_bank / tc) * 100;
-      const groupBankPcts = data.map(r => {
+    // 5. Bank commission split
+    const tc2 = bm.computed.total_commission;
+    if (office.commission_insurance !== null && office.commission_bank !== null && tc2 !== null && tc2 > 0) {
+      const bankPct = (office.commission_bank / tc2) * 100;
+      const groupBankPcts = refData.map(r => {
         const c = getComputed(r);
         if (c.total_commission && c.total_commission > 0 && r.commission_bank !== null)
           return (r.commission_bank / c.total_commission) * 100;
@@ -664,31 +680,57 @@ function AnalysisSummary({ office, data, benchmarks, language }: {
       const avgBankPct = groupBankPcts.length ? groupBankPcts.reduce((a,b) => a+b,0) / groupBankPcts.length : null;
       if (avgBankPct !== null && bankPct > avgBankPct + 10) {
         items.push({ icon: "🏦", type: "neutral", text: nl
-          ? `Hoger aandeel bankcommissie (${Math.round(bankPct)}% vs. gem. ${Math.round(avgBankPct)}%).`
-          : `Part plus élevée de commission bancaire (${Math.round(bankPct)}% vs. moy. ${Math.round(avgBankPct)}%).` });
+          ? `Hoger aandeel bankcommissie vs. ${label} (${Math.round(bankPct)}% vs. gem. ${Math.round(avgBankPct)}%).`
+          : `Part plus élevée de commission bancaire vs. ${label} (${Math.round(bankPct)}% vs. moy. ${Math.round(avgBankPct)}%).` });
       }
     }
 
     // 6. Satisfaction
     const satScore = satisfactionScore(office.satisfaction_aquilae);
-    const groupSat = data.map(r => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+    const groupSat = refData.map(r => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
     const avgSat = groupSat.length ? groupSat.reduce((a,b) => a+b,0) / groupSat.length : null;
     if (satScore !== null && avgSat !== null) {
       if (satScore >= 3) {
         items.push({ icon: "😊", type: "positive", text: nl
-          ? `Zeer tevreden over Aquilae (score ${satScore}/3, gem. ${avgSat.toFixed(1)}/3).`
-          : `Très satisfait d'Aquilae (score ${satScore}/3, moy. ${avgSat.toFixed(1)}/3).` });
+          ? `Zeer tevreden over Aquilae (score ${satScore}/3, gem. ${label} ${avgSat.toFixed(1)}/3).`
+          : `Très satisfait d'Aquilae (score ${satScore}/3, moy. ${label} ${avgSat.toFixed(1)}/3).` });
       } else if (satScore < avgSat - 0.3) {
         items.push({ icon: "😐", type: "negative", text: nl
-          ? `Tevredenheid lager dan gemiddeld (score ${satScore}/3, gem. ${avgSat.toFixed(1)}/3).`
-          : `Satisfaction inférieure à la moyenne (score ${satScore}/3, moy. ${avgSat.toFixed(1)}/3).` });
+          ? `Tevredenheid lager dan gemiddeld in ${label} (score ${satScore}/3, gem. ${avgSat.toFixed(1)}/3).`
+          : `Satisfaction inférieure à la moyenne ${label} (score ${satScore}/3, moy. ${avgSat.toFixed(1)}/3).` });
       }
     }
 
     return items;
+  }
+
+  const groupInsights = useMemo(() => {
+    const nl = language === "nl";
+    const label = nl ? "de groep" : "du groupe";
+    return generateInsights(benchmarks, data, label);
   }, [office, data, benchmarks, language]);
 
-  if (insights.length === 0) return null;
+  const sizeInsights = useMemo(() => {
+    if (!sizeBenchmarks || !sizeData || !officeSize) return [];
+    return generateInsights(sizeBenchmarks, sizeData, sizeLabel);
+  }, [office, sizeBenchmarks, sizeData, officeSize, language]);
+
+  if (groupInsights.length === 0 && sizeInsights.length === 0) return null;
+
+  const renderList = (items: typeof groupInsights) => (
+    <ul className="space-y-2.5">
+      {items.map((item, i) => (
+        <li key={i} className={`flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-relaxed ${
+          item.type === "positive" ? "bg-accent-green/10 text-accent-green" :
+          item.type === "negative" ? "bg-accent-orange/10 text-accent-orange" :
+          "bg-muted/50 text-foreground"
+        }`}>
+          <span className="shrink-0 text-base">{item.icon}</span>
+          <span>{item.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <div className="rounded-xl border border-border bg-card p-5 card-shadow">
@@ -696,18 +738,23 @@ function AnalysisSummary({ office, data, benchmarks, language }: {
         <FileText className="h-4 w-4 text-primary" />
         <h3 className="text-sm font-semibold">{t("office.analysis", language)}</h3>
       </div>
-      <ul className="space-y-2.5">
-        {insights.map((item, i) => (
-          <li key={i} className={`flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-relaxed ${
-            item.type === "positive" ? "bg-accent-green/10 text-accent-green" :
-            item.type === "negative" ? "bg-accent-orange/10 text-accent-orange" :
-            "bg-muted/50 text-foreground"
-          }`}>
-            <span className="shrink-0 text-base">{item.icon}</span>
-            <span>{item.text}</span>
-          </li>
-        ))}
-      </ul>
+
+      {groupInsights.length > 0 && (
+        <>
+          <h4 className="mb-2 text-xs font-medium text-muted-foreground">{t("office.benchmark_group", language)}</h4>
+          {renderList(groupInsights)}
+        </>
+      )}
+
+      {sizeInsights.length > 0 && (
+        <>
+          <div className="my-4 border-t border-border" />
+          <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+            {t("office.benchmark_size", language)} — {sizeLabel}
+          </h4>
+          {renderList(sizeInsights)}
+        </>
+      )}
     </div>
   );
 }
