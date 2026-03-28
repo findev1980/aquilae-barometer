@@ -198,7 +198,8 @@ export default function OfficeDashboard() {
         const c = getComputed(rec);
         const groupComm = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
         const groupFte = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
-        const groupSat = yearData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+        const groupPri = yearData.map((r) => r.pct_private).filter((v): v is number => v !== null);
+        const groupSme = yearData.map((r) => r.pct_sme).filter((v): v is number => v !== null);
         return {
           year,
           commIns: rec.commission_insurance,
@@ -206,13 +207,50 @@ export default function OfficeDashboard() {
           totalComm: c.total_commission,
           totalFte: c.total_fte,
           commPerFte: c.commission_per_fte,
-          satisfaction: satisfactionScore(rec.satisfaction_aquilae),
+          pctPrivate: rec.pct_private,
+          pctSme: rec.pct_sme,
           groupCommMean: groupComm.length > 0 ? groupComm.reduce((a, b) => a + b, 0) / groupComm.length : null,
           groupFteMean: groupFte.length > 0 ? groupFte.reduce((a, b) => a + b, 0) / groupFte.length : null,
-          groupSatMean: groupSat.length > 0 ? groupSat.reduce((a, b) => a + b, 0) / groupSat.length : null,
+          groupPriMean: groupPri.length > 0 ? Math.round(groupPri.reduce((a, b) => a + b, 0) / groupPri.length * 10) / 10 : null,
+          groupSmeMean: groupSme.length > 0 ? Math.round(groupSme.reduce((a, b) => a + b, 0) / groupSme.length * 10) / 10 : null,
         };
       })
       .filter(Boolean);
+  }, [selectedOffice, allData, meta.available_years, sourceLanguageFilter]);
+
+  // Company evolution for office rankings
+  const officeCompanyEvolution = useMemo(() => {
+    if (!selectedOffice || meta.available_years.length < 2) return { nonlife: [] as { company: string; [key: string]: number | string }[], life: [] as { company: string; [key: string]: number | string }[] };
+    const buildEvolution = (field: "ranking_nonlife" | "ranking_life") => {
+      const companyYearPoints: Record<string, Record<number, number>> = {};
+      for (const year of meta.available_years) {
+        const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+        const rec = yearData.find((r) => r.office_name === selectedOffice);
+        if (!rec) continue;
+        const list = rec[field];
+        for (let i = 0; i < Math.min(list.length, 5); i++) {
+          const company = list[i]?.trim();
+          if (!company) continue;
+          // Normalize company name
+          const normalized = company.toLowerCase() === "axa" ? "AXA Belgium" : company;
+          if (!companyYearPoints[normalized]) companyYearPoints[normalized] = {};
+          companyYearPoints[normalized][year] = (companyYearPoints[normalized][year] || 0) + (5 - i);
+        }
+      }
+      // Get top companies by total points
+      const totals = Object.entries(companyYearPoints).map(([company, years]) => ({
+        company,
+        total: Object.values(years).reduce((a, b) => a + b, 0),
+        years,
+      })).sort((a, b) => b.total - a.total).slice(0, 5);
+
+      return totals.map(({ company, years }) => {
+        const row: Record<string, number | string> = { company };
+        for (const y of meta.available_years) row[String(y)] = years[y] || 0;
+        return row;
+      });
+    };
+    return { nonlife: buildEvolution("ranking_nonlife"), life: buildEvolution("ranking_life") };
   }, [selectedOffice, allData, meta.available_years, sourceLanguageFilter]);
 
   if (data.length === 0) {
