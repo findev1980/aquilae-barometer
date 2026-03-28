@@ -1139,31 +1139,6 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = lastAutoTableFinalY(doc, y) + 10;
-
-  // Top 10 efficiency
-  y = sectionTitle(doc, lang === "nl" ? "Top 10 efficiëntie (commissie/FTE)" : "Top 10 efficacité (commission/ETP)", y);
-  const top10Eff = [...data]
-    .map((r) => ({ ...r, eff: getComputed(r).commission_per_fte }))
-    .filter((r) => r.eff !== null)
-    .sort((a, b) => b.eff! - a.eff!)
-    .slice(0, 10);
-
-  autoTable(doc, {
-    startY: y,
-    head: [["#", t("field.office_name", lang), t("field.commission_per_fte", lang), t("field.total_commission", lang)]],
-    body: top10Eff.map((r, i) => {
-      const c = getComputed(r);
-      return [String(i + 1), anon(r.office_name), fmtCur(r.eff), fmtCur(c.total_commission)];
-    }),
-    theme: "grid",
-    headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-    bodyStyles: { fontSize: 8, textColor: [...DARK] },
-    alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
-    margin: { left: 15, right: 15 },
-    styles: { cellPadding: 2 },
-    columnStyles: { 0: { cellWidth: 10 } },
-  });
 
   addFooter(doc, year, 1, totalPages, lang);
 
