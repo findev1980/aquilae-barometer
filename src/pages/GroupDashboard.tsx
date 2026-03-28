@@ -749,18 +749,16 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
         avgSme: avg(smes),
       };
     }).filter(Boolean);
-  }, [allData, meta.available_years, sourceLanguageFilter]);
+  }, [allData, meta.available_years, sourceLanguageFilter, sizeFilter]);
 
   // Top 5 company evolution (non-life)
   const companyEvolution = useMemo(() => {
-    // Get overall top 5 companies across all years
-    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const allFiltered = filterBySize(filterBySourceLang(allData, sourceLanguageFilter), sizeFilter);
     const overallRanking = calcWeightedRanking(allFiltered, "ranking_nonlife");
     const top5 = overallRanking.slice(0, 5).map((r) => r.company);
 
-    // For each year, compute points per company
     return meta.available_years.map((year) => {
-      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      const yearData = filterBySize(filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter), sizeFilter);
       if (yearData.length === 0) return null;
       const ranking = calcWeightedRanking(yearData, "ranking_nonlife");
       const row: Record<string, number | string> = { year };
@@ -770,21 +768,21 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
       });
       return row;
     }).filter(Boolean) as Record<string, number | string>[];
-  }, [allData, meta.available_years, sourceLanguageFilter]);
+  }, [allData, meta.available_years, sourceLanguageFilter, sizeFilter]);
 
   const top5Companies = useMemo(() => {
-    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const allFiltered = filterBySize(filterBySourceLang(allData, sourceLanguageFilter), sizeFilter);
     return calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
-  }, [allData, sourceLanguageFilter]);
+  }, [allData, sourceLanguageFilter, sizeFilter]);
 
   // Life company evolution
   const companyEvolutionLife = useMemo(() => {
-    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const allFiltered = filterBySize(filterBySourceLang(allData, sourceLanguageFilter), sizeFilter);
     const overallRanking = calcWeightedRanking(allFiltered, "ranking_life");
     const top5 = overallRanking.slice(0, 5).map((r) => r.company);
 
     return meta.available_years.map((year) => {
-      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      const yearData = filterBySize(filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter), sizeFilter);
       if (yearData.length === 0) return null;
       const ranking = calcWeightedRanking(yearData, "ranking_life");
       const row: Record<string, number | string> = { year };
@@ -794,12 +792,12 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
       });
       return row;
     }).filter(Boolean) as Record<string, number | string>[];
-  }, [allData, meta.available_years, sourceLanguageFilter]);
+  }, [allData, meta.available_years, sourceLanguageFilter, sizeFilter]);
 
   const top5CompaniesLife = useMemo(() => {
-    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const allFiltered = filterBySize(filterBySourceLang(allData, sourceLanguageFilter), sizeFilter);
     return calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
-  }, [allData, sourceLanguageFilter]);
+  }, [allData, sourceLanguageFilter, sizeFilter]);
 
   const COMPANY_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(35,90%,55%)", "hsl(200,70%,50%)", "hsl(340,65%,50%)"];
 
