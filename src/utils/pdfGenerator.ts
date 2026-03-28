@@ -6,8 +6,9 @@ import { t } from "@/i18n/translations";
 import {
   getComputed, calcBenchmark, calcWeightedRanking,
   formatCurrency, satisfactionScore, recommendScore, alignmentScore,
-  calcFrequency, getOfficeSize, getOfficeSizeLabel
+  calcFrequency, getOfficeSize, getOfficeSizeLabel, filterByYear, filterBySourceLang
 } from "@/utils/benchmarkCalc";
+import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 
 const PRIMARY = [121, 97, 171] as const; // #7961AB
 const PRIMARY_LIGHT = [237, 232, 245] as const;
