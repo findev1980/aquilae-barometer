@@ -65,7 +65,17 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold animate-fade-in">{t("nav.admin", language)}</h1>
+      <div className="flex items-center justify-between animate-fade-in">
+        <h1 className="text-2xl font-bold">{t("nav.admin", language)}</h1>
+        <button
+          onClick={handleExportVerificatie}
+          disabled={exporting}
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-transform hover:bg-accent active:scale-[0.97] disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {exporting ? "..." : t("admin.export_verification", language)}
+        </button>
+      </div>
 
       {/* Upload area */}
       <div
