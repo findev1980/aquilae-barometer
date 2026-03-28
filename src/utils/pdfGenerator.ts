@@ -639,162 +639,250 @@ export function generateOfficePDF(
         fmtCur(r.commission_insurance),
         c.total_fte !== null ? c.total_fte.toFixed(1) : "—",
         fmtCur(c.commission_per_fte),
-        r.satisfaction_aquilae || "—",
+        r.pct_private !== null ? `${r.pct_private}%` : "—",
+        r.pct_sme !== null ? `${r.pct_sme}%` : "—",
       ];
     });
 
     autoTable(doc, {
       startY: y,
-      head: [[t("filter.year", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang), t("field.satisfaction", lang)]],
+      head: [[t("filter.year", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang), t("field.pct_private", lang), t("field.pct_sme", lang)]],
       body: evoBody,
       theme: "grid",
-      headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
-      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      headStyles: { fillColor: [...PRIMARY], fontSize: 7, textColor: [...WHITE] },
+      bodyStyles: { fontSize: 7, textColor: [...DARK] },
       alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
       margin: { left: 15, right: 15 },
-      styles: { cellPadding: 2 },
+      styles: { cellPadding: 1.5 },
     });
-    y = lastAutoTableFinalY(doc, y) + 12;
+    y = lastAutoTableFinalY(doc, y) + 10;
 
     // Prepare chart data
     const chartYears = officeAllYears.map((r) => r.survey_year);
     const chartComm = officeAllYears.map((r) => getComputed(r).total_commission);
     const chartFte = officeAllYears.map((r) => getComputed(r).total_fte);
-    const chartSat = officeAllYears.map((r) => satisfactionScore(r.satisfaction_aquilae));
+    const chartCommPerFte = officeAllYears.map((r) => getComputed(r).commission_per_fte);
+    const chartPctPrivate = officeAllYears.map((r) => r.pct_private);
+    const chartPctSme = officeAllYears.map((r) => r.pct_sme);
 
-    // Also compute group means per year for comparison
-    const allYearsSet = [...new Set((allYearsData || []).map((r) => r.survey_year))].sort();
+    // Group means per year
     const groupCommByYear: Record<number, number[]> = {};
     const groupFteByYear: Record<number, number[]> = {};
-    const groupSatByYear: Record<number, number[]> = {};
+    const groupPriByYear: Record<number, number[]> = {};
+    const groupSmeByYear: Record<number, number[]> = {};
     for (const r of (allYearsData || [])) {
       const c = getComputed(r);
-      if (!groupCommByYear[r.survey_year]) { groupCommByYear[r.survey_year] = []; groupFteByYear[r.survey_year] = []; groupSatByYear[r.survey_year] = []; }
+      if (!groupCommByYear[r.survey_year]) { groupCommByYear[r.survey_year] = []; groupFteByYear[r.survey_year] = []; groupPriByYear[r.survey_year] = []; groupSmeByYear[r.survey_year] = []; }
       if (c.total_commission !== null) groupCommByYear[r.survey_year].push(c.total_commission);
       if (c.total_fte !== null) groupFteByYear[r.survey_year].push(c.total_fte);
-      const s = satisfactionScore(r.satisfaction_aquilae);
-      if (s !== null) groupSatByYear[r.survey_year].push(s);
+      if (r.pct_private !== null) groupPriByYear[r.survey_year].push(r.pct_private);
+      if (r.pct_sme !== null) groupSmeByYear[r.survey_year].push(r.pct_sme);
     }
     const avgArr = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     const groupCommMeans = chartYears.map((yr) => avgArr(groupCommByYear[yr] || []));
     const groupFteMeans = chartYears.map((yr) => avgArr(groupFteByYear[yr] || []));
-    const groupSatMeans = chartYears.map((yr) => avgArr(groupSatByYear[yr] || []));
+    const groupPriMeans = chartYears.map((yr) => avgArr(groupPriByYear[yr] || []));
+    const groupSmeMeans = chartYears.map((yr) => avgArr(groupSmeByYear[yr] || []));
 
     const chartW = 80;
-    const chartH = 40;
+    const chartH = 35;
 
-    // Draw 3 mini charts in a row
-    const charts: { title: string; officeVals: (number | null)[]; groupVals: (number | null)[]; formatFn: (v: number) => string; maxOverride?: number }[] = [
-      { title: t("field.total_commission", lang), officeVals: chartComm, groupVals: groupCommMeans, formatFn: (v) => `€${(v / 1000).toFixed(0)}k` },
-      { title: "FTE", officeVals: chartFte, groupVals: groupFteMeans, formatFn: (v) => v.toFixed(1) },
-      { title: t("field.satisfaction", lang), officeVals: chartSat, groupVals: groupSatMeans, formatFn: (v) => v.toFixed(1), maxOverride: 3 },
-    ];
-
-    // Two charts per row
-    for (let ci = 0; ci < charts.length; ci++) {
-      const chart = charts[ci];
-      const col = ci % 2;
-      const xOff = 15 + col * (chartW + 15);
-
-      if (ci === 2) y += chartH + 22;
-
-      const chartY = col === 0 && ci < 2 ? y : y;
-
-      // Title
-      doc.setFontSize(8);
+    // Helper: draw mini line chart
+    const drawMiniChart = (
+      title: string, xOff: number, chartY: number,
+      officeVals: (number | null)[], groupVals: (number | null)[],
+      formatFn: (v: number) => string, maxOverride?: number,
+      color: readonly [number, number, number] = PRIMARY,
+      extraLine?: { vals: (number | null)[]; color: readonly [number, number, number]; label: string }
+    ) => {
+      doc.setFontSize(7);
       doc.setTextColor(...PRIMARY);
       doc.setFont("helvetica", "bold");
-      doc.text(chart.title, xOff, chartY);
+      doc.text(title, xOff, chartY);
 
       const areaX = xOff;
       const areaY = chartY + 3;
 
-      // Axes
       doc.setDrawColor(200, 200, 210);
       doc.setLineWidth(0.3);
-      doc.line(areaX, areaY, areaX, areaY + chartH); // Y axis
-      doc.line(areaX, areaY + chartH, areaX + chartW, areaY + chartH); // X axis
+      doc.line(areaX, areaY, areaX, areaY + chartH);
+      doc.line(areaX, areaY + chartH, areaX + chartW, areaY + chartH);
 
-      // Combine all values for scale
-      const allVals = [...chart.officeVals, ...chart.groupVals].filter((v): v is number => v !== null);
-      if (allVals.length === 0) continue;
-      const minVal = chart.maxOverride !== undefined ? 0 : Math.min(...allVals) * 0.85;
-      const maxVal = chart.maxOverride !== undefined ? chart.maxOverride : Math.max(...allVals) * 1.1;
+      const allVals = [...officeVals, ...groupVals, ...(extraLine?.vals || [])].filter((v): v is number => v !== null);
+      if (allVals.length === 0) return;
+      const minVal = maxOverride !== undefined ? 0 : Math.min(...allVals) * 0.85;
+      const maxVal = maxOverride !== undefined ? maxOverride : Math.max(...allVals) * 1.1;
       const range = maxVal - minVal || 1;
 
       const toX = (i: number) => areaX + (i / Math.max(chartYears.length - 1, 1)) * chartW;
       const toY = (v: number) => areaY + chartH - ((v - minVal) / range) * chartH;
 
       // Y-axis labels
-      doc.setFontSize(5.5);
+      doc.setFontSize(5);
       doc.setTextColor(...GREY);
       doc.setFont("helvetica", "normal");
-      doc.text(chart.formatFn(maxVal), areaX - 1, areaY + 2, { align: "right" });
-      doc.text(chart.formatFn(minVal), areaX - 1, areaY + chartH, { align: "right" });
+      doc.text(formatFn(maxVal), areaX - 1, areaY + 2, { align: "right" });
+      doc.text(formatFn(minVal), areaX - 1, areaY + chartH, { align: "right" });
 
       // X-axis labels
       for (let i = 0; i < chartYears.length; i++) {
         doc.text(String(chartYears[i]), toX(i), areaY + chartH + 4, { align: "center" });
       }
 
-      // Draw group line (dashed)
-      const groupPts = chart.groupVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
+      // Group line (dashed)
+      const groupPts = groupVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
       if (groupPts.length > 1) {
-        doc.setDrawColor(...PRIMARY_LIGHT);
-        doc.setLineWidth(0.6);
+        doc.setDrawColor(180, 180, 195);
+        doc.setLineWidth(0.5);
         doc.setLineDashPattern([1.5, 1.5], 0);
-        for (let i = 1; i < groupPts.length; i++) {
-          doc.line(groupPts[i - 1].x, groupPts[i - 1].y, groupPts[i].x, groupPts[i].y);
-        }
+        for (let i = 1; i < groupPts.length; i++) doc.line(groupPts[i - 1].x, groupPts[i - 1].y, groupPts[i].x, groupPts[i].y);
         doc.setLineDashPattern([], 0);
       }
 
-      // Draw office line (solid)
-      const officePts = chart.officeVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
+      // Extra line (e.g. KMO)
+      if (extraLine) {
+        const pts = extraLine.vals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
+        if (pts.length > 1) {
+          doc.setDrawColor(...extraLine.color);
+          doc.setLineWidth(0.7);
+          for (let i = 1; i < pts.length; i++) doc.line(pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y);
+          doc.setFillColor(...extraLine.color);
+          for (const pt of pts) doc.circle(pt.x, pt.y, 0.8, "F");
+        }
+      }
+
+      // Office line (solid)
+      const officePts = officeVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
       if (officePts.length > 1) {
-        doc.setDrawColor(...PRIMARY);
+        doc.setDrawColor(...color);
         doc.setLineWidth(0.8);
-        for (let i = 1; i < officePts.length; i++) {
-          doc.line(officePts[i - 1].x, officePts[i - 1].y, officePts[i].x, officePts[i].y);
-        }
-        // Dots
-        doc.setFillColor(...PRIMARY);
-        for (const pt of officePts) {
-          doc.circle(pt.x, pt.y, 1, "F");
-        }
+        for (let i = 1; i < officePts.length; i++) doc.line(officePts[i - 1].x, officePts[i - 1].y, officePts[i].x, officePts[i].y);
+        doc.setFillColor(...color);
+        for (const pt of officePts) doc.circle(pt.x, pt.y, 1, "F");
       }
 
-      // Data value labels on office dots
-      doc.setFontSize(5);
+      // Value labels
+      doc.setFontSize(4.5);
       doc.setTextColor(...DARK);
-      for (let i = 0; i < chart.officeVals.length; i++) {
-        const v = chart.officeVals[i];
-        if (v !== null) {
-          doc.text(chart.formatFn(v), toX(i), toY(v) - 2.5, { align: "center" });
-        }
+      for (let i = 0; i < officeVals.length; i++) {
+        const v = officeVals[i];
+        if (v !== null) doc.text(formatFn(v), toX(i), toY(v) - 2.5, { align: "center" });
       }
-    }
+    };
 
-    y += chartH + 22;
+    // Chart row 1: Commission + FTE
+    drawMiniChart(t("field.total_commission", lang), 15, y, chartComm, groupCommMeans, (v) => `€${(v / 1000).toFixed(0)}k`);
+    drawMiniChart("FTE", 15 + chartW + 15, y, chartFte, groupFteMeans, (v) => v.toFixed(1));
+    y += chartH + 18;
+
+    // Chart row 2: Commission/FTE + % Particulieren vs KMO
+    drawMiniChart(t("field.commission_per_fte", lang), 15, y, chartCommPerFte, [], (v) => `€${(v / 1000).toFixed(0)}k`, undefined, [34, 139, 34] as const);
+    drawMiniChart(
+      lang === "nl" ? "% Particulieren vs KMO" : "% Particuliers vs PME",
+      15 + chartW + 15, y,
+      chartPctPrivate, groupPriMeans,
+      (v) => `${Math.round(v)}%`, 100,
+      PRIMARY,
+      { vals: chartPctSme, color: [220, 160, 40] as const, label: t("field.pct_sme", lang) }
+    );
+    y += chartH + 14;
 
     // Legend
-    doc.setFontSize(6);
+    doc.setFontSize(5.5);
     doc.setDrawColor(...PRIMARY);
     doc.setLineWidth(0.8);
-    doc.line(15, y, 22, y);
+    doc.line(15, y, 20, y);
     doc.setFillColor(...PRIMARY);
-    doc.circle(18.5, y, 0.8, "F");
+    doc.circle(17.5, y, 0.7, "F");
     doc.setTextColor(...DARK);
     doc.setFont("helvetica", "normal");
-    doc.text(t("benchmark.office", lang), 24, y + 1);
+    doc.text(t("benchmark.office", lang), 22, y + 1);
 
-    doc.setDrawColor(...PRIMARY_LIGHT);
-    doc.setLineWidth(0.6);
+    doc.setDrawColor(180, 180, 195);
+    doc.setLineWidth(0.5);
     doc.setLineDashPattern([1.5, 1.5], 0);
-    doc.line(55, y, 62, y);
+    doc.line(50, y, 55, y);
     doc.setLineDashPattern([], 0);
     doc.setTextColor(...GREY);
-    doc.text(t("benchmark.group", lang) + " " + t("benchmark.mean", lang).toLowerCase(), 64, y + 1);
+    doc.text(lang === "nl" ? "Groepsgemiddelde" : "Moyenne groupe", 57, y + 1);
+    y += 10;
+
+    // === PAGE 5b — Company evolution ===
+    // Build company evolution for this office
+    const buildCompanyEvolution = (field: "ranking_nonlife" | "ranking_life") => {
+      const companyYearPoints: Record<string, Record<number, number>> = {};
+      for (const rec of officeAllYears) {
+        const list = rec[field];
+        for (let i = 0; i < Math.min(list.length, 5); i++) {
+          const company = list[i]?.trim();
+          if (!company) continue;
+          const normalized = company.toLowerCase() === "axa" ? "AXA Belgium" : company;
+          if (!companyYearPoints[normalized]) companyYearPoints[normalized] = {};
+          companyYearPoints[normalized][rec.survey_year] = (companyYearPoints[normalized][rec.survey_year] || 0) + (5 - i);
+        }
+      }
+      return Object.entries(companyYearPoints)
+        .map(([company, years]) => ({ company, total: Object.values(years).reduce((a, b) => a + b, 0), years }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
+    };
+
+    const companyNonlife = buildCompanyEvolution("ranking_nonlife");
+    const companyLife = buildCompanyEvolution("ranking_life");
+
+    // Check if we need a new page
+    if (y > 200) {
+      addFooter(doc, year, 5, totalPages, lang);
+      doc.addPage();
+      addHeader(doc, office.office_name, 5);
+      y = 28;
+    }
+
+    // Company non-life table
+    if (companyNonlife.length > 0) {
+      y = sectionTitle(doc, lang === "nl" ? "Top maatschappijen niet-leven (punten)" : "Top compagnies non-vie (points)", y);
+      const compHead = [lang === "nl" ? "Maatschappij" : "Compagnie", ...chartYears.map(String), "Totaal"];
+      const compBody = companyNonlife.map(({ company, years, total }) => [
+        company,
+        ...chartYears.map(yr => years[yr] ? String(years[yr]) : "—"),
+        String(total),
+      ]);
+      autoTable(doc, {
+        startY: y,
+        head: [compHead],
+        body: compBody,
+        theme: "grid",
+        headStyles: { fillColor: [...PRIMARY], fontSize: 7, textColor: [...WHITE] },
+        bodyStyles: { fontSize: 7, textColor: [...DARK] },
+        alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+        margin: { left: 15, right: 15 },
+        styles: { cellPadding: 1.5 },
+      });
+      y = lastAutoTableFinalY(doc, y) + 10;
+    }
+
+    // Company life table
+    if (companyLife.length > 0) {
+      y = sectionTitle(doc, lang === "nl" ? "Top maatschappijen leven (punten)" : "Top compagnies vie (points)", y);
+      const compHead = [lang === "nl" ? "Maatschappij" : "Compagnie", ...chartYears.map(String), "Totaal"];
+      const compBody = companyLife.map(({ company, years, total }) => [
+        company,
+        ...chartYears.map(yr => years[yr] ? String(years[yr]) : "—"),
+        String(total),
+      ]);
+      autoTable(doc, {
+        startY: y,
+        head: [compHead],
+        body: compBody,
+        theme: "grid",
+        headStyles: { fillColor: [...PRIMARY], fontSize: 7, textColor: [...WHITE] },
+        bodyStyles: { fontSize: 7, textColor: [...DARK] },
+        alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+        margin: { left: 15, right: 15 },
+        styles: { cellPadding: 1.5 },
+      });
+      y = lastAutoTableFinalY(doc, y) + 8;
+    }
 
   } else {
     doc.setFontSize(9);
