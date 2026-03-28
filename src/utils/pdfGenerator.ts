@@ -1446,7 +1446,7 @@ export function generateGroupPDF(
         formatFn: (v) => String(Math.round(v)),
       });
 
-      y += 70;
+      y += 80;
     }
 
     const top5Life = calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
@@ -1472,9 +1472,10 @@ export function generateGroupPDF(
         formatFn: (v) => String(Math.round(v)),
       });
 
-      y += 70;
+      y += 80;
     }
 
+    y += 10;
     // Cijfers per jaar table
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
