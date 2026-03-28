@@ -272,7 +272,12 @@ export function generateOfficePDF(
   doc.addPage();
   addHeader(doc, office.office_name, 2);
   y = 28;
-  y = sectionTitle(doc, t("office.financial_benchmark", lang), y);
+  // Group-wide benchmark
+  const officeSize = getOfficeSize(office);
+  const sizeData = officeSize ? filterBySize(allData, officeSize) : null;
+
+  const benchGroupLabel = lang === "nl" ? "Vergelijking t.o.v. alle kantoren" : "Comparaison avec tous les bureaux";
+  y = sectionTitle(doc, benchGroupLabel, y);
 
   const benchRows = [
     { label: t("field.commission_ins", lang), value: office.commission_insurance, allVals: allData.map((r) => r.commission_insurance) },
@@ -281,31 +286,63 @@ export function generateOfficePDF(
     { label: t("field.commission_per_fte", lang), value: computed.commission_per_fte, allVals: allData.map((r) => getComputed(r).commission_per_fte) },
   ];
 
-  const tableBody = benchRows.map((row) => {
-    const bm = calcBenchmark(row.allVals, row.value);
-    return [
-      row.label,
-      fmtCur(row.value),
-      fmtCur(bm.mean),
-      fmtCur(bm.median),
-      bm.percentile !== null ? `P${bm.percentile}` : "—",
-    ];
-  });
-
   autoTable(doc, {
     startY: y,
     head: [[
       "", t("office.value", lang), t("benchmark.mean", lang),
       t("benchmark.median", lang), t("benchmark.percentile", lang)
     ]],
-    body: tableBody,
+    body: benchRows.map((row) => {
+      const bm = calcBenchmark(row.allVals, row.value);
+      return [row.label, fmtCur(row.value), fmtCur(bm.mean), fmtCur(bm.median), bm.percentile !== null ? `P${bm.percentile}` : "—"];
+    }),
     theme: "grid",
-    headStyles: { fillColor: [...PRIMARY], fontSize: 8, fontStyle: "bold", textColor: [...WHITE] },
-    bodyStyles: { fontSize: 8, textColor: [...DARK] },
+    headStyles: { fillColor: [...PRIMARY], fontSize: 7, fontStyle: "bold", textColor: [...WHITE] },
+    bodyStyles: { fontSize: 7, textColor: [...DARK] },
     alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
     margin: { left: 15, right: 15 },
-    styles: { cellPadding: 2 },
+    styles: { cellPadding: 1.5 },
   });
+  y = lastAutoTableFinalY(doc, y) + 6;
+  doc.setFontSize(6);
+  doc.setTextColor(...GREY);
+  doc.text(`n = ${allData.filter(r => r.commission_insurance !== null).length} ${lang === "nl" ? "kantoren" : "bureaux"}`, 15, y);
+  y += 8;
+
+  // Size-category benchmark
+  if (sizeData && officeSize) {
+    const benchSizeLabel = `${lang === "nl" ? "Vergelijking t.o.v. kantoorgrootte" : "Comparaison par taille"} — ${getOfficeSizeLabel(officeSize, lang)}`;
+    y = sectionTitle(doc, benchSizeLabel, y);
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        "", t("office.value", lang), t("benchmark.mean", lang),
+        t("benchmark.median", lang), t("benchmark.percentile", lang)
+      ]],
+      body: benchRows.map((row) => {
+        const sizeVals = sizeData.map((r) => {
+          if (row.label === t("field.commission_ins", lang)) return r.commission_insurance;
+          if (row.label === t("field.commission_bank", lang)) return r.commission_bank;
+          if (row.label === t("field.total_commission", lang)) return getComputed(r).total_commission;
+          return getComputed(r).commission_per_fte;
+        });
+        const bm = calcBenchmark(sizeVals, row.value);
+        return [row.label, fmtCur(row.value), fmtCur(bm.mean), fmtCur(bm.median), bm.percentile !== null ? `P${bm.percentile}` : "—"];
+      }),
+      theme: "grid",
+      headStyles: { fillColor: [...PRIMARY], fontSize: 7, fontStyle: "bold", textColor: [...WHITE] },
+      bodyStyles: { fontSize: 7, textColor: [...DARK] },
+      alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
+      margin: { left: 15, right: 15 },
+      styles: { cellPadding: 1.5 },
+    });
+    y = lastAutoTableFinalY(doc, y) + 4;
+    doc.setFontSize(6);
+    doc.setTextColor(...GREY);
+    doc.text(`n = ${sizeData.filter(r => r.commission_insurance !== null).length} ${lang === "nl" ? "kantoren" : "bureaux"}`, 15, y);
+    y += 8;
+  }
 
   y = lastAutoTableFinalY(doc, y) + 10;
 
