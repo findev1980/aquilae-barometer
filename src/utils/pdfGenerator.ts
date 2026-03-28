@@ -341,10 +341,10 @@ export function generateOfficePDF(
     doc.setFontSize(6);
     doc.setTextColor(...GREY);
     doc.text(`n = ${bmSizeData.filter(r => r.commission_insurance !== null).length} ${lang === "nl" ? "kantoren" : "bureaux"}`, 15, y);
-    y += 8;
+    y += 12;
   }
 
-  y = lastAutoTableFinalY(doc, y) + 10;
+  y += 6;
 
   // Portfolio distribution with size-category markers
   const ORANGE = [220, 120, 20] as const;
