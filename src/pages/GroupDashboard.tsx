@@ -720,19 +720,61 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
 
       const comms = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
       const ftes = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
-      const sats = yearData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
 
       const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+      // Size distribution
+      let klein = 0, middel = 0, groot = 0;
+      yearData.forEach((r) => {
+        const size = getOfficeSize(r);
+        if (size === "klein") klein++;
+        else if (size === "middelgroot") middel++;
+        else if (size === "groot") groot++;
+      });
+
+      // Client segment averages
+      const privs = yearData.map((r) => r.pct_private).filter((v): v is number => v !== null);
+      const smes = yearData.map((r) => r.pct_sme).filter((v): v is number => v !== null);
 
       return {
         year,
         avgComm: avg(comms),
         avgFte: avg(ftes),
-        avgSat: avg(sats),
         officeCount: n,
+        klein, middel, groot,
+        avgPrivate: avg(privs),
+        avgSme: avg(smes),
       };
     }).filter(Boolean);
   }, [allData, meta.available_years, sourceLanguageFilter]);
+
+  // Top 5 company evolution (non-life)
+  const companyEvolution = useMemo(() => {
+    // Get overall top 5 companies across all years
+    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const overallRanking = calcWeightedRanking(allFiltered, "ranking_nonlife");
+    const top5 = overallRanking.slice(0, 5).map((r) => r.company);
+
+    // For each year, compute points per company
+    return meta.available_years.map((year) => {
+      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      if (yearData.length === 0) return null;
+      const ranking = calcWeightedRanking(yearData, "ranking_nonlife");
+      const row: Record<string, number | string> = { year };
+      top5.forEach((c) => {
+        const found = ranking.find((r) => r.company === c);
+        row[c] = found ? found.totalPoints : 0;
+      });
+      return row;
+    }).filter(Boolean) as Record<string, number | string>[];
+  }, [allData, meta.available_years, sourceLanguageFilter]);
+
+  const top5Companies = useMemo(() => {
+    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    return calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
+  }, [allData, sourceLanguageFilter]);
+
+  const COMPANY_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(35,90%,55%)", "hsl(200,70%,50%)", "hsl(340,65%,50%)"];
 
   if (evolutionData.length < 2) {
     return (
@@ -769,7 +811,6 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
           </ResponsiveContainer>
         </SectionCard>
 
-
         <SectionCard title={t("group.office_count_trend", language)}>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
@@ -781,6 +822,55 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
+
+        {/* Size distribution per year */}
+        <SectionCard title={t("group.size_distribution_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+              <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="klein" stackId="size" fill="hsl(200,70%,50%)" name={t("group.small", language)} radius={[0, 0, 0, 0]} />
+              <Bar dataKey="middel" stackId="size" fill="hsl(35,90%,55%)" name={t("group.medium", language)} />
+              <Bar dataKey="groot" stackId="size" fill="hsl(262,30%,53%)" name={t("group.large", language)} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        {/* Client segment trend */}
+        <SectionCard title={t("group.client_segment_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${v?.toFixed(0)}%`} />
+              <Tooltip formatter={(v: number) => [`${v?.toFixed(1)}%`]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Line type="monotone" dataKey="avgPrivate" name={t("group.pct_private", language)} stroke="hsl(262,30%,53%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(262,30%,53%)" }} />
+              <Line type="monotone" dataKey="avgSme" name={t("group.pct_sme", language)} stroke="hsl(122,39%,49%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(122,39%,49%)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        {/* Company ranking evolution */}
+        {companyEvolution.length >= 2 && top5Companies.length > 0 && (
+          <SectionCard title={t("group.company_ranking_trend", language)}>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={companyEvolution} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {top5Companies.map((company, i) => (
+                  <Line key={company} type="monotone" dataKey={company} name={company} stroke={COMPANY_COLORS[i % COMPANY_COLORS.length]} strokeWidth={2} dot={{ r: 4, fill: COMPANY_COLORS[i % COMPANY_COLORS.length] }} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </SectionCard>
+        )}
       </div>
     </div>
   );
