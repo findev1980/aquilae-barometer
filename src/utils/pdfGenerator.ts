@@ -1400,7 +1400,82 @@ export function generateGroupPDF(
 
     y += chartH + 20;
 
-    // Evolution data table
+  } else {
+    doc.setFontSize(9);
+    doc.setTextColor(...GREY);
+    doc.setFont("helvetica", "italic");
+    doc.text(lang === "nl"
+      ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
+      : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
+  }
+
+  addFooter(doc, year, 4, totalPages, lang);
+
+  // ===== PAGE 5 — Company Evolution + Cijfers per jaar =====
+  doc.addPage();
+  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 5);
+  y = 28;
+  y = sectionTitle(doc, lang === "nl" ? "Evolutie top maatschappijen" : "Évolution top compagnies", y);
+
+  if (allYears.length >= 2) {
+    const COMPANY_COLORS: (readonly [number, number, number])[] = [
+      [121, 97, 171], [76, 175, 80], [245, 166, 35], [41, 182, 246], [233, 30, 99],
+    ];
+
+    const allFiltered = allData.filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+    const top5NonLife = calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
+
+    if (top5NonLife.length > 0) {
+      const compEvoNL = allYears.map((yr) => {
+        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+        if (yrData.length === 0) return null;
+        const ranking = calcWeightedRanking(yrData, "ranking_nonlife");
+        return {
+          year: yr,
+          lines: top5NonLife.map((c, i) => ({
+            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
+            label: c,
+            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
+          })),
+        };
+      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
+
+      drawMiniMultiLineChart(doc, compEvoNL, {
+        x: 15, y, w: 170, h: 55,
+        title: lang === "nl" ? "Top 5 maatschappijen niet-leven (punten)" : "Top 5 compagnies non-vie (points)",
+        formatFn: (v) => String(Math.round(v)),
+      });
+
+      y += 70;
+    }
+
+    const top5Life = calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
+
+    if (top5Life.length > 0) {
+      const compEvoLife = allYears.map((yr) => {
+        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
+        if (yrData.length === 0) return null;
+        const ranking = calcWeightedRanking(yrData, "ranking_life");
+        return {
+          year: yr,
+          lines: top5Life.map((c, i) => ({
+            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
+            label: c,
+            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
+          })),
+        };
+      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
+
+      drawMiniMultiLineChart(doc, compEvoLife, {
+        x: 15, y, w: 170, h: 55,
+        title: lang === "nl" ? "Top 5 maatschappijen leven (punten)" : "Top 5 compagnies vie (points)",
+        formatFn: (v) => String(Math.round(v)),
+      });
+
+      y += 70;
+    }
+
+    // Cijfers per jaar table
     y = sectionTitle(doc, lang === "nl" ? "Cijfers per jaar" : "Chiffres par année", y);
     autoTable(doc, {
       startY: y,
@@ -1431,80 +1506,6 @@ export function generateGroupPDF(
       margin: { left: 15, right: 15 },
       styles: { cellPadding: 2 },
     });
-  } else {
-    doc.setFontSize(9);
-    doc.setTextColor(...GREY);
-    doc.setFont("helvetica", "italic");
-    doc.text(lang === "nl"
-      ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
-      : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
-  }
-
-  addFooter(doc, year, 4, totalPages, lang);
-
-  // ===== PAGE 5 — Company Evolution =====
-  doc.addPage();
-  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 5);
-  y = 28;
-  y = sectionTitle(doc, lang === "nl" ? "Evolutie top maatschappijen" : "Évolution top compagnies", y);
-
-  if (allYears.length >= 2) {
-    const COMPANY_COLORS: (readonly [number, number, number])[] = [
-      [121, 97, 171], [76, 175, 80], [245, 166, 35], [41, 182, 246], [233, 30, 99],
-    ];
-
-    // Non-life company evolution
-    const allFiltered = allData.filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
-    const top5NonLife = calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
-
-    if (top5NonLife.length > 0) {
-      const compEvoNL = allYears.map((yr) => {
-        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
-        if (yrData.length === 0) return null;
-        const ranking = calcWeightedRanking(yrData, "ranking_nonlife");
-        return {
-          year: yr,
-          lines: top5NonLife.map((c, i) => ({
-            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
-            label: c,
-            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
-          })),
-        };
-      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
-
-      drawMiniMultiLineChart(doc, compEvoNL, {
-        x: 15, y, w: 170, h: 55,
-        title: lang === "nl" ? "Top 5 maatschappijen niet-leven (punten)" : "Top 5 compagnies non-vie (points)",
-        formatFn: (v) => String(Math.round(v)),
-      });
-
-      y += 70;
-    }
-
-    // Life company evolution
-    const top5Life = calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
-
-    if (top5Life.length > 0) {
-      const compEvoLife = allYears.map((yr) => {
-        const yrData = allData.filter((r) => r.survey_year === yr).filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
-        if (yrData.length === 0) return null;
-        const ranking = calcWeightedRanking(yrData, "ranking_life");
-        return {
-          year: yr,
-          lines: top5Life.map((c, i) => ({
-            value: ranking.find((r) => r.company === c)?.totalPoints ?? 0,
-            label: c,
-            color: COMPANY_COLORS[i % COMPANY_COLORS.length],
-          })),
-        };
-      }).filter(Boolean) as { year: number; lines: { value: number | null; label: string; color: readonly [number, number, number] }[] }[];
-
-      drawMiniMultiLineChart(doc, compEvoLife, {
-        x: 15, y, w: 170, h: 55,
-        title: lang === "nl" ? "Top 5 maatschappijen leven (punten)" : "Top 5 compagnies vie (points)",
-        formatFn: (v) => String(Math.round(v)),
-      });
-    }
   }
 
   addFooter(doc, year, 5, totalPages, lang);
