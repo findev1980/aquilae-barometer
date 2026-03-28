@@ -198,7 +198,8 @@ export default function OfficeDashboard() {
         const c = getComputed(rec);
         const groupComm = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
         const groupFte = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
-        const groupSat = yearData.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
+        const groupPri = yearData.map((r) => r.pct_private).filter((v): v is number => v !== null);
+        const groupSme = yearData.map((r) => r.pct_sme).filter((v): v is number => v !== null);
         return {
           year,
           commIns: rec.commission_insurance,
@@ -206,13 +207,50 @@ export default function OfficeDashboard() {
           totalComm: c.total_commission,
           totalFte: c.total_fte,
           commPerFte: c.commission_per_fte,
-          satisfaction: satisfactionScore(rec.satisfaction_aquilae),
+          pctPrivate: rec.pct_private,
+          pctSme: rec.pct_sme,
           groupCommMean: groupComm.length > 0 ? groupComm.reduce((a, b) => a + b, 0) / groupComm.length : null,
           groupFteMean: groupFte.length > 0 ? groupFte.reduce((a, b) => a + b, 0) / groupFte.length : null,
-          groupSatMean: groupSat.length > 0 ? groupSat.reduce((a, b) => a + b, 0) / groupSat.length : null,
+          groupPriMean: groupPri.length > 0 ? Math.round(groupPri.reduce((a, b) => a + b, 0) / groupPri.length * 10) / 10 : null,
+          groupSmeMean: groupSme.length > 0 ? Math.round(groupSme.reduce((a, b) => a + b, 0) / groupSme.length * 10) / 10 : null,
         };
       })
       .filter(Boolean);
+  }, [selectedOffice, allData, meta.available_years, sourceLanguageFilter]);
+
+  // Company evolution for office rankings
+  const officeCompanyEvolution = useMemo(() => {
+    if (!selectedOffice || meta.available_years.length < 2) return { nonlife: [] as { company: string; [key: string]: number | string }[], life: [] as { company: string; [key: string]: number | string }[] };
+    const buildEvolution = (field: "ranking_nonlife" | "ranking_life") => {
+      const companyYearPoints: Record<string, Record<number, number>> = {};
+      for (const year of meta.available_years) {
+        const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+        const rec = yearData.find((r) => r.office_name === selectedOffice);
+        if (!rec) continue;
+        const list = rec[field];
+        for (let i = 0; i < Math.min(list.length, 5); i++) {
+          const company = list[i]?.trim();
+          if (!company) continue;
+          // Normalize company name
+          const normalized = company.toLowerCase() === "axa" ? "AXA Belgium" : company;
+          if (!companyYearPoints[normalized]) companyYearPoints[normalized] = {};
+          companyYearPoints[normalized][year] = (companyYearPoints[normalized][year] || 0) + (5 - i);
+        }
+      }
+      // Get top companies by total points
+      const totals = Object.entries(companyYearPoints).map(([company, years]) => ({
+        company,
+        total: Object.values(years).reduce((a, b) => a + b, 0),
+        years,
+      })).sort((a, b) => b.total - a.total).slice(0, 5);
+
+      return totals.map(({ company, years }) => {
+        const row: Record<string, number | string> = { company };
+        for (const y of meta.available_years) row[String(y)] = years[y] || 0;
+        return row;
+      });
+    };
+    return { nonlife: buildEvolution("ranking_nonlife"), life: buildEvolution("ranking_life") };
   }, [selectedOffice, allData, meta.available_years, sourceLanguageFilter]);
 
   if (data.length === 0) {
@@ -559,21 +597,61 @@ export default function OfficeDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Satisfaction evolution */}
+                {/* % Particulieren vs KMO evolution */}
                 <div>
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.satisfaction", language)}</p>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.pct_private_sme", language)}</p>
                   <ResponsiveContainer width="100%" height={200}>
                     <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 10 }} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
-                      <Tooltip formatter={(v: number, name: string) => [v ?? "—", name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="satisfaction" name={t("office.value", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
-                      <Line type="monotone" dataKey="groupSatMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
+                      <Tooltip formatter={(v: number, name: string) => [`${v}%`, name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="pctPrivate" name={t("field.pct_private", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
+                      <Line type="monotone" dataKey="pctSme" name={t("field.pct_sme", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
+                      <Line type="monotone" dataKey="groupPriMean" name={`${t("field.pct_private", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="groupSmeMean" name={`${t("field.pct_sme", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(35,60%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Legend wrapperStyle={{ fontSize: 10 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+
+                {/* Top companies non-life */}
+                {officeCompanyEvolution.nonlife.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.company_nonlife", language)}</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={officeCompanyEvolution.nonlife} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="company" tick={{ fontSize: 9 }} interval={0} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        {meta.available_years.map((y, i) => (
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${262 - i * 30},30%,${53 + i * 10}%)`} />
+                        ))}
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Top companies life */}
+                {officeCompanyEvolution.life.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.company_life", language)}</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={officeCompanyEvolution.life} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="company" tick={{ fontSize: 9 }} interval={0} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        {meta.available_years.map((y, i) => (
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${142 - i * 20},45%,${45 + i * 10}%)`} />
+                        ))}
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             </div>
           ) : evolutionData.length === 1 ? (
