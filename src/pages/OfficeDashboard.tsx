@@ -115,6 +115,15 @@ export default function OfficeDashboard() {
     return data;
   }, [data, sizeFilter, officeSize]);
 
+  // Size-specific benchmark data (always filtered by office's own size category)
+  const sizeBenchmarkData = useMemo(() => {
+    if (!officeSize) return null;
+    return filterBySize(data, officeSize);
+  }, [data, officeSize]);
+
+  // Group-wide benchmark data (all offices, no size filter)
+  const groupBenchmarkData = useMemo(() => data, [data]);
+
   const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
 
   const benchmarks = useMemo(() => {
@@ -128,6 +137,32 @@ export default function OfficeDashboard() {
       computed: c,
     };
   }, [office, benchmarkData]);
+
+  // Group-wide benchmarks (all offices)
+  const groupBenchmarks = useMemo(() => {
+    if (!office) return null;
+    const c = getComputed(office);
+    return {
+      commIns: calcBenchmark(groupBenchmarkData.map((r) => r.commission_insurance), office.commission_insurance),
+      commBank: calcBenchmark(groupBenchmarkData.map((r) => r.commission_bank), office.commission_bank),
+      totalComm: calcBenchmark(groupBenchmarkData.map((r) => getComputed(r).total_commission), c.total_commission),
+      commPerFte: calcBenchmark(groupBenchmarkData.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
+      computed: c,
+    };
+  }, [office, groupBenchmarkData]);
+
+  // Size-specific benchmarks
+  const sizeBenchmarks = useMemo(() => {
+    if (!office || !sizeBenchmarkData) return null;
+    const c = getComputed(office);
+    return {
+      commIns: calcBenchmark(sizeBenchmarkData.map((r) => r.commission_insurance), office.commission_insurance),
+      commBank: calcBenchmark(sizeBenchmarkData.map((r) => r.commission_bank), office.commission_bank),
+      totalComm: calcBenchmark(sizeBenchmarkData.map((r) => getComputed(r).total_commission), c.total_commission),
+      commPerFte: calcBenchmark(sizeBenchmarkData.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
+      computed: c,
+    };
+  }, [office, sizeBenchmarkData]);
 
   const radarData = useMemo(() => {
     if (!office) return [];
@@ -226,9 +261,12 @@ export default function OfficeDashboard() {
           </div>
 
           {/* Financial benchmark */}
-          {benchmarks && (
+          {groupBenchmarks && (
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
               <h3 className="mb-4 text-sm font-semibold">{t("office.financial_benchmark", language)}</h3>
+              
+              {/* Group-wide comparison */}
+              <h4 className="mb-2 text-xs font-medium text-muted-foreground">{t("office.benchmark_group", language)}</h4>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -241,17 +279,48 @@ export default function OfficeDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    <BenchmarkRow label={t("field.commission_ins", language)} value={office.commission_insurance} mean={benchmarks.commIns.mean} median={benchmarks.commIns.median} percentile={benchmarks.commIns.percentile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.commission_bank", language)} value={office.commission_bank} mean={benchmarks.commBank.mean} median={benchmarks.commBank.median} percentile={benchmarks.commBank.percentile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.total_commission", language)} value={benchmarks.computed.total_commission} mean={benchmarks.totalComm.mean} median={benchmarks.totalComm.median} percentile={benchmarks.totalComm.percentile} formatFn={formatCurrency} />
-                    <BenchmarkRow label={t("field.commission_per_fte", language)} value={benchmarks.computed.commission_per_fte} mean={benchmarks.commPerFte.mean} median={benchmarks.commPerFte.median} percentile={benchmarks.commPerFte.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_ins", language)} value={office.commission_insurance} mean={groupBenchmarks.commIns.mean} median={groupBenchmarks.commIns.median} percentile={groupBenchmarks.commIns.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_bank", language)} value={office.commission_bank} mean={groupBenchmarks.commBank.mean} median={groupBenchmarks.commBank.median} percentile={groupBenchmarks.commBank.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.total_commission", language)} value={groupBenchmarks.computed.total_commission} mean={groupBenchmarks.totalComm.mean} median={groupBenchmarks.totalComm.median} percentile={groupBenchmarks.totalComm.percentile} formatFn={formatCurrency} />
+                    <BenchmarkRow label={t("field.commission_per_fte", language)} value={groupBenchmarks.computed.commission_per_fte} mean={groupBenchmarks.commPerFte.mean} median={groupBenchmarks.commPerFte.median} percentile={groupBenchmarks.commPerFte.percentile} formatFn={formatCurrency} />
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                n = {benchmarks.commIns.n} {t("common.offices", language)}
-                {officeSize && ` — ${t("size.benchmark_note", language)} (${getOfficeSizeLabel(officeSize, language)})`}
+              <p className="mt-1 text-xs text-muted-foreground">
+                n = {groupBenchmarks.commIns.n} {t("common.offices", language)}
               </p>
+
+              {/* Size-specific comparison */}
+              {sizeBenchmarks && officeSize && (
+                <>
+                  <div className="my-4 border-t border-border" />
+                  <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+                    {t("office.benchmark_size", language)} — {getOfficeSizeLabel(officeSize, language)}
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border text-left">
+                          <th className="pb-2 pr-3 text-xs font-medium text-muted-foreground" />
+                          <th className="pb-2 pr-3 text-right text-xs font-medium text-muted-foreground">{t("office.value", language)}</th>
+                          <HeaderWithTooltip label={t("benchmark.mean", language)} tooltip={t("benchmark.mean_tooltip", language)} />
+                          <HeaderWithTooltip label={t("benchmark.median", language)} tooltip={t("benchmark.median_tooltip", language)} />
+                          <HeaderWithTooltip label={t("benchmark.percentile", language)} tooltip={t("benchmark.percentile_tooltip", language)} />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <BenchmarkRow label={t("field.commission_ins", language)} value={office.commission_insurance} mean={sizeBenchmarks.commIns.mean} median={sizeBenchmarks.commIns.median} percentile={sizeBenchmarks.commIns.percentile} formatFn={formatCurrency} />
+                        <BenchmarkRow label={t("field.commission_bank", language)} value={office.commission_bank} mean={sizeBenchmarks.commBank.mean} median={sizeBenchmarks.commBank.median} percentile={sizeBenchmarks.commBank.percentile} formatFn={formatCurrency} />
+                        <BenchmarkRow label={t("field.total_commission", language)} value={sizeBenchmarks.computed.total_commission} mean={sizeBenchmarks.totalComm.mean} median={sizeBenchmarks.totalComm.median} percentile={sizeBenchmarks.totalComm.percentile} formatFn={formatCurrency} />
+                        <BenchmarkRow label={t("field.commission_per_fte", language)} value={sizeBenchmarks.computed.commission_per_fte} mean={sizeBenchmarks.commPerFte.mean} median={sizeBenchmarks.commPerFte.median} percentile={sizeBenchmarks.commPerFte.percentile} formatFn={formatCurrency} />
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    n = {sizeBenchmarks.commIns.n} {t("common.offices", language)}
+                  </p>
+                </>
+              )}
             </div>
           )}
 
