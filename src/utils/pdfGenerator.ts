@@ -1129,7 +1129,7 @@ export function generateGroupPDF(
     head: [["#", t("field.office_name", lang), t("field.commission_ins", lang), "FTE", t("field.commission_per_fte", lang)]],
     body: top10.map((r, i) => {
       const c = getComputed(r);
-      return [String(i + 1), r.office_name, fmtCur(r.commission_insurance), c.total_fte?.toFixed(1) ?? "—", fmtCur(c.commission_per_fte)];
+      return [String(i + 1), anon(r.office_name), fmtCur(r.commission_insurance), c.total_fte?.toFixed(1) ?? "—", fmtCur(c.commission_per_fte)];
     }),
     theme: "grid",
     headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
@@ -1154,7 +1154,7 @@ export function generateGroupPDF(
     head: [["#", t("field.office_name", lang), t("field.commission_per_fte", lang), t("field.total_commission", lang)]],
     body: top10Eff.map((r, i) => {
       const c = getComputed(r);
-      return [String(i + 1), r.office_name, fmtCur(r.eff), fmtCur(c.total_commission)];
+      return [String(i + 1), anon(r.office_name), fmtCur(r.eff), fmtCur(c.total_commission)];
     }),
     theme: "grid",
     headStyles: { fillColor: [...PRIMARY], fontSize: 8, textColor: [...WHITE] },
