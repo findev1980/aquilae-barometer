@@ -310,8 +310,8 @@ export function generateOfficePDF(
   y += 8;
 
   // Size-category benchmark
-  if (sizeData && officeSize) {
-    const benchSizeLabel = `${lang === "nl" ? "Vergelijking t.o.v. kantoorgrootte" : "Comparaison par taille"} — ${getOfficeSizeLabel(officeSize, lang)}`;
+  if (bmSizeData && bmOfficeSize) {
+    const benchSizeLabel = `${lang === "nl" ? "Vergelijking t.o.v. kantoorgrootte" : "Comparaison par taille"} — ${getOfficeSizeLabel(bmOfficeSize, lang)}`;
     y = sectionTitle(doc, benchSizeLabel, y);
 
     autoTable(doc, {
@@ -321,7 +321,7 @@ export function generateOfficePDF(
         t("benchmark.median", lang), t("benchmark.percentile", lang)
       ]],
       body: benchRows.map((row) => {
-        const sizeVals = sizeData.map((r) => {
+        const sizeVals = bmSizeData.map((r) => {
           if (row.label === t("field.commission_ins", lang)) return r.commission_insurance;
           if (row.label === t("field.commission_bank", lang)) return r.commission_bank;
           if (row.label === t("field.total_commission", lang)) return getComputed(r).total_commission;
@@ -340,7 +340,7 @@ export function generateOfficePDF(
     y = lastAutoTableFinalY(doc, y) + 4;
     doc.setFontSize(6);
     doc.setTextColor(...GREY);
-    doc.text(`n = ${sizeData.filter(r => r.commission_insurance !== null).length} ${lang === "nl" ? "kantoren" : "bureaux"}`, 15, y);
+    doc.text(`n = ${bmSizeData.filter(r => r.commission_insurance !== null).length} ${lang === "nl" ? "kantoren" : "bureaux"}`, 15, y);
     y += 8;
   }
 
