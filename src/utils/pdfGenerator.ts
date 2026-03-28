@@ -7,7 +7,7 @@ import {
   getComputed, calcBenchmark, calcWeightedRanking,
   formatCurrency, satisfactionScore, recommendScore, alignmentScore,
   calcFrequency, getOfficeSize, getOfficeSizeLabel, filterByYear, filterBySourceLang,
-  filterBySize
+  filterBySize, normalizeCompanyName
 } from "@/utils/benchmarkCalc";
 import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
@@ -431,7 +431,7 @@ export function generateOfficePDF(
   const drawCompanyList = (title: string, officeList: string[], groupRanking: ReturnType<typeof calcWeightedRanking>, yPos: number): number => {
     yPos = sectionTitle(doc, title, yPos);
     for (let i = 0; i < Math.min(officeList.length, 5); i++) {
-      const company = officeList[i];
+      const company = normalizeCompanyName(officeList[i]);
       const groupEntry = groupRanking.find((g) => g.company === company);
       const groupPos = groupEntry?.rank;
       const inGroupTop5 = groupPos !== undefined && groupPos <= 5;
@@ -816,7 +816,7 @@ export function generateOfficePDF(
         for (let i = 0; i < Math.min(list.length, 5); i++) {
           const company = list[i]?.trim();
           if (!company) continue;
-          const normalized = company.toLowerCase() === "axa" ? "AXA Belgium" : company;
+          const normalized = normalizeCompanyName(company);
           if (!companyYearPoints[normalized]) companyYearPoints[normalized] = {};
           companyYearPoints[normalized][rec.survey_year] = (companyYearPoints[normalized][rec.survey_year] || 0) + (5 - i);
         }
