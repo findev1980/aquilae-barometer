@@ -95,6 +95,29 @@ export const PRIORITIES_MAP: TermMapping[] = [
   },
 ];
 
+// Satisfaction — NL ↔ FR
+export const SATISFACTION_MAP: TermMapping[] = [
+  { nl: "Zeer tevreden", fr: "Très satisfait" },
+  { nl: "Tevreden", fr: "Satisfait" },
+  { nl: "Neutraal", fr: "Neutre" },
+];
+
+// Recommend — NL ↔ FR
+export const RECOMMEND_MAP: TermMapping[] = [
+  { nl: "Zeer zeker", fr: "Certainement" },
+  { nl: "Waarschijnlijk wel", fr: "Probablement" },
+  { nl: "Misschien", fr: "Peut-être" },
+];
+
+// Alignment (mission, vision, values, charter) — NL ↔ FR
+export const ALIGNMENT_MAP: TermMapping[] = [
+  { nl: "Helemaal", fr: "Complètement" },
+  { nl: "Ja", fr: "Oui" },
+  { nl: "Gedeeltelijk", fr: "Partiellement" },
+  { nl: "Eerder niet", fr: "Plutôt pas" },
+  { nl: "Helemaal niet", fr: "Pas du tout" },
+];
+
 /**
  * Normalize a raw value to a canonical key using a mapping table.
  * Returns the value in the target language, or the original if no mapping found.
