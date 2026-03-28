@@ -101,7 +101,7 @@ const COMPANY_ALIASES: Record<string, string> = {
   "axa belgium": "AXA Belgium",
 };
 
-function normalizeCompanyName(name: string): string {
+export function normalizeCompanyName(name: string): string {
   const key = name.trim().toLowerCase();
   return COMPANY_ALIASES[key] || name.trim();
 }
