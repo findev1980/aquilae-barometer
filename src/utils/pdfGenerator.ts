@@ -900,7 +900,6 @@ export function generateOfficePDF(
   }
 
   // ===== Analysis Summary (continues on current page) =====
-  y = 28;
   y = sectionTitle(doc, t("office.analysis", lang), y);
 
   const renderInsights = (insights: AnalysisInsight[], subtitle?: string) => {
