@@ -203,36 +203,59 @@ export function generateOfficePDF(
 
   y = sectionTitle(doc, t("office.personnel", lang), y);
   {
-    const avgManagers = (() => { const v = allData.map(r => r.num_managers).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-    const avgEmployees = (() => { const v = allData.map(r => r.num_employees_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-    const avgFte = (() => { const v = allData.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-    const avgCommPerFte = (() => { const v = allData.map(r => getComputed(r).commission_per_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+    const calcAvg = (records: OfficeRecord[], getter: (r: OfficeRecord) => number | null) => {
+      const v = records.map(getter).filter((x): x is number => x !== null);
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+    };
+    const officeSize = getOfficeSize(office);
+    const sizeData = officeSize ? filterBySize(allData, officeSize) : null;
+
+    const avgManagers = calcAvg(allData, r => r.num_managers);
+    const avgEmployees = calcAvg(allData, r => r.num_employees_fte);
+    const avgFte = calcAvg(allData, r => getComputed(r).total_fte);
+    const avgCommPerFte = calcAvg(allData, r => getComputed(r).commission_per_fte);
+
+    const sizeAvgManagers = sizeData ? calcAvg(sizeData, r => r.num_managers) : null;
+    const sizeAvgEmployees = sizeData ? calcAvg(sizeData, r => r.num_employees_fte) : null;
+    const sizeAvgFte = sizeData ? calcAvg(sizeData, r => getComputed(r).total_fte) : null;
+    const sizeAvgCommPerFte = sizeData ? calcAvg(sizeData, r => getComputed(r).commission_per_fte) : null;
 
     const persRows = [
-      { label: t("field.managers", lang), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-      { label: t("field.employees", lang), value: office.num_employees_fte, groupAvg: avgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-      { label: "Total FTE", value: computed.total_fte, groupAvg: avgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-      { label: t("field.commission_per_fte", lang), value: computed.commission_per_fte, groupAvg: avgCommPerFte, fmt: (v: number | null) => fmtCur(v) },
+      { label: t("field.managers", lang), value: office.num_managers, groupAvg: avgManagers, sizeAvg: sizeAvgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: t("field.employees", lang), value: office.num_employees_fte, groupAvg: avgEmployees, sizeAvg: sizeAvgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: "Total FTE", value: computed.total_fte, groupAvg: avgFte, sizeAvg: sizeAvgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+      { label: t("field.commission_per_fte", lang), value: computed.commission_per_fte, groupAvg: avgCommPerFte, sizeAvg: sizeAvgCommPerFte, fmt: (v: number | null) => fmtCur(v) },
     ];
 
     const officeLabel = lang === "nl" ? "Kantoor" : "Bureau";
-    const groupLabel = lang === "nl" ? "Groepsgemiddelde" : "Moyenne groupe";
-    const diffLabel = lang === "nl" ? "Verschil" : "Différence";
+    const groupLabel = lang === "nl" ? "Groep" : "Groupe";
+    const sizeLabel = officeSize ? getOfficeSizeLabel(officeSize, lang) : "";
+    const diffGroupLabel = lang === "nl" ? "Δ groep" : "Δ groupe";
+    const diffSizeLabel = lang === "nl" ? "Δ grootte" : "Δ taille";
+    const hasSizeCol = sizeData !== null && officeSize !== null;
+
+    const head = hasSizeCol
+      ? [["", officeLabel, groupLabel, diffGroupLabel, sizeLabel, diffSizeLabel]]
+      : [["", officeLabel, groupLabel, diffGroupLabel]];
 
     autoTable(doc, {
       startY: y,
-      head: [["", officeLabel, groupLabel, diffLabel]],
-      body: persRows.map(({ label, value, groupAvg, fmt }) => {
-        const diff = value !== null && groupAvg !== null ? value - groupAvg : null;
-        const diffStr = diff !== null ? `${diff >= 0 ? "+" : ""}${fmt(diff)}` : "—";
-        return [label, fmt(value), groupAvg !== null ? fmt(groupAvg) : "—", diffStr];
+      head,
+      body: persRows.map(({ label, value, groupAvg, sizeAvg, fmt }) => {
+        const groupDiff = value !== null && groupAvg !== null ? value - groupAvg : null;
+        const groupDiffStr = groupDiff !== null ? `${groupDiff >= 0 ? "+" : ""}${fmt(groupDiff)}` : "—";
+        const sizeDiff = value !== null && sizeAvg !== null ? value - sizeAvg : null;
+        const sizeDiffStr = sizeDiff !== null ? `${sizeDiff >= 0 ? "+" : ""}${fmt(sizeDiff)}` : "—";
+        const row = [label, fmt(value), groupAvg !== null ? fmt(groupAvg) : "—", groupDiffStr];
+        if (hasSizeCol) row.push(sizeAvg !== null ? fmt(sizeAvg) : "—", sizeDiffStr);
+        return row;
       }),
       theme: "grid",
-      headStyles: { fillColor: [...PRIMARY], fontSize: 8, fontStyle: "bold", textColor: [...WHITE] },
-      bodyStyles: { fontSize: 8, textColor: [...DARK] },
+      headStyles: { fillColor: [...PRIMARY], fontSize: 7, fontStyle: "bold", textColor: [...WHITE] },
+      bodyStyles: { fontSize: 7, textColor: [...DARK] },
       alternateRowStyles: { fillColor: [...PRIMARY_LIGHT] },
       margin: { left: 15, right: 15 },
-      styles: { cellPadding: 2 },
+      styles: { cellPadding: 1.5 },
     });
     y = lastAutoTableFinalY(doc, y) + 8;
   }
