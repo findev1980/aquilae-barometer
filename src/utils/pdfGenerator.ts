@@ -1331,6 +1331,7 @@ export function generateGroupPDF(
       };
     });
 
+  if (allYears.length >= 2) {
     const chartW = 75;
     const chartH = 45;
 
