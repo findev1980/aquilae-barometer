@@ -597,21 +597,61 @@ export default function OfficeDashboard() {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Satisfaction evolution */}
+                {/* % Particulieren vs KMO evolution */}
                 <div>
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.satisfaction", language)}</p>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.pct_private_sme", language)}</p>
                   <ResponsiveContainer width="100%" height={200}>
                     <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 10 }} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
-                      <Tooltip formatter={(v: number, name: string) => [v ?? "—", name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="satisfaction" name={t("office.value", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
-                      <Line type="monotone" dataKey="groupSatMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
+                      <Tooltip formatter={(v: number, name: string) => [`${v}%`, name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                      <Line type="monotone" dataKey="pctPrivate" name={t("field.pct_private", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
+                      <Line type="monotone" dataKey="pctSme" name={t("field.pct_sme", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
+                      <Line type="monotone" dataKey="groupPriMean" name={`${t("field.pct_private", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="groupSmeMean" name={`${t("field.pct_sme", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(35,60%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Legend wrapperStyle={{ fontSize: 10 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+
+                {/* Top companies non-life */}
+                {officeCompanyEvolution.nonlife.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.company_nonlife", language)}</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={officeCompanyEvolution.nonlife} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="company" tick={{ fontSize: 9 }} interval={0} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        {meta.available_years.map((y, i) => (
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${262 - i * 30},30%,${53 + i * 10}%)`} />
+                        ))}
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Top companies life */}
+                {officeCompanyEvolution.life.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">{t("evolution.company_life", language)}</p>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={officeCompanyEvolution.life} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="company" tick={{ fontSize: 9 }} interval={0} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        {meta.available_years.map((y, i) => (
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${142 - i * 20},45%,${45 + i * 10}%)`} />
+                        ))}
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             </div>
           ) : evolutionData.length === 1 ? (
