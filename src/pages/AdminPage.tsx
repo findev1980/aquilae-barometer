@@ -2,7 +2,8 @@ import { useState, useCallback } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import { parseExcelFile } from "@/utils/dataParser";
-import { Upload, FileSpreadsheet, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { generateVerificatieZip } from "@/utils/verificatieExport";
+import { Upload, FileSpreadsheet, AlertCircle, AlertTriangle, CheckCircle2, Download } from "lucide-react";
 
 export default function AdminPage() {
   const { language, meta, importData } = useBarometerStore();
@@ -12,6 +13,24 @@ export default function AdminPage() {
   const [importing, setImporting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showOverwrite, setShowOverwrite] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportVerificatie = async () => {
+    setExporting(true);
+    try {
+      const blob = await generateVerificatieZip();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Verificatie_kantoren.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -46,7 +65,17 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold animate-fade-in">{t("nav.admin", language)}</h1>
+      <div className="flex items-center justify-between animate-fade-in">
+        <h1 className="text-2xl font-bold">{t("nav.admin", language)}</h1>
+        <button
+          onClick={handleExportVerificatie}
+          disabled={exporting}
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition-transform hover:bg-accent active:scale-[0.97] disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {exporting ? "..." : t("admin.export_verification", language)}
+        </button>
+      </div>
 
       {/* Upload area */}
       <div
