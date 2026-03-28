@@ -776,6 +776,30 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
     return calcWeightedRanking(allFiltered, "ranking_nonlife").slice(0, 5).map((r) => r.company);
   }, [allData, sourceLanguageFilter]);
 
+  // Life company evolution
+  const companyEvolutionLife = useMemo(() => {
+    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    const overallRanking = calcWeightedRanking(allFiltered, "ranking_life");
+    const top5 = overallRanking.slice(0, 5).map((r) => r.company);
+
+    return meta.available_years.map((year) => {
+      const yearData = filterBySourceLang(filterByYear(allData, year), sourceLanguageFilter);
+      if (yearData.length === 0) return null;
+      const ranking = calcWeightedRanking(yearData, "ranking_life");
+      const row: Record<string, number | string> = { year };
+      top5.forEach((c) => {
+        const found = ranking.find((r) => r.company === c);
+        row[c] = found ? found.totalPoints : 0;
+      });
+      return row;
+    }).filter(Boolean) as Record<string, number | string>[];
+  }, [allData, meta.available_years, sourceLanguageFilter]);
+
+  const top5CompaniesLife = useMemo(() => {
+    const allFiltered = filterBySourceLang(allData, sourceLanguageFilter);
+    return calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
+  }, [allData, sourceLanguageFilter]);
+
   const COMPANY_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(35,90%,55%)", "hsl(200,70%,50%)", "hsl(340,65%,50%)"];
 
   if (evolutionData.length < 2) {
@@ -879,6 +903,24 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
                 <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
                 {top5Companies.map((company, i) => (
+                  <Line key={company} type="monotone" dataKey={company} name={company} stroke={COMPANY_COLORS[i % COMPANY_COLORS.length]} strokeWidth={2} dot={{ r: 4, fill: COMPANY_COLORS[i % COMPANY_COLORS.length] }} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </SectionCard>
+        )}
+
+        {/* Life company ranking evolution */}
+        {companyEvolutionLife.length >= 2 && top5CompaniesLife.length > 0 && (
+          <SectionCard title={t("group.company_ranking_life_trend", language)}>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={companyEvolutionLife} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                {top5CompaniesLife.map((company, i) => (
                   <Line key={company} type="monotone" dataKey={company} name={company} stroke={COMPANY_COLORS[i % COMPANY_COLORS.length]} strokeWidth={2} dot={{ r: 4, fill: COMPANY_COLORS[i % COMPANY_COLORS.length] }} />
                 ))}
               </LineChart>
