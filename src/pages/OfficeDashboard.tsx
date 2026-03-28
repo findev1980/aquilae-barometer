@@ -325,7 +325,7 @@ export default function OfficeDashboard() {
           )}
 
           {/* Analysis Summary */}
-          {benchmarks && <AnalysisSummary office={office} data={data} benchmarks={benchmarks} language={language} />}
+          {groupBenchmarks && <AnalysisSummary office={office} data={data} benchmarks={groupBenchmarks} sizeBenchmarks={sizeBenchmarks} sizeData={sizeBenchmarkData} officeSize={officeSize} language={language} />}
 
           {/* Portfolio distribution */}
           {office && <PortfolioDistribution office={office} data={data} sizeData={sizeBenchmarkData} officeSize={officeSize} language={language} />}
