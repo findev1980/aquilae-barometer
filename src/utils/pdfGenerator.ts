@@ -1139,7 +1139,13 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-  y = lastAutoTableFinalY(doc, y) + 10;
+
+  addFooter(doc, year, 1, totalPages, lang);
+
+  // ===== PAGE 2 — Top 10 Efficiency + Companies & Engagement =====
+  doc.addPage();
+  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 2);
+  y = 28;
 
   // Top 10 efficiency
   y = sectionTitle(doc, lang === "nl" ? "Top 10 efficiëntie (commissie/FTE)" : "Top 10 efficacité (commission/ETP)", y);
@@ -1164,10 +1170,7 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
     columnStyles: { 0: { cellWidth: 10 } },
   });
-
-  addFooter(doc, year, 1, totalPages, lang);
-
-  // ===== PAGE 2 — Companies & Engagement =====
+  y = lastAutoTableFinalY(doc, y) + 10;
   doc.addPage();
   addHeader(doc, "Groepsrapport", 2);
   y = 28;
