@@ -1,37 +1,50 @@
 
 
-## Plan: Data persisteren in de database
+# Verificatie-export: ZIP met één Excel per kantoor
 
-### Probleem
-Alle geïmporteerde kantoordata wordt opgeslagen in `localStorage`, wat vluchtig is. Bij herdeployment, andere browser, of cache-wissing verdwijnt alles.
+## Wat wordt gebouwd
 
-### Oplossing
-Migreer de data-opslag van localStorage naar de database, zodat data persistent is en gedeeld tussen sessies/apparaten.
+Een knop "Exporteer verificatiebestanden" op de Admin-pagina die:
+1. Alle kantoren en alle beschikbare jaren ophaalt uit de database
+2. Per kantoor een apart Excel-bestand genereert (bestandsnaam = kantoornaam)
+3. Alles bundelt in één ZIP-bestand dat gedownload wordt
 
-### Stappen
+### Excel-structuur per kantoor
 
-1. **Database tabel aanmaken**
-   - `office_records` tabel met alle velden uit het `OfficeRecord` type
-   - `import_meta` tabel voor jaar-metadata (available_years, last_import)
-   - RLS policies: alleen ingelogde gebruikers kunnen lezen/schrijven
+```text
+Verificatie data - [Kantoornaam]
 
-2. **Import-flow aanpassen (`AdminPage` + store)**
-   - Bij CSV-import: data schrijven naar `office_records` tabel i.p.v. localStorage
-   - Meta bijwerken in `import_meta`
-   - Delete-year: verwijderen uit database
+Jaar | Zaakvoerders | Bedienden (FTE) | Commissie Verzekeringen (€) | Commissie Bank (€)
+2022 |      —       |        —        |         1.520.000           |      950.000
+2023 |      —       |        —        |         1.600.000           |      950.000
+...
+```
 
-3. **Data laden bij opstarten**
-   - `loadFromStorage` hernoemen naar `loadData`
-   - Data ophalen via Supabase query i.p.v. localStorage
-   - Caching in Zustand store blijft voor snelle UI
+- Eén rij per beschikbaar jaar (alle jaren uit de database)
+- Jaren zonder data voor dat kantoor: volledige rij met gele achtergrond
+- Individuele null-cellen: gele achtergrond
+- Bestaande data ingevuld
 
-4. **localStorage verwijderen**
-   - Verwijder alle `localStorage.getItem/setItem` calls voor data (settings zoals taal/thema mogen lokaal blijven)
+## Technische aanpak
 
-### Technische details
+### 1. Nieuwe utility: `src/utils/verificatieExport.ts`
+- Query alle unieke kantoornamen + alle beschikbare jaren uit `office_records`
+- Per kantoor: genereer een xlsx-werkblad met `xlsx` (SheetJS) library
+- Gele achtergrond op lege/null cellen
+- Gebruik `JSZip` om alle xlsx-bestanden in één ZIP te bundelen
+- Bestandsnaam per kantoor: kantoornaam (speciale tekens sanitized) + `.xlsx`
+- ZIP-bestandsnaam: `Verificatie_kantoren.zip`
 
-- De `OfficeRecord` type in `src/types/barometer.ts` bepaalt de kolomstructuur
-- De store (`useBarometerStore.ts`) wordt aangepast om async Supabase calls te doen
-- RLS: `authenticated` gebruikers krijgen volledige CRUD-toegang
-- Bestaande filtering/berekeningen blijven ongewijzigd (werken op in-memory data)
+### 2. Dependencies
+- `xlsx` (SheetJS) — al beschikbaar of toevoegen voor Excel-generatie met styling
+- `jszip` — toevoegen voor ZIP-bundeling
+- Alternatief: `exceljs` in plaats van `xlsx` (betere styling-ondersteuning voor gele achtergrond)
+
+### 3. AdminPage aanpassen (`src/pages/AdminPage.tsx`)
+- Nieuwe knop "Exporteer verificatiebestanden" met Download-icoon
+- Loading state + disabled tijdens generatie
+- Triggert de export-functie, download resulterende ZIP via blob URL
+
+### 4. Translations (`src/i18n/translations.ts`)
+- `admin.export_verification` NL: "Exporteer verificatiebestanden" / FR: "Exporter fichiers de vérification"
 
