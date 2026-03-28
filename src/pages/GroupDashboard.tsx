@@ -720,6 +720,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
 
       const comms = yearData.map((r) => getComputed(r).total_commission).filter((v): v is number => v !== null);
       const ftes = yearData.map((r) => getComputed(r).total_fte).filter((v): v is number => v !== null);
+      const commPerFtes = yearData.map((r) => getComputed(r).commission_per_fte).filter((v): v is number => v !== null);
 
       const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
 
@@ -740,6 +741,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
         year,
         avgComm: avg(comms),
         avgFte: avg(ftes),
+        avgCommPerFte: avg(commPerFtes),
         officeCount: n,
         klein, middel, groot,
         avgPrivate: avg(privs),
@@ -807,6 +809,18 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => [v?.toFixed(1) ?? "—", t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
               <Line type="monotone" dataKey="avgFte" name={t("benchmark.mean", language)} stroke="hsl(122,39%,49%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(122,39%,49%)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </SectionCard>
+
+        <SectionCard title={t("group.avg_commission_per_fte_trend", language)}>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => [formatCurrency(v), t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
+              <Line type="monotone" dataKey="avgCommPerFte" name={t("benchmark.mean", language)} stroke="hsl(142,60%,40%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(142,60%,40%)" }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionCard>
