@@ -1360,7 +1360,7 @@ export function generateGroupPDF(
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.count, groupValue: null })), {
       x: 115, y, w: chartW, h: chartH,
-      title: lang === "nl" ? "Aantal kantoren" : "Nombre de bureaux",
+      title: lang === "nl" ? "Aantal deelnemende kantoren" : "Nombre de bureaux participants",
       formatFn: (v) => String(Math.round(v)),
       color: PRIMARY,
     });
