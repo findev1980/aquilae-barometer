@@ -1300,8 +1300,7 @@ export function generateGroupPDF(
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie groepsgemiddelden" : "Évolution moyennes de groupe", y);
 
-  if (allYears.length >= 2) {
-    const evolutionData = allYears.map((yr) => {
+  const evolutionData = allYears.map((yr) => {
       const yrData = allData
         .filter((r) => r.survey_year === yr)
         .filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
