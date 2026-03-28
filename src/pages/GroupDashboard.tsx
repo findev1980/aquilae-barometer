@@ -534,8 +534,8 @@ function StrategyTab({ data, language }: { data: import("@/types/barometer").Off
 }
 
 function EngagementTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
-  const satDist = useMemo(() => calcFrequency(data, "satisfaction_aquilae"), [data]);
-  const recDist = useMemo(() => calcFrequency(data, "recommend_aquilae"), [data]);
+  const satDist = useMemo(() => calcFrequencyTranslated(data, "satisfaction_aquilae", SATISFACTION_MAP, language), [data, language]);
+  const recDist = useMemo(() => calcFrequencyTranslated(data, "recommend_aquilae", RECOMMEND_MAP, language), [data, language]);
 
   const avgScores = useMemo(() => {
     const sat = data.map((r) => satisfactionScore(r.satisfaction_aquilae)).filter((v): v is number => v !== null);
