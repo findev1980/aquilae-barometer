@@ -2,7 +2,8 @@ import { useState, useCallback } from "react";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import { parseExcelFile } from "@/utils/dataParser";
-import { Upload, FileSpreadsheet, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { generateVerificatieZip } from "@/utils/verificatieExport";
+import { Upload, FileSpreadsheet, AlertCircle, AlertTriangle, CheckCircle2, Download } from "lucide-react";
 
 export default function AdminPage() {
   const { language, meta, importData } = useBarometerStore();
@@ -12,6 +13,24 @@ export default function AdminPage() {
   const [importing, setImporting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showOverwrite, setShowOverwrite] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportVerificatie = async () => {
+    setExporting(true);
+    try {
+      const blob = await generateVerificatieZip();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Verificatie_kantoren.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
