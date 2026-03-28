@@ -1046,6 +1046,13 @@ export function generateGroupPDF(
     .filter((r) => r.survey_year === year)
     .filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
 
+  // Anonymize office names for group report
+  const uniqueNames = [...new Set(data.map((r) => r.office_name))].sort();
+  const anonLabel = lang === "fr" ? "Bureau" : "Kantoor";
+  const anonMap = new Map<string, string>();
+  uniqueNames.forEach((name, i) => anonMap.set(name, `${anonLabel} ${i + 1}`));
+  const anon = (name: string) => anonMap.get(name) ?? name;
+
   // Get all years for evolution
   const allYears = [...new Set(allData.map((r) => r.survey_year))].sort();
 
