@@ -8,7 +8,7 @@ import {
   alignmentScore, calcBenchmark, getOfficeSize, getOfficeSizeLabel
 } from "@/utils/benchmarkCalc";
 import type { OfficeSize } from "@/utils/benchmarkCalc";
-import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
+import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP, SATISFACTION_MAP, RECOMMEND_MAP, ALIGNMENT_MAP } from "@/utils/termMappings";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   Cell, PieChart, Pie, LineChart, Line, Legend, ReferenceLine,
