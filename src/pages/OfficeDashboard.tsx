@@ -335,16 +335,27 @@ export default function OfficeDashboard() {
             <div className="rounded-xl border border-border bg-card p-5 card-shadow">
               <h3 className="mb-4 text-sm font-semibold">{t("office.personnel", language)}</h3>
               {(() => {
-                const avgManagers = (() => { const v = data.map(r => r.num_managers).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-                const avgEmployees = (() => { const v = data.map(r => r.num_employees_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-                const avgFte = (() => { const v = data.map(r => getComputed(r).total_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
-                const avgCommPerFte = (() => { const v = data.map(r => getComputed(r).commission_per_fte).filter((v): v is number => v !== null); return v.length ? v.reduce((a,b) => a+b, 0) / v.length : null; })();
+                const calcAvg = (records: OfficeRecord[], getter: (r: OfficeRecord) => number | null) => {
+                  const v = records.map(getter).filter((x): x is number => x !== null);
+                  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+                };
+                const avgManagers = calcAvg(data, r => r.num_managers);
+                const avgEmployees = calcAvg(data, r => r.num_employees_fte);
+                const avgFte = calcAvg(data, r => getComputed(r).total_fte);
+                const avgCommPerFte = calcAvg(data, r => getComputed(r).commission_per_fte);
+
+                const sizeAvgManagers = sizeBenchmarkData ? calcAvg(sizeBenchmarkData, r => r.num_managers) : null;
+                const sizeAvgEmployees = sizeBenchmarkData ? calcAvg(sizeBenchmarkData, r => r.num_employees_fte) : null;
+                const sizeAvgFte = sizeBenchmarkData ? calcAvg(sizeBenchmarkData, r => getComputed(r).total_fte) : null;
+                const sizeAvgCommPerFte = sizeBenchmarkData ? calcAvg(sizeBenchmarkData, r => getComputed(r).commission_per_fte) : null;
+
                 const rows = [
-                  { label: t("field.managers", language), value: office.num_managers, groupAvg: avgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-                  { label: t("field.employees", language), value: office.num_employees_fte, groupAvg: avgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-                  { label: "Total FTE", value: benchmarks?.computed.total_fte ?? null, groupAvg: avgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
-                  { label: t("field.commission_per_fte", language), value: benchmarks?.computed.commission_per_fte ?? null, groupAvg: avgCommPerFte, fmt: (v: number | null) => formatCurrency(v) },
+                  { label: t("field.managers", language), value: office.num_managers, groupAvg: avgManagers, sizeAvg: sizeAvgManagers, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+                  { label: t("field.employees", language), value: office.num_employees_fte, groupAvg: avgEmployees, sizeAvg: sizeAvgEmployees, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+                  { label: "Total FTE", value: benchmarks?.computed.total_fte ?? null, groupAvg: avgFte, sizeAvg: sizeAvgFte, fmt: (v: number | null) => v !== null ? v.toFixed(2) : "—" },
+                  { label: t("field.commission_per_fte", language), value: benchmarks?.computed.commission_per_fte ?? null, groupAvg: avgCommPerFte, sizeAvg: sizeAvgCommPerFte, fmt: (v: number | null) => formatCurrency(v) },
                 ];
+                const hasSizeCol = sizeBenchmarkData !== null && officeSize !== null;
                 return (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -352,12 +363,15 @@ export default function OfficeDashboard() {
                         <tr className="border-b border-border">
                           <th className="pb-2 text-left text-xs font-medium text-muted-foreground" />
                           <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Kantoor" : "Bureau"}</th>
-                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Groepsgemiddelde" : "Moyenne groupe"}</th>
-                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Verschil" : "Différence"}</th>
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Groep" : "Groupe"}</th>
+                          {hasSizeCol && (
+                            <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{getOfficeSizeLabel(officeSize!, language)}</th>
+                          )}
+                          <th className="pb-2 text-right text-xs font-medium text-muted-foreground">{language === "nl" ? "Verschil (groep)" : "Diff. (groupe)"}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {rows.map(({ label, value, groupAvg, fmt }) => {
+                        {rows.map(({ label, value, groupAvg, sizeAvg, fmt }) => {
                           const diff = value !== null && groupAvg !== null ? value - groupAvg : null;
                           const isPositive = diff !== null && diff >= 0;
                           return (
@@ -365,6 +379,9 @@ export default function OfficeDashboard() {
                               <td className="py-2 pr-3 font-medium text-muted-foreground">{label}</td>
                               <td className="py-2 pr-3 text-right tabular-nums font-semibold">{fmt(value)}</td>
                               <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{groupAvg !== null ? fmt(groupAvg) : "—"}</td>
+                              {hasSizeCol && (
+                                <td className="py-2 pr-3 text-right tabular-nums text-accent-orange">{sizeAvg !== null ? fmt(sizeAvg) : "—"}</td>
+                              )}
                               <td className={`py-2 text-right tabular-nums text-xs ${diff === null ? "text-muted-foreground" : isPositive ? "text-accent-green" : "text-accent-orange"}`}>
                                 {diff !== null ? `${isPositive ? "+" : ""}${fmt(diff)}` : "—"}
                               </td>
