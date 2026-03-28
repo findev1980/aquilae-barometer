@@ -769,17 +769,6 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, language }: {
           </ResponsiveContainer>
         </SectionCard>
 
-        <SectionCard title={t("group.avg_satisfaction_trend", language)}>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={evolutionData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="year" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 10 }} domain={[0, 3]} ticks={[0, 1, 2, 3]} />
-              <Tooltip formatter={(v: number) => [v?.toFixed(2) ?? "—", t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-              <Line type="monotone" dataKey="avgSat" name={t("benchmark.mean", language)} stroke="hsl(35,90%,55%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(35,90%,55%)" }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </SectionCard>
 
         <SectionCard title={t("group.office_count_trend", language)}>
           <ResponsiveContainer width="100%" height={250}>
