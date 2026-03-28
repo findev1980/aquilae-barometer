@@ -6,8 +6,10 @@ import { t } from "@/i18n/translations";
 import {
   getComputed, calcBenchmark, calcWeightedRanking,
   formatCurrency, satisfactionScore, recommendScore, alignmentScore,
-  calcFrequency, getOfficeSize, getOfficeSizeLabel, filterByYear, filterBySourceLang
+  calcFrequency, getOfficeSize, getOfficeSizeLabel, filterByYear, filterBySourceLang,
+  filterBySize
 } from "@/utils/benchmarkCalc";
+import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 
 const PRIMARY = [121, 97, 171] as const; // #7961AB
