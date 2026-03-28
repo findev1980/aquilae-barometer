@@ -95,13 +95,24 @@ export function alignmentScore(val: string): number | null {
   return null;
 }
 
+// Normalize company name aliases to a canonical form
+const COMPANY_ALIASES: Record<string, string> = {
+  "axa": "AXA Belgium",
+  "axa belgium": "AXA Belgium",
+};
+
+function normalizeCompanyName(name: string): string {
+  const key = name.trim().toLowerCase();
+  return COMPANY_ALIASES[key] || name.trim();
+}
+
 export function calcWeightedRanking(records: OfficeRecord[], field: "ranking_nonlife" | "ranking_life"): WeightedRanking[] {
   const scores: Record<string, { points: number; top3: number }> = {};
 
   for (const r of records) {
     const list = r[field];
     for (let i = 0; i < Math.min(list.length, 5); i++) {
-      const company = list[i].trim();
+      const company = normalizeCompanyName(list[i]);
       if (!company) continue;
       if (!scores[company]) scores[company] = { points: 0, top3: 0 };
       scores[company].points += 5 - i;
