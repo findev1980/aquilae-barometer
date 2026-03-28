@@ -115,6 +115,15 @@ export default function OfficeDashboard() {
     return data;
   }, [data, sizeFilter, officeSize]);
 
+  // Size-specific benchmark data (always filtered by office's own size category)
+  const sizeBenchmarkData = useMemo(() => {
+    if (!officeSize) return null;
+    return filterBySize(data, officeSize);
+  }, [data, officeSize]);
+
+  // Group-wide benchmark data (all offices, no size filter)
+  const groupBenchmarkData = useMemo(() => data, [data]);
+
   const offices = useMemo(() => data.map((r) => r.office_name).sort(), [data]);
 
   const benchmarks = useMemo(() => {
@@ -128,6 +137,32 @@ export default function OfficeDashboard() {
       computed: c,
     };
   }, [office, benchmarkData]);
+
+  // Group-wide benchmarks (all offices)
+  const groupBenchmarks = useMemo(() => {
+    if (!office) return null;
+    const c = getComputed(office);
+    return {
+      commIns: calcBenchmark(groupBenchmarkData.map((r) => r.commission_insurance), office.commission_insurance),
+      commBank: calcBenchmark(groupBenchmarkData.map((r) => r.commission_bank), office.commission_bank),
+      totalComm: calcBenchmark(groupBenchmarkData.map((r) => getComputed(r).total_commission), c.total_commission),
+      commPerFte: calcBenchmark(groupBenchmarkData.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
+      computed: c,
+    };
+  }, [office, groupBenchmarkData]);
+
+  // Size-specific benchmarks
+  const sizeBenchmarks = useMemo(() => {
+    if (!office || !sizeBenchmarkData) return null;
+    const c = getComputed(office);
+    return {
+      commIns: calcBenchmark(sizeBenchmarkData.map((r) => r.commission_insurance), office.commission_insurance),
+      commBank: calcBenchmark(sizeBenchmarkData.map((r) => r.commission_bank), office.commission_bank),
+      totalComm: calcBenchmark(sizeBenchmarkData.map((r) => getComputed(r).total_commission), c.total_commission),
+      commPerFte: calcBenchmark(sizeBenchmarkData.map((r) => getComputed(r).commission_per_fte), c.commission_per_fte),
+      computed: c,
+    };
+  }, [office, sizeBenchmarkData]);
 
   const radarData = useMemo(() => {
     if (!office) return [];
