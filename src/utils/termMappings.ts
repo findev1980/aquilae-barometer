@@ -99,14 +99,19 @@ export const PRIORITIES_MAP: TermMapping[] = [
  * Normalize a raw value to a canonical key using a mapping table.
  * Returns the value in the target language, or the original if no mapping found.
  */
+/** Collapse all whitespace variants (non-breaking spaces, multiple spaces) into single regular spaces */
+function normalizeWhitespace(s: string): string {
+  return s.replace(/[\s\u00A0]+/g, " ").trim();
+}
+
 export function normalizeAndTranslate(
   rawValue: string,
   mappings: TermMapping[],
   targetLang: "nl" | "fr"
 ): string {
-  const trimmed = rawValue.trim();
+  const trimmed = normalizeWhitespace(rawValue);
   for (const m of mappings) {
-    if (m.nl === trimmed || m.fr === trimmed) {
+    if (normalizeWhitespace(m.nl) === trimmed || normalizeWhitespace(m.fr) === trimmed) {
       return m[targetLang];
     }
   }
