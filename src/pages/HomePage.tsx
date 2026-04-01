@@ -126,9 +126,9 @@ export default function HomePage() {
                     onClick={() => { navigate("/office"); useBarometerStore.getState().setSelectedOffice(r.office_name); }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
                   >
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>{r.office_name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{r.source_language.toUpperCase()}</span>
+                     <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                     <span>{getDisplayName(r.office_name)}</span>
+                     <span className="ml-auto text-xs text-muted-foreground">{r.source_language.toUpperCase()}</span>
                   </button>
                 </li>
               ))}
