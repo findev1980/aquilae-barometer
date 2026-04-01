@@ -631,10 +631,11 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
 }
 
 function TopBottomTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { getDisplayName: dn } = useBarometerStore();
   const rankings = useMemo(() => {
     const withCommIns = data
       .filter((r) => r.commission_insurance !== null)
-      .map((r) => ({ name: r.office_name, value: r.commission_insurance!, lang: r.source_language }))
+      .map((r) => ({ name: dn(r.office_name), value: r.commission_insurance!, lang: r.source_language }))
       .sort((a, b) => b.value - a.value);
 
     const withCommBank = data
