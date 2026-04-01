@@ -103,7 +103,7 @@ function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, 
 }
 
 export default function OfficeDashboard() {
-  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, selectedOffice, setSelectedOffice, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, selectedOffice, setSelectedOffice, meta, getDisplayName } = useBarometerStore();
 
   const data = useMemo(() => filterBySourceLang(filterByYear(allData, selectedYear), sourceLanguageFilter), [allData, selectedYear, sourceLanguageFilter]);
   const office = useMemo(() => data.find((r) => r.office_name === selectedOffice), [data, selectedOffice]);
