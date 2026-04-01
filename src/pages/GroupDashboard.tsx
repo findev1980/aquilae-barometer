@@ -329,7 +329,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
             <tbody>
               {sortedData.map(({ record: r, computed: c }, i) => (
                 <tr key={r.office_name} className={`border-b border-border/50 ${i % 2 === 0 ? "bg-primary-light/30" : ""}`}>
-                  <td className="py-2 pr-4 font-medium">{r.office_name}</td>
+                  <td className="py-2 pr-4 font-medium">{dn(r.office_name)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_insurance)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_bank)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(c.total_commission)}</td>
