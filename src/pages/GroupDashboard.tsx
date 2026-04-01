@@ -1221,7 +1221,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
             <ul className="absolute z-10 mt-1 max-h-48 w-full max-w-sm overflow-auto rounded-lg border border-border bg-card shadow-lg">
               {filtered.slice(0, 10).map((name) => (
                 <li key={name}>
-                  <button onClick={() => addOffice(name)} className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors">{name}</button>
+                  <button onClick={() => addOffice(name)} className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors">{dn(name)}</button>
                 </li>
               ))}
             </ul>
