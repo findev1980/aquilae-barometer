@@ -631,7 +631,7 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
 }
 
 function TopBottomTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
-  const { getDisplayName: dn } = useBarometerStore();
+  const { getDisplayName: dn, anonymized } = useBarometerStore();
   const rankings = useMemo(() => {
     const withCommIns = data
       .filter((r) => r.commission_insurance !== null)
