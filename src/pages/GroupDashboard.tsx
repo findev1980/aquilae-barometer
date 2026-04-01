@@ -961,8 +961,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
       results.push({
         icon: "📊",
         text: nl
-          ? `${best.record.office_name} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${worst.record.office_name}.`
-          : `${best.record.office_name} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${worst.record.office_name}.`,
+          ? `${dn(best.record.office_name)} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${dn(worst.record.office_name)}.`
+          : `${dn(best.record.office_name)} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${dn(worst.record.office_name)}.`,
         type: "neutral",
       });
     }
@@ -975,8 +975,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
       results.push({
         icon: "⚡",
         text: nl
-          ? `${bestEff.record.office_name} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${worstEff.record.office_name} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.`
-          : `${bestEff.record.office_name} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${worstEff.record.office_name} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`,
+          ? `${dn(bestEff.record.office_name)} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${dn(worstEff.record.office_name)} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.`
+          : `${dn(bestEff.record.office_name)} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${dn(worstEff.record.office_name)} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`,
         type: "neutral",
       });
     }
@@ -989,8 +989,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: above ? "✅" : "⚠️",
           text: nl
-            ? `${record.office_name} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.`
-            : `${record.office_name} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`,
+            ? `${dn(record.office_name)} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.`
+            : `${dn(record.office_name)} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`,
           type: above ? "positive" : "negative",
         });
       }
@@ -1004,8 +1004,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: above ? "🎯" : "📉",
           text: nl
-            ? `${record.office_name} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).`
-            : `${record.office_name} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`,
+            ? `${dn(record.office_name)} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).`
+            : `${dn(record.office_name)} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`,
           type: above ? "positive" : "negative",
         });
       }
@@ -1021,8 +1021,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: "👥",
           text: nl
-            ? `${largest.record.office_name} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${smallest.record.office_name} (${smallest.computed.total_fte} FTE).`
-            : `${largest.record.office_name} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${smallest.record.office_name} (${smallest.computed.total_fte} ETP).`,
+            ? `${dn(largest.record.office_name)} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} FTE).`
+            : `${dn(largest.record.office_name)} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} ETP).`,
           type: "neutral",
         });
       }
@@ -1038,8 +1038,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: "🏢",
           text: nl
-            ? `${record.office_name} richt zich voornamelijk op ${dominant} (${pct}%).`
-            : `${record.office_name} se concentre principalement sur ${dominant} (${pct}%).`,
+            ? `${dn(record.office_name)} richt zich voornamelijk op ${dominant} (${pct}%).`
+            : `${dn(record.office_name)} se concentre principalement sur ${dominant} (${pct}%).`,
           type: "neutral",
         });
       }
@@ -1142,25 +1142,25 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
     if (best.computed.total_commission && worst.computed.total_commission && best.computed.total_commission > 0) {
       const diff = best.computed.total_commission - worst.computed.total_commission;
       const pct = ((diff / worst.computed.total_commission) * 100).toFixed(0);
-      results.push({ icon: "📊", text: nl ? `${best.record.office_name} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${worst.record.office_name}.` : `${best.record.office_name} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${worst.record.office_name}.`, type: "neutral" });
+      results.push({ icon: "📊", text: nl ? `${dn(best.record.office_name)} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${dn(worst.record.office_name)}.` : `${dn(best.record.office_name)} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${dn(worst.record.office_name)}.`, type: "neutral" });
     }
     const effSorted = [...selectedData].filter((d) => d.computed.commission_per_fte !== null).sort((a, b) => (b.computed.commission_per_fte ?? 0) - (a.computed.commission_per_fte ?? 0));
     if (effSorted.length >= 2) {
       const bestEff = effSorted[0]; const worstEff = effSorted[effSorted.length - 1];
-      results.push({ icon: "⚡", text: nl ? `${bestEff.record.office_name} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${worstEff.record.office_name} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.` : `${bestEff.record.office_name} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${worstEff.record.office_name} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`, type: "neutral" });
+      results.push({ icon: "⚡", text: nl ? `${dn(bestEff.record.office_name)} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${dn(worstEff.record.office_name)} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.` : `${dn(bestEff.record.office_name)} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${dn(worstEff.record.office_name)} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`, type: "neutral" });
     }
     selectedData.forEach(({ record, computed }) => {
       if (computed.total_commission !== null && groupAvgComm > 0) {
         const pctVsGroup = ((computed.total_commission / groupAvgComm - 1) * 100).toFixed(0);
         const above = computed.total_commission >= groupAvgComm;
-        results.push({ icon: above ? "✅" : "⚠️", text: nl ? `${record.office_name} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.` : `${record.office_name} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`, type: above ? "positive" : "negative" });
+        results.push({ icon: above ? "✅" : "⚠️", text: nl ? `${dn(record.office_name)} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.` : `${dn(record.office_name)} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`, type: above ? "positive" : "negative" });
       }
     });
     selectedData.forEach(({ record, computed }) => {
       if (computed.commission_per_fte !== null && groupAvgEff > 0) {
         const pctVsGroup = ((computed.commission_per_fte / groupAvgEff - 1) * 100).toFixed(0);
         const above = computed.commission_per_fte >= groupAvgEff;
-        results.push({ icon: above ? "🎯" : "📉", text: nl ? `${record.office_name} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).` : `${record.office_name} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`, type: above ? "positive" : "negative" });
+        results.push({ icon: above ? "🎯" : "📉", text: nl ? `${dn(record.office_name)} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).` : `${dn(record.office_name)} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`, type: above ? "positive" : "negative" });
       }
     });
     const fteSorted = [...selectedData].filter((d) => d.computed.total_fte !== null).sort((a, b) => (b.computed.total_fte ?? 0) - (a.computed.total_fte ?? 0));
@@ -1168,14 +1168,14 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
       const largest = fteSorted[0]; const smallest = fteSorted[fteSorted.length - 1];
       if (largest.computed.total_fte && smallest.computed.total_fte) {
         const ratio = (largest.computed.total_fte / smallest.computed.total_fte).toFixed(1);
-        results.push({ icon: "👥", text: nl ? `${largest.record.office_name} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${smallest.record.office_name} (${smallest.computed.total_fte} FTE).` : `${largest.record.office_name} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${smallest.record.office_name} (${smallest.computed.total_fte} ETP).`, type: "neutral" });
+        results.push({ icon: "👥", text: nl ? `${dn(largest.record.office_name)} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} FTE).` : `${dn(largest.record.office_name)} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} ETP).`, type: "neutral" });
       }
     }
     selectedData.forEach(({ record }) => {
       if (record.pct_private !== null && record.pct_sme !== null) {
         const dominant = record.pct_private > record.pct_sme ? (nl ? "particulier" : "particulier") : (nl ? "KMO" : "PME");
         const pct = Math.max(record.pct_private, record.pct_sme ?? 0);
-        results.push({ icon: "🏢", text: nl ? `${record.office_name} richt zich voornamelijk op ${dominant} (${pct}%).` : `${record.office_name} se concentre principalement sur ${dominant} (${pct}%).`, type: "neutral" });
+        results.push({ icon: "🏢", text: nl ? `${dn(record.office_name)} richt zich voornamelijk op ${dominant} (${pct}%).` : `${dn(record.office_name)} se concentre principalement sur ${dominant} (${pct}%).`, type: "neutral" });
       }
     });
     return results;
