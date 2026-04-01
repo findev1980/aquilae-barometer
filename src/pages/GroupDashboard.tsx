@@ -147,7 +147,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
       .filter((r) => r.commission_insurance !== null)
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: r.commission_insurance! }))
       .sort((a, b) => b.value - a.value),
-    [data]
+    [data, anonymized]
   );
 
   const commBankData = useMemo(() =>
@@ -155,7 +155,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
       .filter((r) => r.commission_bank !== null)
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: r.commission_bank! }))
       .sort((a, b) => b.value - a.value),
-    [data]
+    [data, anonymized]
   );
 
   const avgPrivate = useMemo(() => {
@@ -181,7 +181,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
       .filter((r) => r.pct_private !== null || r.pct_sme !== null)
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), fullName: dn(r.office_name), private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
       .sort((a, b) => b.private - a.private),
-    [data]
+    [data, anonymized]
   );
 
   const lifeNonlifeData = useMemo(() =>
@@ -189,7 +189,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
       .filter((r) => r.pct_life !== null || r.pct_nonlife !== null)
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), fullName: dn(r.office_name), life: r.pct_life ?? 0, nonlife: r.pct_nonlife ?? 0 }))
       .sort((a, b) => b.nonlife - a.nonlife),
-    [data]
+    [data, anonymized]
   );
 
   const sortedData = useMemo(() => {
