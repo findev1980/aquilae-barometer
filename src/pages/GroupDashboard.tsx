@@ -646,7 +646,7 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
     const withTotal = data
       .map((r) => {
         const c = getComputed(r);
-        return { name: r.office_name, value: c.total_commission ?? 0, lang: r.source_language };
+        return { name: dn(r.office_name), value: c.total_commission ?? 0, lang: r.source_language };
       })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
