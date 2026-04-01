@@ -188,7 +188,7 @@ export default function ExportsPage() {
             map((r) =>
             <li key={r.office_name} className="flex items-center justify-between px-5 py-2.5 hover:bg-muted/50 transition-colors">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{r.office_name}</p>
+                      <p className="text-sm font-medium truncate">{getDisplayName(r.office_name)}</p>
                       <p className="text-xs text-muted-foreground">{r.source_language.toUpperCase()}</p>
                     </div>
                     <button
