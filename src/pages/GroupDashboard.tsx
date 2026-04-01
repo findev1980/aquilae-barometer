@@ -1256,7 +1256,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
                   {selectedData.map((_, i) => (
                     <Radar
                       key={i}
-                      name={selected[i]}
+                      name={dn(selected[i])}
                       dataKey={`office_${i}`}
                       stroke={COMPARE_COLORS[i % COMPARE_COLORS.length]}
                       fill={COMPARE_COLORS[i % COMPARE_COLORS.length]}
