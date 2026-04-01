@@ -940,6 +940,7 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
   data: import("@/types/barometer").OfficeRecord[];
   language: "nl" | "fr";
 }) {
+  const { getDisplayName: dn } = useBarometerStore();
   const insights = useMemo(() => {
     if (selectedData.length < 2) return [];
     const nl = language === "nl";
