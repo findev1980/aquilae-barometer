@@ -94,7 +94,16 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Search + Quick nav */}
+      {/* Anonymize toggle */}
+      {meta.available_years.length > 0 && (
+        <div className="flex items-center gap-3 animate-fade-in" style={{ animationDelay: "320ms" }}>
+          <Switch checked={anonymized} onCheckedChange={toggleAnonymized} id="anon-toggle" />
+          <label htmlFor="anon-toggle" className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
+            {anonymized ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+            {t("home.anonymize", language)}
+          </label>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Office search */}
         <div className="rounded-xl border border-border bg-card p-5 card-shadow animate-fade-in" style={{ animationDelay: "350ms" }}>
