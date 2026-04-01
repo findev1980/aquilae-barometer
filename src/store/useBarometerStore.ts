@@ -18,12 +18,15 @@ interface BarometerState {
   allData: OfficeRecord[];
   meta: BarometerMeta;
   loading: boolean;
+  anonymized: boolean;
 
   setLanguage: (lang: Language) => void;
   setSelectedYear: (year: number) => void;
   setSelectedOffice: (office: string | null) => void;
   setSourceLanguageFilter: (filter: "nl" | "fr" | "all") => void;
   setSizeFilter: (filter: OfficeSize | "all") => void;
+  toggleAnonymized: () => void;
+  getDisplayName: (officeName: string) => string;
   importData: (records: OfficeRecord[], year: number) => Promise<void>;
   deleteYear: (year: number) => Promise<void>;
   loadData: () => Promise<void>;
