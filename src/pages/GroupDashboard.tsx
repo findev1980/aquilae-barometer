@@ -357,7 +357,7 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
     data
       .map((r) => {
         const c = getComputed(r);
-        return { name: r.office_name.slice(0, 25), fullName: r.office_name, fte: c.total_fte, managers: r.num_managers ?? 0, employees: r.num_employees_fte ?? 0 };
+        return { name: dn(r.office_name).slice(0, 25), fullName: dn(r.office_name), fte: c.total_fte, managers: r.num_managers ?? 0, employees: r.num_employees_fte ?? 0 };
       })
       .filter((d) => d.fte !== null)
       .sort((a, b) => b.fte! - a.fte!) as { name: string; fullName: string; fte: number; managers: number; employees: number }[],
