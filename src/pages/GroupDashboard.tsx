@@ -1204,7 +1204,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
         <div className="flex flex-wrap gap-2 mb-3">
           {selected.map((name, i) => (
             <span key={name} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white" style={{ backgroundColor: COMPARE_COLORS[i % COMPARE_COLORS.length] }}>
-              {name}
+              {dn(name)}
               <button onClick={() => removeOffice(name)} className="hover:opacity-70 transition-opacity"><X className="h-3 w-3" /></button>
             </span>
           ))}
