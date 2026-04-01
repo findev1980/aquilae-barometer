@@ -24,7 +24,7 @@ function KpiCard({ icon: Icon, label, value, sub, delay }: { icon: React.Element
 }
 
 export default function HomePage() {
-  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta, anonymized, toggleAnonymized, getDisplayName } = useBarometerStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
