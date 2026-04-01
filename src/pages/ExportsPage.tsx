@@ -7,7 +7,7 @@ import { Download, FileText, Loader2, CheckCircle2, Users } from "lucide-react";
 import JSZip from "jszip";
 
 export default function ExportsPage() {
-  const { language, selectedYear, sourceLanguageFilter, allData } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, allData, getDisplayName } = useBarometerStore();
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
