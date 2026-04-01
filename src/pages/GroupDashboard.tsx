@@ -345,6 +345,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
 }
 
 function PersonnelTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { getDisplayName: dn } = useBarometerStore();
   const efficiencyData = useMemo(() =>
     data
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: getComputed(r).commission_per_fte }))
