@@ -876,8 +876,9 @@ function ExportPDFButton({ office, data, allData, language, year }: {
     setLoading(true);
     await new Promise((r) => requestAnimationFrame(r));
     try {
-      const doc = generateOfficePDF(office, data, language, allData);
-      doc.save(generateOfficeFileName(office.office_name, year));
+      const displayName = useBarometerStore.getState().getDisplayName;
+      const doc = generateOfficePDF(office, data, language, allData, displayName);
+      doc.save(generateOfficeFileName(displayName(office.office_name), year));
     } catch (err) {
       console.error("PDF export failed:", err);
     }
