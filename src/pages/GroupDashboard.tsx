@@ -132,7 +132,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 function FinancialTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
-  const dn = useBarometerStore.getState().getDisplayName;
+  const { getDisplayName: dn, anonymized } = useBarometerStore();
   type SortCol = "office_name" | "commission_ins" | "commission_bank" | "total_commission" | "commission_per_fte";
   const [sortCol, setSortCol] = useState<SortCol>("commission_ins");
   const [sortAsc, setSortAsc] = useState(false);
