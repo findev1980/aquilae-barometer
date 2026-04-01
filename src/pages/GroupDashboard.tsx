@@ -640,7 +640,7 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
 
     const withCommBank = data
       .filter((r) => r.commission_bank !== null)
-      .map((r) => ({ name: r.office_name, value: r.commission_bank!, lang: r.source_language }))
+      .map((r) => ({ name: dn(r.office_name), value: r.commission_bank!, lang: r.source_language }))
       .sort((a, b) => b.value - a.value);
 
     const withTotal = data
