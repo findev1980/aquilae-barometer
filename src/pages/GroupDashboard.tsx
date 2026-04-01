@@ -351,7 +351,7 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
       .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: getComputed(r).commission_per_fte }))
       .filter((d) => d.value !== null)
       .sort((a, b) => b.value! - a.value!) as { name: string; value: number }[],
-    [data]
+    [data, anonymized]
   );
 
   const fteData = useMemo(() =>
@@ -362,7 +362,7 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
       })
       .filter((d) => d.fte !== null)
       .sort((a, b) => b.fte! - a.fte!) as { name: string; fullName: string; fte: number; managers: number; employees: number }[],
-    [data]
+    [data, anonymized]
   );
 
   return (
