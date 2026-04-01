@@ -153,7 +153,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
   const commBankData = useMemo(() =>
     data
       .filter((r) => r.commission_bank !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), value: r.commission_bank! }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: r.commission_bank! }))
       .sort((a, b) => b.value - a.value),
     [data]
   );
