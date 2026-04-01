@@ -1190,7 +1190,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
       const records = selectedData.map((d) => d.record);
       const { allData: storeAllData } = useBarometerStore.getState();
       const doc = generateComparePDF(records, storeAllData, language, selectedYear, insights);
-      const names = records.map((r) => r.office_name.slice(0, 12).replace(/\s+/g, "_")).join("_vs_");
+      const names = records.map((r) => dn(r.office_name).slice(0, 12).replace(/\s+/g, "_")).join("_vs_");
       doc.save(`Aquilae_Vergelijking_${selectedYear}_${names}.pdf`);
     } catch (err) {
       console.error("Compare PDF generation failed:", err);
