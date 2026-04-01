@@ -28,8 +28,8 @@ export default function ExportsPage() {
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
-      const doc = generateOfficePDF(office, data, language, allData);
-      doc.save(generateOfficeFileName(officeName, selectedYear));
+      const doc = generateOfficePDF(office, data, language, allData, getDisplayName);
+      doc.save(generateOfficeFileName(getDisplayName(officeName), selectedYear));
     } catch (err) {
       console.error("PDF generation failed:", err);
     }
