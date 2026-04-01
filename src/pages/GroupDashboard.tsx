@@ -660,7 +660,7 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
       .sort((a, b) => b.value - a.value);
 
     return { withCommIns, withCommBank, withTotal, withEff };
-  }, [data]);
+  }, [data, anonymized]);
 
   const RankingList = ({ items, maxValue, color }: { items: { name: string; value: number; lang: string }[]; maxValue: number; color: string }) => (
     <div className="space-y-2">
