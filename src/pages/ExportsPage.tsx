@@ -7,7 +7,7 @@ import { Download, FileText, Loader2, CheckCircle2, Users } from "lucide-react";
 import JSZip from "jszip";
 
 export default function ExportsPage() {
-  const { language, selectedYear, sourceLanguageFilter, allData } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, allData, getDisplayName } = useBarometerStore();
   const [exporting, setExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
@@ -28,8 +28,8 @@ export default function ExportsPage() {
     await new Promise((r) => requestAnimationFrame(r));
 
     try {
-      const doc = generateOfficePDF(office, data, language, allData);
-      doc.save(generateOfficeFileName(officeName, selectedYear));
+      const doc = generateOfficePDF(office, data, language, allData, getDisplayName);
+      doc.save(generateOfficeFileName(getDisplayName(officeName), selectedYear));
     } catch (err) {
       console.error("PDF generation failed:", err);
     }
@@ -66,9 +66,9 @@ export default function ExportsPage() {
 
       for (let i = 0; i < data.length; i++) {
         const office = data[i];
-        const doc = generateOfficePDF(office, data, language, allData);
+        const doc = generateOfficePDF(office, data, language, allData, getDisplayName);
         const pdfBlob = doc.output("blob");
-        zip.file(generateOfficeFileName(office.office_name, selectedYear), pdfBlob);
+        zip.file(generateOfficeFileName(getDisplayName(office.office_name), selectedYear), pdfBlob);
         setProgress(Math.round((i + 1) / data.length * 100));
         await new Promise((r) => setTimeout(r, 10));
       }
@@ -188,7 +188,7 @@ export default function ExportsPage() {
             map((r) =>
             <li key={r.office_name} className="flex items-center justify-between px-5 py-2.5 hover:bg-muted/50 transition-colors">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{r.office_name}</p>
+                      <p className="text-sm font-medium truncate">{getDisplayName(r.office_name)}</p>
                       <p className="text-xs text-muted-foreground">{r.source_language.toUpperCase()}</p>
                     </div>
                     <button
