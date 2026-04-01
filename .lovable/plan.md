@@ -1,50 +1,33 @@
 
 
-# Verificatie-export: ZIP met één Excel per kantoor
+# Anonimiseer-toggle op homescherm
 
 ## Wat wordt gebouwd
 
-Een knop "Exporteer verificatiebestanden" op de Admin-pagina die:
-1. Alle kantoren en alle beschikbare jaren ophaalt uit de database
-2. Per kantoor een apart Excel-bestand genereert (bestandsnaam = kantoornaam)
-3. Alles bundelt in één ZIP-bestand dat gedownload wordt
+Een toggle-knop op de homepagina (en in de store) waarmee kantoornamen visueel worden geanonimiseerd tot "Kantoor 1", "Kantoor 2", etc. De database wordt niet gewijzigd — het is puur een weergave-instelling.
 
-### Excel-structuur per kantoor
+## Aanpak
 
-```text
-Verificatie data - [Kantoornaam]
+### 1. Store uitbreiden (`src/store/useBarometerStore.ts`)
+- Nieuwe state: `anonymized: boolean` (default `false`)
+- Nieuwe action: `toggleAnonymized()`
+- Nieuwe helper: `getDisplayName(officeName: string): string` die een consistente mapping bijhoudt (Map van echte naam → "Kantoor 1", "Kantoor 2", …) gesorteerd op kantoornaam
 
-Jaar | Zaakvoerders | Bedienden (FTE) | Commissie Verzekeringen (€) | Commissie Bank (€)
-2022 |      —       |        —        |         1.520.000           |      950.000
-2023 |      —       |        —        |         1.600.000           |      950.000
-...
-```
+### 2. HomePage aanpassen (`src/pages/HomePage.tsx`)
+- Toggle-knop onder de KPI-rij (of naast de zoekbalk), zichtbaar voor alle gebruikers
+- Icoon: `EyeOff` / `Eye` van Lucide
+- Bij actief: zoekresultaten tonen "Kantoor 1" i.p.v. echte namen
 
-- Eén rij per beschikbaar jaar (alle jaren uit de database)
-- Jaren zonder data voor dat kantoor: volledige rij met gele achtergrond
-- Individuele null-cellen: gele achtergrond
-- Bestaande data ingevuld
+### 3. Overige pagina's aanpassen
+- `OfficeDashboard.tsx`: kantoornaam vervangen door anoniem label
+- `GroupDashboard.tsx`: in tabellen/grafieken de anonieme namen gebruiken
+- `ExportsPage.tsx` / PDF-exports: anonieme namen meenemen wanneer toggle actief is
 
-## Technische aanpak
+### 4. Translations
+- `home.anonymize` NL: "Anonimiseren" / FR: "Anonymiser"
 
-### 1. Nieuwe utility: `src/utils/verificatieExport.ts`
-- Query alle unieke kantoornamen + alle beschikbare jaren uit `office_records`
-- Per kantoor: genereer een xlsx-werkblad met `xlsx` (SheetJS) library
-- Gele achtergrond op lege/null cellen
-- Gebruik `JSZip` om alle xlsx-bestanden in één ZIP te bundelen
-- Bestandsnaam per kantoor: kantoornaam (speciale tekens sanitized) + `.xlsx`
-- ZIP-bestandsnaam: `Verificatie_kantoren.zip`
-
-### 2. Dependencies
-- `xlsx` (SheetJS) — al beschikbaar of toevoegen voor Excel-generatie met styling
-- `jszip` — toevoegen voor ZIP-bundeling
-- Alternatief: `exceljs` in plaats van `xlsx` (betere styling-ondersteuning voor gele achtergrond)
-
-### 3. AdminPage aanpassen (`src/pages/AdminPage.tsx`)
-- Nieuwe knop "Exporteer verificatiebestanden" met Download-icoon
-- Loading state + disabled tijdens generatie
-- Triggert de export-functie, download resulterende ZIP via blob URL
-
-### 4. Translations (`src/i18n/translations.ts`)
-- `admin.export_verification` NL: "Exporteer verificatiebestanden" / FR: "Exporter fichiers de vérification"
+## Logica anonimisering
+- Sorteer alle unieke kantoornamen alfabetisch
+- Ken elk een vast nummer toe: "Kantoor 1", "Kantoor 2", …
+- De mapping wordt berekend op basis van `allData` en blijft consistent zolang de data niet wijzigt
 
