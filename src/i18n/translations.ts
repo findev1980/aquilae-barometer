@@ -165,6 +165,7 @@ const translations: Record<Language, Record<string, string>> = {
     "evolution.satisfaction": "Tevredenheid",
     "evolution.no_history": "Onvoldoende historische data (slechts 1 jaar beschikbaar)",
     "evolution.year": "Jaar",
+    "home.anonymize": "Anonimiseren",
   },
   fr: {
     "nav.home": "Accueil",
