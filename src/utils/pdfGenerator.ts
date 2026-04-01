@@ -148,11 +148,14 @@ export function generateOfficePDF(
   office: OfficeRecord,
   allData: OfficeRecord[],
   lang: Language,
-  allYearsData?: OfficeRecord[]
+  allYearsData?: OfficeRecord[],
+  displayNameFn?: (name: string) => string
 ): jsPDF {
   // Use the office's own language for the PDF content
   const officeLang: Language = (office.source_language === "fr" ? "fr" : "nl");
   lang = officeLang;
+  const dn = displayNameFn || ((n: string) => n);
+  const officeName = dn(office.office_name);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
@@ -160,13 +163,13 @@ export function generateOfficePDF(
   const totalPages = 6;
 
   // ===== PAGE 1 — Office Profile =====
-  addHeader(doc, office.office_name, 1);
+  addHeader(doc, officeName, 1);
   let y = 28;
 
   doc.setFontSize(20);
   doc.setTextColor(...DARK);
   doc.setFont("helvetica", "bold");
-  doc.text(office.office_name, 15, y);
+  doc.text(officeName, 15, y);
   y += 10;
 
   // Badge line
@@ -270,7 +273,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 2 — Financial Benchmark =====
   doc.addPage();
-  addHeader(doc, office.office_name, 2);
+  addHeader(doc, officeName, 2);
   y = 28;
   // Group-wide benchmark
   const bmOfficeSize = getOfficeSize(office);
@@ -421,7 +424,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 3 — Companies & Strategy =====
   doc.addPage();
-  addHeader(doc, office.office_name, 3);
+  addHeader(doc, officeName, 3);
   y = 28;
 
   // Companies - styled like app with numbered list and group position badges
@@ -549,7 +552,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 4 — Aquilae Engagement =====
   doc.addPage();
-  addHeader(doc, office.office_name, 4);
+  addHeader(doc, officeName, 4);
   y = 28;
   y = sectionTitle(doc, t("office.engagement", lang), y);
 
@@ -624,7 +627,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 5 — Evolution =====
   doc.addPage();
-  addHeader(doc, office.office_name, 5);
+  addHeader(doc, officeName, 5);
   y = 28;
   y = sectionTitle(doc, t("office.evolution", lang), y);
 
@@ -834,7 +837,7 @@ export function generateOfficePDF(
 
     // === New page for company rankings ===
     doc.addPage();
-    addHeader(doc, office.office_name, 6);
+    addHeader(doc, officeName, 6);
     y = 28;
 
     // Company non-life table
@@ -895,7 +898,7 @@ export function generateOfficePDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
     addFooter(doc, year, 5, totalPages, lang);
     doc.addPage();
-    addHeader(doc, office.office_name, 6);
+    addHeader(doc, officeName, 6);
     y = 28;
   }
 

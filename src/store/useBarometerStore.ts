@@ -18,12 +18,15 @@ interface BarometerState {
   allData: OfficeRecord[];
   meta: BarometerMeta;
   loading: boolean;
+  anonymized: boolean;
 
   setLanguage: (lang: Language) => void;
   setSelectedYear: (year: number) => void;
   setSelectedOffice: (office: string | null) => void;
   setSourceLanguageFilter: (filter: "nl" | "fr" | "all") => void;
   setSizeFilter: (filter: OfficeSize | "all") => void;
+  toggleAnonymized: () => void;
+  getDisplayName: (officeName: string) => string;
   importData: (records: OfficeRecord[], year: number) => Promise<void>;
   deleteYear: (year: number) => Promise<void>;
   loadData: () => Promise<void>;
@@ -48,6 +51,7 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   allData: [],
   meta: { available_years: [], last_import: null },
   loading: false,
+  anonymized: false,
 
   setLanguage: (lang) => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify({ language: lang }));
@@ -58,6 +62,15 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   setSelectedOffice: (office) => set({ selectedOffice: office }),
   setSourceLanguageFilter: (filter) => set({ sourceLanguageFilter: filter }),
   setSizeFilter: (filter) => set({ sizeFilter: filter }),
+  toggleAnonymized: () => set((s) => ({ anonymized: !s.anonymized })),
+
+  getDisplayName: (officeName: string) => {
+    const state = get();
+    if (!state.anonymized) return officeName;
+    const uniqueNames = [...new Set(state.allData.map((r) => r.office_name))].sort();
+    const idx = uniqueNames.indexOf(officeName);
+    return idx >= 0 ? `Kantoor ${idx + 1}` : officeName;
+  },
 
   importData: async (records, year) => {
     // Delete existing records for this year

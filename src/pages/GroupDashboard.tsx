@@ -132,6 +132,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 function FinancialTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { getDisplayName: dn, anonymized } = useBarometerStore();
   type SortCol = "office_name" | "commission_ins" | "commission_bank" | "total_commission" | "commission_per_fte";
   const [sortCol, setSortCol] = useState<SortCol>("commission_ins");
   const [sortAsc, setSortAsc] = useState(false);
@@ -144,17 +145,17 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
   const commData = useMemo(() =>
     data
       .filter((r) => r.commission_insurance !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), value: r.commission_insurance! }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: r.commission_insurance! }))
       .sort((a, b) => b.value - a.value),
-    [data]
+    [data, anonymized]
   );
 
   const commBankData = useMemo(() =>
     data
       .filter((r) => r.commission_bank !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), value: r.commission_bank! }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: r.commission_bank! }))
       .sort((a, b) => b.value - a.value),
-    [data]
+    [data, anonymized]
   );
 
   const avgPrivate = useMemo(() => {
@@ -178,17 +179,17 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
   const privateSmeData = useMemo(() =>
     data
       .filter((r) => r.pct_private !== null || r.pct_sme !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), fullName: r.office_name, private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), fullName: dn(r.office_name), private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
       .sort((a, b) => b.private - a.private),
-    [data]
+    [data, anonymized]
   );
 
   const lifeNonlifeData = useMemo(() =>
     data
       .filter((r) => r.pct_life !== null || r.pct_nonlife !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), fullName: r.office_name, life: r.pct_life ?? 0, nonlife: r.pct_nonlife ?? 0 }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), fullName: dn(r.office_name), life: r.pct_life ?? 0, nonlife: r.pct_nonlife ?? 0 }))
       .sort((a, b) => b.nonlife - a.nonlife),
-    [data]
+    [data, anonymized]
   );
 
   const sortedData = useMemo(() => {
@@ -328,7 +329,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
             <tbody>
               {sortedData.map(({ record: r, computed: c }, i) => (
                 <tr key={r.office_name} className={`border-b border-border/50 ${i % 2 === 0 ? "bg-primary-light/30" : ""}`}>
-                  <td className="py-2 pr-4 font-medium">{r.office_name}</td>
+                  <td className="py-2 pr-4 font-medium">{dn(r.office_name)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_insurance)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(r.commission_bank)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{formatCurrency(c.total_commission)}</td>
@@ -344,23 +345,24 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
 }
 
 function PersonnelTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { getDisplayName: dn, anonymized } = useBarometerStore();
   const efficiencyData = useMemo(() =>
     data
-      .map((r) => ({ name: r.office_name.slice(0, 20), value: getComputed(r).commission_per_fte }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), value: getComputed(r).commission_per_fte }))
       .filter((d) => d.value !== null)
       .sort((a, b) => b.value! - a.value!) as { name: string; value: number }[],
-    [data]
+    [data, anonymized]
   );
 
   const fteData = useMemo(() =>
     data
       .map((r) => {
         const c = getComputed(r);
-        return { name: r.office_name.slice(0, 25), fullName: r.office_name, fte: c.total_fte, managers: r.num_managers ?? 0, employees: r.num_employees_fte ?? 0 };
+        return { name: dn(r.office_name).slice(0, 25), fullName: dn(r.office_name), fte: c.total_fte, managers: r.num_managers ?? 0, employees: r.num_employees_fte ?? 0 };
       })
       .filter((d) => d.fte !== null)
       .sort((a, b) => b.fte! - a.fte!) as { name: string; fullName: string; fte: number; managers: number; employees: number }[],
-    [data]
+    [data, anonymized]
   );
 
   return (
@@ -629,21 +631,22 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
 }
 
 function TopBottomTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
+  const { getDisplayName: dn, anonymized } = useBarometerStore();
   const rankings = useMemo(() => {
     const withCommIns = data
       .filter((r) => r.commission_insurance !== null)
-      .map((r) => ({ name: r.office_name, value: r.commission_insurance!, lang: r.source_language }))
+      .map((r) => ({ name: dn(r.office_name), value: r.commission_insurance!, lang: r.source_language }))
       .sort((a, b) => b.value - a.value);
 
     const withCommBank = data
       .filter((r) => r.commission_bank !== null)
-      .map((r) => ({ name: r.office_name, value: r.commission_bank!, lang: r.source_language }))
+      .map((r) => ({ name: dn(r.office_name), value: r.commission_bank!, lang: r.source_language }))
       .sort((a, b) => b.value - a.value);
 
     const withTotal = data
       .map((r) => {
         const c = getComputed(r);
-        return { name: r.office_name, value: c.total_commission ?? 0, lang: r.source_language };
+        return { name: dn(r.office_name), value: c.total_commission ?? 0, lang: r.source_language };
       })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
@@ -651,13 +654,13 @@ function TopBottomTab({ data, language }: { data: import("@/types/barometer").Of
     const withEff = data
       .map((r) => {
         const c = getComputed(r);
-        return { name: r.office_name, value: c.commission_per_fte ?? 0, lang: r.source_language };
+        return { name: dn(r.office_name), value: c.commission_per_fte ?? 0, lang: r.source_language };
       })
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
 
     return { withCommIns, withCommBank, withTotal, withEff };
-  }, [data]);
+  }, [data, anonymized]);
 
   const RankingList = ({ items, maxValue, color }: { items: { name: string; value: number; lang: string }[]; maxValue: number; color: string }) => (
     <div className="space-y-2">
@@ -937,6 +940,7 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
   data: import("@/types/barometer").OfficeRecord[];
   language: "nl" | "fr";
 }) {
+  const { getDisplayName: dn } = useBarometerStore();
   const insights = useMemo(() => {
     if (selectedData.length < 2) return [];
     const nl = language === "nl";
@@ -958,8 +962,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
       results.push({
         icon: "📊",
         text: nl
-          ? `${best.record.office_name} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${worst.record.office_name}.`
-          : `${best.record.office_name} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${worst.record.office_name}.`,
+          ? `${dn(best.record.office_name)} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${dn(worst.record.office_name)}.`
+          : `${dn(best.record.office_name)} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${dn(worst.record.office_name)}.`,
         type: "neutral",
       });
     }
@@ -972,8 +976,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
       results.push({
         icon: "⚡",
         text: nl
-          ? `${bestEff.record.office_name} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${worstEff.record.office_name} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.`
-          : `${bestEff.record.office_name} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${worstEff.record.office_name} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`,
+          ? `${dn(bestEff.record.office_name)} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${dn(worstEff.record.office_name)} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.`
+          : `${dn(bestEff.record.office_name)} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${dn(worstEff.record.office_name)} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`,
         type: "neutral",
       });
     }
@@ -986,8 +990,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: above ? "✅" : "⚠️",
           text: nl
-            ? `${record.office_name} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.`
-            : `${record.office_name} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`,
+            ? `${dn(record.office_name)} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.`
+            : `${dn(record.office_name)} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`,
           type: above ? "positive" : "negative",
         });
       }
@@ -1001,8 +1005,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: above ? "🎯" : "📉",
           text: nl
-            ? `${record.office_name} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).`
-            : `${record.office_name} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`,
+            ? `${dn(record.office_name)} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).`
+            : `${dn(record.office_name)} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`,
           type: above ? "positive" : "negative",
         });
       }
@@ -1018,8 +1022,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: "👥",
           text: nl
-            ? `${largest.record.office_name} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${smallest.record.office_name} (${smallest.computed.total_fte} FTE).`
-            : `${largest.record.office_name} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${smallest.record.office_name} (${smallest.computed.total_fte} ETP).`,
+            ? `${dn(largest.record.office_name)} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} FTE).`
+            : `${dn(largest.record.office_name)} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} ETP).`,
           type: "neutral",
         });
       }
@@ -1035,8 +1039,8 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
         results.push({
           icon: "🏢",
           text: nl
-            ? `${record.office_name} richt zich voornamelijk op ${dominant} (${pct}%).`
-            : `${record.office_name} se concentre principalement sur ${dominant} (${pct}%).`,
+            ? `${dn(record.office_name)} richt zich voornamelijk op ${dominant} (${pct}%).`
+            : `${dn(record.office_name)} se concentre principalement sur ${dominant} (${pct}%).`,
           type: "neutral",
         });
       }
@@ -1071,7 +1075,7 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
 const COMPARE_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)", "hsl(200,70%,50%)", "hsl(45,90%,50%)", "hsl(310,50%,55%)"];
 
 function CompareTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
-  const { selectedYear } = useBarometerStore();
+  const { selectedYear, getDisplayName: dn } = useBarometerStore();
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [pdfExporting, setPdfExporting] = useState(false);
@@ -1139,25 +1143,25 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
     if (best.computed.total_commission && worst.computed.total_commission && best.computed.total_commission > 0) {
       const diff = best.computed.total_commission - worst.computed.total_commission;
       const pct = ((diff / worst.computed.total_commission) * 100).toFixed(0);
-      results.push({ icon: "📊", text: nl ? `${best.record.office_name} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${worst.record.office_name}.` : `${best.record.office_name} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${worst.record.office_name}.`, type: "neutral" });
+      results.push({ icon: "📊", text: nl ? `${dn(best.record.office_name)} genereert ${formatCurrency(diff)} (${pct}%) meer totale commissie dan ${dn(worst.record.office_name)}.` : `${dn(best.record.office_name)} génère ${formatCurrency(diff)} (${pct}%) de plus en commission totale que ${dn(worst.record.office_name)}.`, type: "neutral" });
     }
     const effSorted = [...selectedData].filter((d) => d.computed.commission_per_fte !== null).sort((a, b) => (b.computed.commission_per_fte ?? 0) - (a.computed.commission_per_fte ?? 0));
     if (effSorted.length >= 2) {
       const bestEff = effSorted[0]; const worstEff = effSorted[effSorted.length - 1];
-      results.push({ icon: "⚡", text: nl ? `${bestEff.record.office_name} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${worstEff.record.office_name} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.` : `${bestEff.record.office_name} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${worstEff.record.office_name} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`, type: "neutral" });
+      results.push({ icon: "⚡", text: nl ? `${dn(bestEff.record.office_name)} is het meest efficiënt met ${formatCurrency(bestEff.computed.commission_per_fte)} commissie per FTE, ${dn(worstEff.record.office_name)} het minst met ${formatCurrency(worstEff.computed.commission_per_fte)}.` : `${dn(bestEff.record.office_name)} est le plus efficace avec ${formatCurrency(bestEff.computed.commission_per_fte)} de commission par ETP, ${dn(worstEff.record.office_name)} le moins avec ${formatCurrency(worstEff.computed.commission_per_fte)}.`, type: "neutral" });
     }
     selectedData.forEach(({ record, computed }) => {
       if (computed.total_commission !== null && groupAvgComm > 0) {
         const pctVsGroup = ((computed.total_commission / groupAvgComm - 1) * 100).toFixed(0);
         const above = computed.total_commission >= groupAvgComm;
-        results.push({ icon: above ? "✅" : "⚠️", text: nl ? `${record.office_name} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.` : `${record.office_name} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`, type: above ? "positive" : "negative" });
+        results.push({ icon: above ? "✅" : "⚠️", text: nl ? `${dn(record.office_name)} zit ${above ? "+" : ""}${pctVsGroup}% ${above ? "boven" : "onder"} het groepsgemiddelde qua totale commissie.` : `${dn(record.office_name)} est ${above ? "+" : ""}${pctVsGroup}% ${above ? "au-dessus" : "en dessous"} de la moyenne du groupe en commission totale.`, type: above ? "positive" : "negative" });
       }
     });
     selectedData.forEach(({ record, computed }) => {
       if (computed.commission_per_fte !== null && groupAvgEff > 0) {
         const pctVsGroup = ((computed.commission_per_fte / groupAvgEff - 1) * 100).toFixed(0);
         const above = computed.commission_per_fte >= groupAvgEff;
-        results.push({ icon: above ? "🎯" : "📉", text: nl ? `${record.office_name} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).` : `${record.office_name} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`, type: above ? "positive" : "negative" });
+        results.push({ icon: above ? "🎯" : "📉", text: nl ? `${dn(record.office_name)} heeft een efficiëntie van ${above ? "+" : ""}${pctVsGroup}% t.o.v. het groepsgemiddelde (${formatCurrency(groupAvgEff)}/FTE).` : `${dn(record.office_name)} a une efficacité de ${above ? "+" : ""}${pctVsGroup}% par rapport à la moyenne du groupe (${formatCurrency(groupAvgEff)}/ETP).`, type: above ? "positive" : "negative" });
       }
     });
     const fteSorted = [...selectedData].filter((d) => d.computed.total_fte !== null).sort((a, b) => (b.computed.total_fte ?? 0) - (a.computed.total_fte ?? 0));
@@ -1165,14 +1169,14 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
       const largest = fteSorted[0]; const smallest = fteSorted[fteSorted.length - 1];
       if (largest.computed.total_fte && smallest.computed.total_fte) {
         const ratio = (largest.computed.total_fte / smallest.computed.total_fte).toFixed(1);
-        results.push({ icon: "👥", text: nl ? `${largest.record.office_name} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${smallest.record.office_name} (${smallest.computed.total_fte} FTE).` : `${largest.record.office_name} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${smallest.record.office_name} (${smallest.computed.total_fte} ETP).`, type: "neutral" });
+        results.push({ icon: "👥", text: nl ? `${dn(largest.record.office_name)} (${largest.computed.total_fte} FTE) is ${ratio}x groter dan ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} FTE).` : `${dn(largest.record.office_name)} (${largest.computed.total_fte} ETP) est ${ratio}x plus grand que ${dn(smallest.record.office_name)} (${smallest.computed.total_fte} ETP).`, type: "neutral" });
       }
     }
     selectedData.forEach(({ record }) => {
       if (record.pct_private !== null && record.pct_sme !== null) {
         const dominant = record.pct_private > record.pct_sme ? (nl ? "particulier" : "particulier") : (nl ? "KMO" : "PME");
         const pct = Math.max(record.pct_private, record.pct_sme ?? 0);
-        results.push({ icon: "🏢", text: nl ? `${record.office_name} richt zich voornamelijk op ${dominant} (${pct}%).` : `${record.office_name} se concentre principalement sur ${dominant} (${pct}%).`, type: "neutral" });
+        results.push({ icon: "🏢", text: nl ? `${dn(record.office_name)} richt zich voornamelijk op ${dominant} (${pct}%).` : `${dn(record.office_name)} se concentre principalement sur ${dominant} (${pct}%).`, type: "neutral" });
       }
     });
     return results;
@@ -1186,7 +1190,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
       const records = selectedData.map((d) => d.record);
       const { allData: storeAllData } = useBarometerStore.getState();
       const doc = generateComparePDF(records, storeAllData, language, selectedYear, insights);
-      const names = records.map((r) => r.office_name.slice(0, 12).replace(/\s+/g, "_")).join("_vs_");
+      const names = records.map((r) => dn(r.office_name).slice(0, 12).replace(/\s+/g, "_")).join("_vs_");
       doc.save(`Aquilae_Vergelijking_${selectedYear}_${names}.pdf`);
     } catch (err) {
       console.error("Compare PDF generation failed:", err);
@@ -1201,7 +1205,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
         <div className="flex flex-wrap gap-2 mb-3">
           {selected.map((name, i) => (
             <span key={name} className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white" style={{ backgroundColor: COMPARE_COLORS[i % COMPARE_COLORS.length] }}>
-              {name}
+              {dn(name)}
               <button onClick={() => removeOffice(name)} className="hover:opacity-70 transition-opacity"><X className="h-3 w-3" /></button>
             </span>
           ))}
@@ -1218,7 +1222,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
             <ul className="absolute z-10 mt-1 max-h-48 w-full max-w-sm overflow-auto rounded-lg border border-border bg-card shadow-lg">
               {filtered.slice(0, 10).map((name) => (
                 <li key={name}>
-                  <button onClick={() => addOffice(name)} className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors">{name}</button>
+                  <button onClick={() => addOffice(name)} className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors">{dn(name)}</button>
                 </li>
               ))}
             </ul>
@@ -1253,7 +1257,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
                   {selectedData.map((_, i) => (
                     <Radar
                       key={i}
-                      name={selected[i]}
+                      name={dn(selected[i])}
                       dataKey={`office_${i}`}
                       stroke={COMPARE_COLORS[i % COMPARE_COLORS.length]}
                       fill={COMPARE_COLORS[i % COMPARE_COLORS.length]}

@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import { filterByYear, filterBySourceLang, filterBySize, formatCurrency, getComputed, satisfactionScore, recommendScore } from "@/utils/benchmarkCalc";
-import { Building2, TrendingUp, Users, ThumbsUp, Star, Search, BarChart3, Upload } from "lucide-react";
+import { Building2, TrendingUp, Users, ThumbsUp, Star, Search, BarChart3, Upload, EyeOff, Eye } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 function KpiCard({ icon: Icon, label, value, sub, delay }: { icon: React.ElementType; label: string; value: string; sub?: string; delay: number }) {
   return (
@@ -23,7 +24,7 @@ function KpiCard({ icon: Icon, label, value, sub, delay }: { icon: React.Element
 }
 
 export default function HomePage() {
-  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
+  const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta, anonymized, toggleAnonymized, getDisplayName } = useBarometerStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -93,7 +94,16 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Search + Quick nav */}
+      {/* Anonymize toggle */}
+      {meta.available_years.length > 0 && (
+        <div className="flex items-center gap-3 animate-fade-in" style={{ animationDelay: "320ms" }}>
+          <Switch checked={anonymized} onCheckedChange={toggleAnonymized} id="anon-toggle" />
+          <label htmlFor="anon-toggle" className="flex items-center gap-2 text-sm font-medium cursor-pointer select-none">
+            {anonymized ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+            {t("home.anonymize", language)}
+          </label>
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Office search */}
         <div className="rounded-xl border border-border bg-card p-5 card-shadow animate-fade-in" style={{ animationDelay: "350ms" }}>
@@ -116,9 +126,9 @@ export default function HomePage() {
                     onClick={() => { navigate("/office"); useBarometerStore.getState().setSelectedOffice(r.office_name); }}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
                   >
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span>{r.office_name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{r.source_language.toUpperCase()}</span>
+                     <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                     <span>{getDisplayName(r.office_name)}</span>
+                     <span className="ml-auto text-xs text-muted-foreground">{r.source_language.toUpperCase()}</span>
                   </button>
                 </li>
               ))}
