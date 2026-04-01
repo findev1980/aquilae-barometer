@@ -268,6 +268,7 @@ export default function OfficeDashboard() {
           placeholder={t("office.select", language)}
           searchPlaceholder={language === "nl" ? "Zoek een kantoor..." : "Rechercher un bureau..."}
           emptyLabel={language === "nl" ? "Geen kantoor gevonden" : "Aucun bureau trouvé"}
+          displayName={getDisplayName}
         />
         {office && selectedYear && (
           <ExportPDFButton office={office} data={data} allData={allData} language={language} year={selectedYear} />
