@@ -273,7 +273,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 2 — Financial Benchmark =====
   doc.addPage();
-  addHeader(doc, office.office_name, 2);
+  addHeader(doc, officeName, 2);
   y = 28;
   // Group-wide benchmark
   const bmOfficeSize = getOfficeSize(office);
@@ -424,7 +424,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 3 — Companies & Strategy =====
   doc.addPage();
-  addHeader(doc, office.office_name, 3);
+  addHeader(doc, officeName, 3);
   y = 28;
 
   // Companies - styled like app with numbered list and group position badges
@@ -552,7 +552,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 4 — Aquilae Engagement =====
   doc.addPage();
-  addHeader(doc, office.office_name, 4);
+  addHeader(doc, officeName, 4);
   y = 28;
   y = sectionTitle(doc, t("office.engagement", lang), y);
 
@@ -627,7 +627,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 5 — Evolution =====
   doc.addPage();
-  addHeader(doc, office.office_name, 5);
+  addHeader(doc, officeName, 5);
   y = 28;
   y = sectionTitle(doc, t("office.evolution", lang), y);
 
@@ -837,7 +837,7 @@ export function generateOfficePDF(
 
     // === New page for company rankings ===
     doc.addPage();
-    addHeader(doc, office.office_name, 6);
+    addHeader(doc, officeName, 6);
     y = 28;
 
     // Company non-life table
@@ -898,7 +898,7 @@ export function generateOfficePDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
     addFooter(doc, year, 5, totalPages, lang);
     doc.addPage();
-    addHeader(doc, office.office_name, 6);
+    addHeader(doc, officeName, 6);
     y = 28;
   }
 
