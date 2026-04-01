@@ -66,9 +66,9 @@ export default function ExportsPage() {
 
       for (let i = 0; i < data.length; i++) {
         const office = data[i];
-        const doc = generateOfficePDF(office, data, language, allData);
+        const doc = generateOfficePDF(office, data, language, allData, getDisplayName);
         const pdfBlob = doc.output("blob");
-        zip.file(generateOfficeFileName(office.office_name, selectedYear), pdfBlob);
+        zip.file(generateOfficeFileName(getDisplayName(office.office_name), selectedYear), pdfBlob);
         setProgress(Math.round((i + 1) / data.length * 100));
         await new Promise((r) => setTimeout(r, 10));
       }
