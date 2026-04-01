@@ -50,13 +50,14 @@ function BenchmarkRow({ label, value, mean, median, percentile, formatFn }: {
   );
 }
 
-function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, searchPlaceholder, emptyLabel }: {
+function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, searchPlaceholder, emptyLabel, displayName }: {
   offices: string[];
   selectedOffice: string | null;
   onSelect: (name: string) => void;
   placeholder: string;
   searchPlaceholder: string;
   emptyLabel: string;
+  displayName: (name: string) => string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -69,7 +70,7 @@ function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, 
           className="flex h-9 w-72 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         >
           <span className={cn("truncate", !selectedOffice && "text-muted-foreground")}>
-            {selectedOffice || placeholder}
+            {selectedOffice ? displayName(selectedOffice) : placeholder}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </button>
@@ -90,7 +91,7 @@ function OfficeSearchCombobox({ offices, selectedOffice, onSelect, placeholder, 
                   }}
                 >
                   <Check className={cn("mr-2 h-4 w-4", selectedOffice === name ? "opacity-100" : "opacity-0")} />
-                  {name}
+                  {displayName(name)}
                 </CommandItem>
               ))}
             </CommandGroup>
