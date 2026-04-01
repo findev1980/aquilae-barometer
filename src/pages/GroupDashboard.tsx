@@ -179,7 +179,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
   const privateSmeData = useMemo(() =>
     data
       .filter((r) => r.pct_private !== null || r.pct_sme !== null)
-      .map((r) => ({ name: r.office_name.slice(0, 20), fullName: r.office_name, private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
+      .map((r) => ({ name: dn(r.office_name).slice(0, 20), fullName: dn(r.office_name), private: r.pct_private ?? 0, sme: r.pct_sme ?? 0 }))
       .sort((a, b) => b.private - a.private),
     [data]
   );
