@@ -1,21 +1,29 @@
 
 
-# Anonimisering toevoegen aan ExportsPage
+# Drie nieuwe gebruikers aanmaken
 
-## Probleem
-De ExportsPage gebruikt overal `r.office_name` rechtstreeks en haalt `getDisplayName` en `anonymized` niet op uit de store.
+## Wat er gebeurt
 
-## Aanpak
+Drie niet-admin gebruikers worden aangemaakt via een tijdelijke backend functie die de Admin API gebruikt met de service role key.
 
-### `src/pages/ExportsPage.tsx`
-1. Haal `anonymized` en `getDisplayName` op uit `useBarometerStore`
-2. In de kantorenlijst: toon `getDisplayName(r.office_name)` i.p.v. `r.office_name`
-3. Bij PDF-bestandsnamen (single export): gebruik `getDisplayName` voor de bestandsnaam wanneer geanonimiseerd
-4. Bij ZIP-export: gebruik geanonimiseerde bestandsnamen voor de individuele PDF's in de ZIP
-5. Geef `getDisplayName` door aan `generateOfficePDF` en `generateGroupPDF` zodat de PDF-inhoud zelf ook geanonimiseerd is (indien de PDF-generator dit al ondersteunt)
+## Gebruikers
 
-Concreet worden deze regels aangepast:
-- **Regel 10**: `getDisplayName` en `anonymized` toevoegen aan destructuring
-- **Regel 191**: `r.office_name` → `getDisplayName(r.office_name)`
-- **Regels 31-32, 69-71**: bestandsnamen en PDF-generatie met `getDisplayName`
+| E-mail | Wachtwoord |
+|---|---|
+| patricia@aquilae.be | `X&I5xB{z[i`fMK6H^`I_` |
+| an@aquilae.be | `K5f^^O8!r[0N-]`'\1`l` |
+| maxime@aquilae.be | `*s^15YqqcqFbO]0d-Q<-` |
+
+## Technische aanpak
+
+1. **Tijdelijke edge function** `create-users` aanmaken die:
+   - De Supabase Admin API (`supabase.auth.admin.createUser`) gebruikt
+   - E-mail auto-confirm aanzet zodat gebruikers direct kunnen inloggen
+   - Alleen door admins kan worden aangeroepen
+
+2. **Functie aanroepen** met de 3 gebruikers
+
+3. **Functie verwijderen** na succesvolle aanmaak
+
+Geen admin-rollen worden toegekend — deze gebruikers krijgen enkel leestoegang.
 
