@@ -628,7 +628,7 @@ export default function OfficeDashboard() {
                         <YAxis tick={{ fontSize: 10 }} />
                         <Tooltip />
                         {meta.available_years.map((y, i) => (
-                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${262 - i * 30},30%,${53 + i * 10}%)`} />
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
                         ))}
                         <Legend wrapperStyle={{ fontSize: 10 }} />
                       </BarChart>
@@ -647,7 +647,7 @@ export default function OfficeDashboard() {
                         <YAxis tick={{ fontSize: 10 }} />
                         <Tooltip />
                         {meta.available_years.map((y, i) => (
-                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(${142 - i * 20},45%,${45 + i * 10}%)`} />
+                          <Bar key={y} dataKey={String(y)} name={String(y)} fill={`hsl(var(--chart-${(i % 5) + 1}))`} />
                         ))}
                         <Legend wrapperStyle={{ fontSize: 10 }} />
                       </BarChart>
