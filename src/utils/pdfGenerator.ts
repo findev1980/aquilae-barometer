@@ -12,7 +12,7 @@ import {
 import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 
-const PRIMARY = [121, 97, 171] as const; // #7961AB
+const PRIMARY = [45, 74, 108] as const; // #7961AB
 const PRIMARY_LIGHT = [237, 232, 245] as const;
 const DARK = [45, 45, 63] as const;
 const GREY = [102, 102, 119] as const;
@@ -350,7 +350,7 @@ export function generateOfficePDF(
   y += 6;
 
   // Portfolio distribution with size-category markers
-  const ORANGE = [220, 120, 20] as const;
+  const ORANGE = [215, 173, 123] as const;
   const barMaxW = w - 60;
   const pdfSizeLabel = bmOfficeSize ? getOfficeSizeLabel(bmOfficeSize, lang) : "";
 
@@ -779,7 +779,7 @@ export function generateOfficePDF(
     y += chartH + 18;
 
     // Chart row 2: Commission/FTE + % Particulieren vs KMO
-    drawMiniChart(t("field.commission_per_fte", lang), 15, y, chartCommPerFte, [], (v) => `€${(v / 1000).toFixed(0)}k`, undefined, [34, 139, 34] as const);
+    drawMiniChart(t("field.commission_per_fte", lang), 15, y, chartCommPerFte, [], (v) => `€${(v / 1000).toFixed(0)}k`, undefined, [79, 138, 110] as const);
     drawMiniChart(
       lang === "nl" ? "% Particulieren vs KMO" : "% Particuliers vs PME",
       15 + chartW + 15, y,
@@ -916,7 +916,7 @@ export function generateOfficePDF(
     for (const insight of insights) {
       const isPositive = insight.type === "positive";
       const isNegative = insight.type === "negative";
-      const indicatorColor: readonly [number, number, number] = isPositive ? [34, 139, 34] : isNegative ? [220, 120, 20] : [...GREY];
+      const indicatorColor: readonly [number, number, number] = isPositive ? [79, 138, 110] : isNegative ? [215, 173, 123] : [...GREY];
 
       doc.setFillColor(indicatorColor[0], indicatorColor[1], indicatorColor[2]);
       doc.circle(19, y + 1, 1.5, "F");
@@ -1484,7 +1484,7 @@ export function generateGroupPDF(
       x: 115, y, w: chartW, h: chartH,
       title: lang === "nl" ? "Gem. FTE" : "ETP moyen",
       formatFn: (v) => v.toFixed(1),
-      color: [76, 175, 80],
+      color: [79, 138, 110],
     });
 
     y += chartH + 20;
@@ -1493,7 +1493,7 @@ export function generateGroupPDF(
       x: 25, y, w: chartW, h: chartH,
       title: lang === "nl" ? "Gem. commissie/FTE" : "Commission moy./ETP",
       formatFn: (v) => `€${(v / 1000).toFixed(0)}k`,
-      color: [76, 175, 80],
+      color: [79, 138, 110],
     });
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.count, groupValue: null })), {
@@ -1507,9 +1507,9 @@ export function generateGroupPDF(
 
     // Size distribution (stacked bar)
     const sizeColors = {
-      klein: [41, 182, 246] as const,  // blue
-      middel: [245, 166, 35] as const, // orange
-      groot: [121, 97, 171] as const,  // purple
+      klein: [30, 51, 80] as const,  // blue
+      middel: [215, 173, 123] as const, // orange
+      groot: [45, 74, 108] as const,  // purple
     };
     drawMiniStackedBar(doc, evolutionData.map((d) => ({
       year: d.year,
@@ -1528,7 +1528,7 @@ export function generateGroupPDF(
       year: d.year,
       lines: [
         { value: d.avgPrivate, label: lang === "nl" ? "% Particulieren" : "% Particuliers", color: PRIMARY },
-        { value: d.avgSme, label: lang === "nl" ? "% KMO" : "% PME", color: [76, 175, 80] as const },
+        { value: d.avgSme, label: lang === "nl" ? "% KMO" : "% PME", color: [79, 138, 110] as const },
       ],
     })), {
       x: 115, y, w: chartW, h: chartH,
@@ -1557,7 +1557,7 @@ export function generateGroupPDF(
 
   if (allYears.length >= 2) {
     const COMPANY_COLORS: (readonly [number, number, number])[] = [
-      [121, 97, 171], [76, 175, 80], [245, 166, 35], [41, 182, 246], [233, 30, 99],
+      [45, 74, 108], [79, 138, 110], [215, 173, 123], [30, 51, 80], [184, 85, 68],
     ];
 
     const allFiltered = allData.filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
@@ -1653,12 +1653,12 @@ export function generateGroupPDF(
 
 // ===== Compare PDF =====
 const COMPARE_PDF_COLORS: [number, number, number][] = [
-  [121, 97, 171],   // purple
-  [76, 175, 80],    // green
-  [255, 87, 34],    // orange
-  [33, 150, 243],   // blue
-  [255, 193, 7],    // yellow
-  [186, 104, 200],  // pink
+  [45, 74, 108],   // purple
+  [79, 138, 110],    // green
+  [215, 173, 123],    // orange
+  [30, 51, 80],   // blue
+  [196, 154, 99],    // yellow
+  [138, 139, 137],  // pink
 ];
 
 export interface CompareInsight {
@@ -1916,14 +1916,14 @@ export function generateComparePDF(
       let bgColor: [number, number, number];
       let dotColor: [number, number, number];
       if (insight.type === "positive") {
-        bgColor = [232, 245, 233];
-        dotColor = [56, 142, 60];
+        bgColor = [207, 225, 214];
+        dotColor = [79, 138, 110];
       } else if (insight.type === "negative") {
-        bgColor = [255, 243, 224];
-        dotColor = [230, 126, 34];
+        bgColor = [247, 238, 223];
+        dotColor = [215, 173, 123];
       } else {
-        bgColor = [245, 245, 250];
-        dotColor = [120, 120, 150];
+        bgColor = [248, 247, 243];
+        dotColor = [138, 139, 137];
       }
 
       doc.setFillColor(...bgColor);
