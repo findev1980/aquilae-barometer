@@ -31,7 +31,7 @@ const TAB_KEYS: Record<Tab, string> = {
   compare: "group.compare",
 };
 
-const COLORS = ["hsl(262,30%,53%)", "hsl(262,30%,68%)", "hsl(262,40%,78%)", "hsl(262,20%,85%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)"];
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-2))", "hsl(var(--chart-4))", "hsl(var(--accent-green))", "hsl(var(--chart-2))"];
 
 export default function GroupDashboard() {
   const { language, selectedYear, sourceLanguageFilter, sizeFilter, allData, meta } = useBarometerStore();
@@ -231,22 +231,22 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
         <SectionCard title={t("field.commission_ins", language)}>
           <ResponsiveContainer width="100%" height={Math.max(300, commData.length * 28)}>
             <BarChart data={commData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              <Bar dataKey="value" fill="hsl(262,30%,53%)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
         <SectionCard title={t("field.commission_bank", language)}>
           <ResponsiveContainer width="100%" height={Math.max(300, commBankData.length * 28)}>
             <BarChart data={commBankData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              <Bar dataKey="value" fill="hsl(221,50%,55%)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -256,7 +256,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
         <SectionCard title={`${t("field.pct_private", language)} / ${t("field.pct_sme", language)}`}>
           <ResponsiveContainer width="100%" height={Math.max(300, privateSmeData.length * 26)}>
             <BarChart data={privateSmeData} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
               <Tooltip content={({ active, payload }) => {
@@ -274,9 +274,9 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
                   </div>
                 );
               }} />
-              <ReferenceLine x={avgPrivate} stroke="hsl(262,50%,40%)" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgPrivate.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(262,50%,40%)" }} />
-              <Bar dataKey="private" stackId="ps" fill="hsl(262,30%,53%)" name={t("field.pct_private", language)} />
-              <Bar dataKey="sme" stackId="ps" fill="hsl(262,40%,78%)" name={t("field.pct_sme", language)} radius={[0, 4, 4, 0]} />
+              <ReferenceLine x={avgPrivate} stroke="hsl(var(--chart-3))" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgPrivate.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(var(--chart-3))" }} />
+              <Bar dataKey="private" stackId="ps" fill="hsl(var(--chart-1))" name={t("field.pct_private", language)} />
+              <Bar dataKey="sme" stackId="ps" fill="hsl(var(--chart-2))" name={t("field.pct_sme", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
           </ResponsiveContainer>
@@ -285,7 +285,7 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
         <SectionCard title={`${t("field.pct_life", language)} / ${t("field.pct_nonlife", language)}`}>
           <ResponsiveContainer width="100%" height={Math.max(300, lifeNonlifeData.length * 26)}>
             <BarChart data={lifeNonlifeData} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
               <Tooltip content={({ active, payload }) => {
@@ -303,9 +303,9 @@ function FinancialTab({ data, language }: { data: import("@/types/barometer").Of
                   </div>
                 );
               }} />
-              <ReferenceLine x={avgNonlife} stroke="hsl(14,60%,40%)" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgNonlife.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(14,60%,40%)" }} />
-              <Bar dataKey="nonlife" stackId="ln" fill="hsl(14,80%,55%)" name={t("field.pct_nonlife", language)} />
-              <Bar dataKey="life" stackId="ln" fill="hsl(45,85%,55%)" name={t("field.pct_life", language)} radius={[0, 4, 4, 0]} />
+              <ReferenceLine x={avgNonlife} stroke="hsl(var(--chart-4))" strokeDasharray="5 3" strokeWidth={2} label={{ value: `⌀ ${avgNonlife.toFixed(0)}%`, position: "top", fontSize: 10, fill: "hsl(var(--chart-4))" }} />
+              <Bar dataKey="nonlife" stackId="ln" fill="hsl(var(--chart-2))" name={t("field.pct_nonlife", language)} />
+              <Bar dataKey="life" stackId="ln" fill="hsl(var(--chart-2))" name={t("field.pct_life", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
           </ResponsiveContainer>
@@ -371,7 +371,7 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
         <SectionCard title={`${t("kpi.avg_fte", language)} ${language === "nl" ? "per kantoor" : "par bureau"}`}>
           <ResponsiveContainer width="100%" height={Math.max(300, fteData.length * 28)}>
             <BarChart data={fteData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 9 }} />
               <Tooltip content={({ active, payload }) => {
@@ -386,8 +386,8 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
                   </div>
                 );
               }} />
-              <Bar dataKey="managers" stackId="fte" fill="hsl(262,30%,53%)" name={t("field.managers", language)} />
-              <Bar dataKey="employees" stackId="fte" fill="hsl(262,40%,78%)" name={t("field.employees", language)} radius={[0, 4, 4, 0]} />
+              <Bar dataKey="managers" stackId="fte" fill="hsl(var(--chart-1))" name={t("field.managers", language)} />
+              <Bar dataKey="employees" stackId="fte" fill="hsl(var(--chart-2))" name={t("field.employees", language)} radius={[0, 4, 4, 0]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </BarChart>
           </ResponsiveContainer>
@@ -396,11 +396,11 @@ function PersonnelTab({ data, language }: { data: import("@/types/barometer").Of
         <SectionCard title={t("field.commission_per_fte", language)}>
           <ResponsiveContainer width="100%" height={Math.max(300, efficiencyData.length * 26)}>
             <BarChart data={efficiencyData} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              <Bar dataKey="value" fill="hsl(122,39%,49%)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="hsl(var(--accent-green))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -449,11 +449,11 @@ function CompaniesTab({ data, language }: { data: import("@/types/barometer").Of
             <div className="mb-4">
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={ranking.slice(0, 5)} layout="vertical" margin={{ left: 10, right: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="company" width={120} tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Bar dataKey="totalPoints" fill="hsl(262,30%,53%)" radius={[0, 4, 4, 0]} name={t("common.points", language)} />
+                  <Bar dataKey="totalPoints" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} name={t("common.points", language)} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -522,11 +522,11 @@ function StrategyTab({ data, language }: { data: import("@/types/barometer").Off
         <SectionCard title={t("field.priorities", language)}>
           <ResponsiveContainer width="100%" height={Math.max(300, priorityDist.length * 36)}>
             <BarChart data={priorityDist} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis type="number" tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="label" width={250} tick={{ fontSize: 9 }} />
               <Tooltip />
-              <Bar dataKey="count" fill="hsl(262,30%,53%)" radius={[0, 4, 4, 0]} name={t("common.frequency", language)} />
+              <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} name={t("common.frequency", language)} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -574,11 +574,11 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
         <SectionCard title={t("field.satisfaction", language)}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={satDist}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="count" fill="hsl(262,30%,53%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -586,11 +586,11 @@ function EngagementTab({ data, language }: { data: import("@/types/barometer").O
         <SectionCard title={t("field.recommend", language)}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={recDist}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="count" fill="hsl(122,39%,49%)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="hsl(var(--accent-green))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -802,7 +802,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
     return calcWeightedRanking(allFiltered, "ranking_life").slice(0, 5).map((r) => r.company);
   }, [allData, sourceLanguageFilter, sizeFilter]);
 
-  const COMPANY_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(35,90%,55%)", "hsl(200,70%,50%)", "hsl(340,65%,50%)"];
+  const COMPANY_COLORS = ["hsl(var(--chart-1))", "hsl(var(--accent-green))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
   if (evolutionData.length < 2) {
     return (
@@ -822,7 +822,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <XAxis dataKey="year" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => [formatCurrency(v), t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-              <Line type="monotone" dataKey="avgComm" name={t("benchmark.mean", language)} stroke="hsl(262,30%,53%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(262,30%,53%)" }} />
+              <Line type="monotone" dataKey="avgComm" name={t("benchmark.mean", language)} stroke="hsl(var(--chart-1))" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--chart-1))" }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -834,7 +834,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <XAxis dataKey="year" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 10 }} />
               <Tooltip formatter={(v: number) => [v?.toFixed(1) ?? "—", t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-              <Line type="monotone" dataKey="avgFte" name={t("benchmark.mean", language)} stroke="hsl(122,39%,49%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(122,39%,49%)" }} />
+              <Line type="monotone" dataKey="avgFte" name={t("benchmark.mean", language)} stroke="hsl(var(--accent-green))" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--accent-green))" }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -846,7 +846,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <XAxis dataKey="year" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => [formatCurrency(v), t("benchmark.mean", language)]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-              <Line type="monotone" dataKey="avgCommPerFte" name={t("benchmark.mean", language)} stroke="hsl(142,60%,40%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(142,60%,40%)" }} />
+              <Line type="monotone" dataKey="avgCommPerFte" name={t("benchmark.mean", language)} stroke="hsl(var(--accent-green))" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--accent-green))" }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -858,7 +858,7 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <XAxis dataKey="year" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
               <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-              <Bar dataKey="officeCount" fill="hsl(262,30%,53%)" radius={[4, 4, 0, 0]} name={t("common.offices", language)} />
+              <Bar dataKey="officeCount" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name={t("common.offices", language)} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -872,9 +872,9 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
               <Tooltip labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="klein" stackId="size" fill="hsl(200,70%,50%)" name={t("group.small", language)} radius={[0, 0, 0, 0]} />
-              <Bar dataKey="middel" stackId="size" fill="hsl(35,90%,55%)" name={t("group.medium", language)} />
-              <Bar dataKey="groot" stackId="size" fill="hsl(262,30%,53%)" name={t("group.large", language)} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="klein" stackId="size" fill="hsl(var(--chart-3))" name={t("group.small", language)} radius={[0, 0, 0, 0]} />
+              <Bar dataKey="middel" stackId="size" fill="hsl(var(--chart-2))" name={t("group.medium", language)} />
+              <Bar dataKey="groot" stackId="size" fill="hsl(var(--chart-1))" name={t("group.large", language)} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -888,8 +888,8 @@ function EvolutionTab({ allData, meta, sourceLanguageFilter, sizeFilter, languag
               <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${v?.toFixed(0)}%`} />
               <Tooltip formatter={(v: number) => [`${v?.toFixed(1)}%`]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="avgPrivate" name={t("group.pct_private", language)} stroke="hsl(262,30%,53%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(262,30%,53%)" }} />
-              <Line type="monotone" dataKey="avgSme" name={t("group.pct_sme", language)} stroke="hsl(122,39%,49%)" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(122,39%,49%)" }} />
+              <Line type="monotone" dataKey="avgPrivate" name={t("group.pct_private", language)} stroke="hsl(var(--chart-1))" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--chart-1))" }} />
+              <Line type="monotone" dataKey="avgSme" name={t("group.pct_sme", language)} stroke="hsl(var(--accent-green))" strokeWidth={2.5} dot={{ r: 5, fill: "hsl(var(--accent-green))" }} />
             </LineChart>
           </ResponsiveContainer>
         </SectionCard>
@@ -1072,7 +1072,7 @@ function CompareAnalysis({ selectedData, selected, data, language }: {
   );
 }
 
-const COMPARE_COLORS = ["hsl(262,30%,53%)", "hsl(122,39%,49%)", "hsl(14,100%,63%)", "hsl(200,70%,50%)", "hsl(45,90%,50%)", "hsl(310,50%,55%)"];
+const COMPARE_COLORS = ["hsl(var(--chart-1))", "hsl(var(--accent-green))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-2))", "hsl(var(--chart-4))"];
 
 function CompareTab({ data, language }: { data: import("@/types/barometer").OfficeRecord[]; language: "nl" | "fr" }) {
   const { selectedYear, getDisplayName: dn } = useBarometerStore();
@@ -1251,7 +1251,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
             <SectionCard title={t("compare.radar_title", language)}>
               <ResponsiveContainer width="100%" height={350}>
                 <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={120}>
-                  <PolarGrid stroke="hsl(252,25%,90%)" />
+                  <PolarGrid stroke="hsl(var(--border))" />
                   <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
                   <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                   {selectedData.map((_, i) => (
@@ -1339,7 +1339,7 @@ function CompareTab({ data, language }: { data: import("@/types/barometer").Offi
           <SectionCard title={t("field.commission_ins", language)}>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={selectedData.map(({ record }, i) => ({ name: record.office_name.slice(0, 20), value: record.commission_insurance ?? 0, fill: COMPARE_COLORS[i % COMPARE_COLORS.length] }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(252,25%,90%)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                 <YAxis tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
