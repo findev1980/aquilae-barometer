@@ -49,12 +49,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo / Title */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <LogIn className="h-7 w-7" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Aquilae Barometer
+          <h1 className="text-3xl font-bold tracking-[0.18em] text-primary">
+            AQUILAE
           </h1>
+          <p className="mt-2 text-sm font-medium text-foreground">
+            Barometer
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
             {language === "nl" ? "Meld je aan om verder te gaan" : "Connectez-vous pour continuer"}
           </p>

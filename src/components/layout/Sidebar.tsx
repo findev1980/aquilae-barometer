@@ -2,7 +2,6 @@ import { useBarometerStore } from "@/store/useBarometerStore";
 import { t } from "@/i18n/translations";
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, BarChart3, Building2, Download, Upload, Settings, PanelLeftClose, PanelLeft } from "lucide-react";
-import aquilaeLogo from "@/assets/aquilae-logo.png";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
@@ -32,15 +31,19 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={200}>
       <aside
-        className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-border bg-card transition-[width] duration-200 ${
+        className={`fixed left-0 top-0 z-30 flex h-screen flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
-        <div className={`flex items-center border-b border-border px-3 py-3 ${collapsed ? "justify-center" : "justify-between"}`}>
-          {!collapsed && <img src={aquilaeLogo} alt="Aquilae" className="h-8 w-auto ml-2" />}
+        <div className={`flex items-center border-b border-sidebar-border px-3 py-3 ${collapsed ? "justify-center" : "justify-between"}`}>
+          {!collapsed && (
+            <span className="ml-2 text-lg font-bold tracking-[0.18em] text-sidebar-foreground">
+              AQUILAE
+            </span>
+          )}
           <button
             onClick={onToggle}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors active:scale-95"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors active:scale-95"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
@@ -59,8 +62,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     collapsed ? "justify-center" : ""
                   } ${
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   }`}
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
@@ -85,7 +88,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </nav>
 
         {!collapsed && (
-          <div className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
+          <div className="border-t border-sidebar-border px-5 py-3 text-xs text-sidebar-foreground/60">
             Aquilae Barometer v1.0
           </div>
         )}
