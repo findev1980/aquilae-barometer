@@ -291,7 +291,23 @@ export function generateOfficePDF(
   const year = office.survey_year;
   const totalPages = 7;
 
-  // ===== PAGE 1 — Office Profile =====
+  // ===== PAGE 1 — Cover =====
+  const sizeForCover = getOfficeSize(office);
+  const sizeLabelCover = sizeForCover ? getOfficeSizeLabel(sizeForCover, lang) : "";
+  const introLines: string[] = [];
+  if (sizeLabelCover) introLines.push(`${lang === "fr" ? "Taille" : "Grootte"}: ${sizeLabelCover}`);
+  if (office.activities.length) introLines.push(`${lang === "fr" ? "Activités" : "Activiteiten"}: ${office.activities.join(", ")}`);
+  if (computed.total_commission !== null) introLines.push(`${lang === "fr" ? "Commission totale" : "Totale commissie"}: ${fmtCur(computed.total_commission)}`);
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Rapport de bureau" : "Kantoorrapport",
+    title: officeName,
+    introLines,
+  });
+
+  // ===== PAGE 2 — Office Profile =====
+  doc.addPage();
   addHeader(doc, year, lang);
   let y = 28;
 
