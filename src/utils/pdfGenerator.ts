@@ -1838,7 +1838,19 @@ export function generateComparePDF(
   const w = doc.internal.pageSize.getWidth();
   const totalPages = 3;
 
-  // ===== PAGE 1 — Radar + Detail Table =====
+  // ===== PAGE 1 — Cover =====
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Comparaison" : "Vergelijking",
+    title: lang === "fr" ? "Comparaison des bureaux" : "Vergelijking kantoren",
+    introLines: [
+      selectedRecords.map((r) => r.office_name).join(" · "),
+    ],
+  });
+
+  // ===== PAGE 2 — Radar + Detail Table =====
+  doc.addPage();
   addHeader(doc, year, lang);
   let y = 28;
 
