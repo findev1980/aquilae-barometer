@@ -155,6 +155,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_office_records: {
+        Args: { _records: Json; _year: number }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
