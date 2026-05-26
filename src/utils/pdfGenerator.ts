@@ -1344,7 +1344,22 @@ export function generateGroupPDF(
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  // ===== PAGE 1 — Overview & KPIs =====
+  // ===== PAGE 1 — Cover =====
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Rapport de groupe" : "Groepsrapport",
+    title: lang === "fr" ? "Rapport de groupe" : "Groepsrapport",
+    introLines: [
+      `${data.length} ${t("common.offices", lang)} · ${sourceLanguageFilter.toUpperCase()}`,
+      lang === "fr"
+        ? "Synthèse annuelle des bureaux Aquilae"
+        : "Jaarlijkse synthese van de Aquilae-kantoren",
+    ],
+  });
+
+  // ===== PAGE 2 — Overview & KPIs =====
+  doc.addPage();
   addHeader(doc, year, lang);
   let y = 28;
 
