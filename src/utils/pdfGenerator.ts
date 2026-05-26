@@ -289,7 +289,7 @@ export function generateOfficePDF(
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
   const year = office.survey_year;
-  const totalPages = 6;
+  const totalPages = 7;
 
   // ===== PAGE 1 — Office Profile =====
   addHeader(doc, year, lang);
@@ -398,7 +398,7 @@ export function generateOfficePDF(
   doc.setFont("helvetica", "normal");
   doc.text(office.activities.join(", "), 15, y);
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Financial Benchmark =====
   doc.addPage();
@@ -549,7 +549,7 @@ export function generateOfficePDF(
     y = drawPortfolioBar(t("field.pct_life", lang), office.pct_life, calcFieldAvg(allData, "pct_life"), bmSizeData ? calcFieldAvg(bmSizeData, "pct_life") : null, y);
   }
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
 
   // ===== PAGE 3 — Companies & Strategy =====
   doc.addPage();
@@ -677,7 +677,7 @@ export function generateOfficePDF(
     doc.text(cLines, 15, y);
   }
 
-  addFooter(doc, year, 3, totalPages, lang);
+  addFooter(doc, year, 4, totalPages, lang);
 
   // ===== PAGE 4 — Aquilae Engagement =====
   doc.addPage();
@@ -752,7 +752,7 @@ export function generateOfficePDF(
     doc.text(rLines, 15, y);
   }
 
-  addFooter(doc, year, 4, totalPages, lang);
+  addFooter(doc, year, 5, totalPages, lang);
 
   // ===== PAGE 5 — Evolution =====
   doc.addPage();
@@ -962,7 +962,7 @@ export function generateOfficePDF(
     const companyNonlife = buildCompanyEvolution("ranking_nonlife");
     const companyLife = buildCompanyEvolution("ranking_life");
 
-    addFooter(doc, year, 5, totalPages, lang);
+    addFooter(doc, year, 6, totalPages, lang);
 
     // === New page for company rankings ===
     doc.addPage();
@@ -1025,7 +1025,7 @@ export function generateOfficePDF(
     doc.text(lang === "nl"
       ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
-    addFooter(doc, year, 5, totalPages, lang);
+    addFooter(doc, year, 6, totalPages, lang);
     doc.addPage();
     addHeader(doc, year, lang);
     y = 28;
@@ -1079,7 +1079,7 @@ export function generateOfficePDF(
     doc.text(lang === "nl" ? "Onvoldoende data voor analyse." : "Données insuffisantes pour l'analyse.", 15, y);
   }
 
-  addFooter(doc, year, 6, totalPages, lang);
+  addFooter(doc, year, 7, totalPages, lang);
 
   return doc;
 }
@@ -1303,7 +1303,7 @@ export function generateGroupPDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 5;
+  const totalPages = 6;
 
   // Filter data for selected year
   const data = allData
@@ -1404,7 +1404,7 @@ export function generateGroupPDF(
     columnStyles: { 0: { cellWidth: 10 } },
   });
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Top 10 Efficiency + Companies & Engagement =====
   doc.addPage();
@@ -1503,7 +1503,7 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
   });
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
 
   // ===== PAGE 3 — Groei en strategie =====
   doc.addPage();
@@ -1559,7 +1559,7 @@ export function generateGroupPDF(
   }
 
 
-  addFooter(doc, year, 3, totalPages, lang);
+  addFooter(doc, year, 4, totalPages, lang);
 
   // ===== PAGE 4 — Evolution Trends =====
   doc.addPage();
@@ -1676,7 +1676,7 @@ export function generateGroupPDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
   }
 
-  addFooter(doc, year, 4, totalPages, lang);
+  addFooter(doc, year, 5, totalPages, lang);
 
   // ===== PAGE 5 — Company Evolution + Cijfers per jaar =====
   doc.addPage();
@@ -1776,7 +1776,7 @@ export function generateGroupPDF(
     });
   }
 
-  addFooter(doc, year, 5, totalPages, lang);
+  addFooter(doc, year, 6, totalPages, lang);
   return doc;
 }
 
@@ -1805,7 +1805,7 @@ export function generateComparePDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 2;
+  const totalPages = 3;
 
   // ===== PAGE 1 — Radar + Detail Table =====
   addHeader(doc, year, lang);
@@ -1961,7 +1961,7 @@ export function generateComparePDF(
     columnStyles: { 0: { fontStyle: "bold", textColor: [...GREY] } },
   });
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Bar chart + Analysis =====
   doc.addPage();
@@ -2069,6 +2069,6 @@ export function generateComparePDF(
     }
   }
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
   return doc;
 }
