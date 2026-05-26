@@ -362,7 +362,7 @@ export function generateOfficePDF(
     doc.setFont("helvetica", "normal");
     if (officeVal !== null) doc.text(`${officeVal}%`, w - 40, yPos, { align: "right" });
     yPos += 3;
-    doc.setFillColor(235, 235, 240);
+    doc.setFillColor(236, 231, 223);
     doc.roundedRect(15, yPos, barMaxW, 5, 1.5, 1.5, "F");
     if (officeVal !== null && officeVal > 0) {
       doc.setFillColor(...PRIMARY);
@@ -443,7 +443,7 @@ export function generateOfficePDF(
       if (i < 3) {
         doc.setFillColor(...PRIMARY_LIGHT);
       } else {
-        doc.setFillColor(235, 235, 240);
+        doc.setFillColor(236, 231, 223);
       }
       doc.circle(19, yPos + 0.5, 3, "F");
       doc.setFontSize(7);
@@ -471,7 +471,7 @@ export function generateOfficePDF(
           doc.setFillColor(...PRIMARY_LIGHT);
           doc.setTextColor(...PRIMARY);
         } else {
-          doc.setFillColor(235, 235, 240);
+          doc.setFillColor(236, 231, 223);
           doc.setTextColor(...GREY);
         }
         doc.roundedRect(badgeX, yPos - 1.5, badgeW, 5, 1.5, 1.5, "F");
@@ -706,7 +706,7 @@ export function generateOfficePDF(
       const areaX = xOff;
       const areaY = chartY + 3;
 
-      doc.setDrawColor(200, 200, 210);
+      doc.setDrawColor(236, 231, 223);
       doc.setLineWidth(0.3);
       doc.line(areaX, areaY, areaX, areaY + chartH);
       doc.line(areaX, areaY + chartH, areaX + chartW, areaY + chartH);
@@ -735,7 +735,7 @@ export function generateOfficePDF(
       // Group line (dashed)
       const groupPts = groupVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
       if (groupPts.length > 1) {
-        doc.setDrawColor(180, 180, 195);
+        doc.setDrawColor(236, 231, 223);
         doc.setLineWidth(0.5);
         doc.setLineDashPattern([1.5, 1.5], 0);
         for (let i = 1; i < groupPts.length; i++) doc.line(groupPts[i - 1].x, groupPts[i - 1].y, groupPts[i].x, groupPts[i].y);
@@ -786,7 +786,7 @@ export function generateOfficePDF(
       chartPctPrivate, groupPriMeans,
       (v) => `${Math.round(v)}%`, 100,
       PRIMARY,
-      { vals: chartPctSme, color: [220, 160, 40] as const, label: t("field.pct_sme", lang) }
+      { vals: chartPctSme, color: [215, 173, 123] as const, label: t("field.pct_sme", lang) }
     );
     y += chartH + 14;
 
@@ -801,7 +801,7 @@ export function generateOfficePDF(
     doc.setFont("helvetica", "normal");
     doc.text(t("benchmark.office", lang), 22, y + 1);
 
-    doc.setDrawColor(180, 180, 195);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.5);
     doc.setLineDashPattern([1.5, 1.5], 0);
     doc.line(50, y, 55, y);
@@ -978,7 +978,7 @@ function drawMiniLineChart(
   const areaY = y + 4;
 
   // Axes
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY, x, areaY + h);
   doc.line(x, areaY + h, x + w, areaY + h);
@@ -1051,7 +1051,7 @@ function drawMiniStackedBar(
   doc.text(title, x, y);
 
   const areaY = y + 4;
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY + h, x + w, areaY + h);
 
@@ -1108,7 +1108,7 @@ function drawMiniMultiLineChart(
   doc.text(title, x, y);
 
   const areaY = y + 4;
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY, x, areaY + h);
   doc.line(x, areaY + h, x + w, areaY + h);
@@ -1731,7 +1731,7 @@ export function generateComparePDF(
   // Draw radar grid
   for (let ring = 1; ring <= 4; ring++) {
     const r = (ring / 4) * radius;
-    doc.setDrawColor(220, 220, 230);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.2);
     for (let i = 0; i < n; i++) {
       const a1 = (Math.PI * 2 * i) / n - Math.PI / 2;
@@ -1745,7 +1745,7 @@ export function generateComparePDF(
   doc.setFont("helvetica", "normal");
   for (let i = 0; i < n; i++) {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    doc.setDrawColor(200, 200, 210);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.15);
     doc.line(cx, cy, cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
     const lx = cx + Math.cos(angle) * (radius + 8);
