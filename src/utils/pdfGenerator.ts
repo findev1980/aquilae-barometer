@@ -12,11 +12,18 @@ import {
 import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 
-const PRIMARY = [121, 97, 171] as const; // #7961AB
-const PRIMARY_LIGHT = [237, 232, 245] as const;
-const DARK = [45, 45, 63] as const;
-const GREY = [102, 102, 119] as const;
+const PRIMARY = [45, 74, 108] as const;         // navy
+const PRIMARY_LIGHT = [232, 237, 242] as const;  // navy-tint
+const DARK = [22, 32, 41] as const;              // ink
+const GREY = [138, 139, 137] as const;           // grey
 const WHITE = [255, 255, 255] as const;
+const GOLD = [215, 173, 123] as const;           // gold
+const GOLD_DARK = [196, 154, 99] as const;
+const CREME = [240, 226, 210] as const;
+const OFFWHITE = [250, 250, 247] as const;
+const BORDER_SOFT = [236, 231, 223] as const;
+const GREEN = [79, 138, 110] as const;
+const RED = [184, 85, 68] as const;
 
 type DocWithLastAutoTable = jsPDF & { lastAutoTable?: { finalY?: number } };
 
@@ -29,41 +36,163 @@ function fmtCur(v: number | null): string {
   return "\u20AC" + Math.round(v).toLocaleString("de-DE");
 }
 
-function addHeader(doc: jsPDF, officeName: string, pageNum: number) {
-  const w = doc.internal.pageSize.getWidth();
-  // Purple top bar
-  doc.setFillColor(...PRIMARY);
-  doc.rect(0, 0, w, 14, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...WHITE);
-  doc.setFont("helvetica", "bold");
-  doc.text("AQUILAE BAROMETER", 15, 9);
-  doc.setFont("helvetica", "normal");
-  doc.text(officeName, w - 15, 9, { align: "right" });
+function drawSpacedText(doc: jsPDF, text: string, x: number, y: number, spacing: number, align: "left" | "right" = "left") {
+  // Draw uppercase letters with manual letter-spacing
+  const chars = text.split("");
+  const widths = chars.map((c) => doc.getTextWidth(c));
+  const total = widths.reduce((a, b) => a + b, 0) + spacing * Math.max(0, chars.length - 1);
+  let cx = align === "right" ? x - total : x;
+  for (let i = 0; i < chars.length; i++) {
+    doc.text(chars[i], cx, y);
+    cx += widths[i] + spacing;
+  }
 }
 
-function addFooter(doc: jsPDF, year: number, pageNum: number, totalPages: number, lang: Language) {
+function addHeader(doc: jsPDF, year: number, lang: Language) {
+  const w = doc.internal.pageSize.getWidth();
+  // Wordmark left
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, "AQUILAE", 15, 14, 0.8);
+  // Context right
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  const ctx = `${lang === "fr" ? "Baromètre" : "Barometer"} · ${year}`;
+  doc.text(ctx, w - 15, 14, { align: "right" });
+  // Hairline
+  doc.setDrawColor(...BORDER_SOFT);
+  doc.setLineWidth(0.5);
+  doc.line(15, 18, w - 15, 18);
+}
+
+function addFooter(doc: jsPDF, _year: number, pageNum: number, totalPages: number, lang: Language) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  doc.setDrawColor(...PRIMARY_LIGHT);
-  doc.line(15, h - 15, w - 15, h - 15);
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setTextColor(...GREY);
-  doc.text(`${t("filter.year", lang)}: ${year}`, 15, h - 9);
-  doc.text(`${pageNum} / ${totalPages}`, w / 2, h - 9, { align: "center" });
-  doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-BE" : "nl-BE"), w - 15, h - 9, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  const confidential = lang === "fr"
+    ? "Confidentiel — usage interne uniquement"
+    : "Vertrouwelijk — uitsluitend voor intern gebruik";
+  doc.text(confidential, 15, h - 8);
+  doc.text(`${pageNum} / ${totalPages}`, w - 15, h - 8, { align: "right" });
+  // 4pt gold bar at very bottom
+  doc.setFillColor(...GOLD);
+  doc.rect(0, h - 4, w, 4, "F");
 }
 
-function sectionTitle(doc: jsPDF, title: string, y: number): number {
-  doc.setFontSize(12);
-  doc.setTextColor(...PRIMARY);
+function sectionTitle(doc: jsPDF, title: string, y: number, kicker?: string): number {
+  const kickerText = (kicker ?? title).toUpperCase();
+  // Kicker
   doc.setFont("helvetica", "bold");
-  doc.text(title, 15, y);
-  const titleWidth = doc.getTextWidth(title);
-  doc.setDrawColor(...PRIMARY);
-  doc.setLineWidth(0.5);
-  doc.line(15, y + 2, 15 + titleWidth, y + 2);
-  return y + 10;
+  doc.setFontSize(7);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, kickerText, 15, y, 0.5);
+  // Title in ink
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...DARK);
+  doc.text(title, 15, y + 6);
+  // Gold accent line 36 x 2 pt
+  doc.setFillColor(...GOLD);
+  doc.rect(15, y + 8.5, 36 / 2.83465, 2 / 2.83465, "F"); // 36pt ~ 12.7mm, 2pt ~ 0.7mm
+  return y + 14;
+}
+
+function drawCoverPage(doc: jsPDF, opts: {
+  year: number;
+  lang: Language;
+  kicker: string;     // small navy uppercase kicker on lower half
+  title: string;      // large ink title on lower half
+  introLines?: string[]; // 1-3 short lines shown in off-white card
+}) {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  const lang = opts.lang;
+
+  // Navy block (top ~50%)
+  const blockH = h * 0.5;
+  doc.setFillColor(...PRIMARY);
+  doc.rect(0, 0, w, blockH, "F");
+  // Gold rectangle top-right (~120 x 80 pt = 42.3 x 28.2 mm)
+  const goldW = 120 / 2.83465;
+  const goldH = 80 / 2.83465;
+  doc.setFillColor(...GOLD);
+  doc.rect(w - goldW, 0, goldW, goldH, "F");
+
+  // White wordmark top-left
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(26);
+  doc.setTextColor(...WHITE);
+  drawSpacedText(doc, "AQUILAE", 20, 30, 2.2);
+  // Short white line
+  doc.setDrawColor(...WHITE);
+  doc.setLineWidth(0.6);
+  doc.line(20, 36, 60, 36);
+  // Tagline
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  const tagline = lang === "fr" ? "BAROMÈTRE ANNUEL" : "JAARLIJKSE BAROMETER";
+  drawSpacedText(doc, tagline, 20, 42, 1.0);
+
+  // Big white year (bottom-left of navy block)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(72);
+  doc.setTextColor(...WHITE);
+  doc.text(String(opts.year), 20, blockH - 14);
+
+  // Lower half (white): kicker + title
+  let y = blockH + 24;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, opts.kicker.toUpperCase(), 20, y, 1.0);
+  y += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(26);
+  doc.setTextColor(...DARK);
+  const titleLines = doc.splitTextToSize(opts.title, w - 40);
+  doc.text(titleLines, 20, y);
+  y += titleLines.length * 10 + 6;
+
+  // Off-white card with gold left edge
+  if (opts.introLines && opts.introLines.length > 0) {
+    const cardX = 20;
+    const cardW = w - 40;
+    const lineH = 5.2;
+    const cardH = opts.introLines.length * lineH + 10;
+    doc.setFillColor(...OFFWHITE);
+    doc.rect(cardX, y, cardW, cardH, "F");
+    doc.setFillColor(...GOLD);
+    doc.rect(cardX, y, 0.7, cardH, "F"); // ~2pt
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    let ly = y + 7;
+    for (const line of opts.introLines) {
+      doc.text(line, cardX + 6, ly);
+      ly += lineH;
+    }
+    y += cardH + 8;
+  }
+
+  // Meta line near bottom (above the gold bar)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  const dateStr = new Date().toLocaleDateString(lang === "fr" ? "fr-BE" : "nl-BE");
+  const meta = lang === "fr"
+    ? `Généré le ${dateStr} — Confidentiel, usage interne uniquement`
+    : `Gegenereerd op ${dateStr} — Vertrouwelijk, uitsluitend voor intern gebruik`;
+  doc.text(meta, 20, h - 12);
+
+  // 4pt gold bar at very bottom
+  doc.setFillColor(...GOLD);
+  doc.rect(0, h - 4, w, 4, "F");
 }
 
 function labelValue(doc: jsPDF, label: string, value: string, x: number, y: number): number {
@@ -160,10 +289,26 @@ export function generateOfficePDF(
   const w = doc.internal.pageSize.getWidth();
   const computed = getComputed(office);
   const year = office.survey_year;
-  const totalPages = 6;
+  const totalPages = 7;
 
-  // ===== PAGE 1 — Office Profile =====
-  addHeader(doc, officeName, 1);
+  // ===== PAGE 1 — Cover =====
+  const sizeForCover = getOfficeSize(office);
+  const sizeLabelCover = sizeForCover ? getOfficeSizeLabel(sizeForCover, lang) : "";
+  const introLines: string[] = [];
+  if (sizeLabelCover) introLines.push(`${lang === "fr" ? "Taille" : "Grootte"}: ${sizeLabelCover}`);
+  if (office.activities.length) introLines.push(`${lang === "fr" ? "Activités" : "Activiteiten"}: ${office.activities.join(", ")}`);
+  if (computed.total_commission !== null) introLines.push(`${lang === "fr" ? "Commission totale" : "Totale commissie"}: ${fmtCur(computed.total_commission)}`);
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Rapport de bureau" : "Kantoorrapport",
+    title: officeName,
+    introLines,
+  });
+
+  // ===== PAGE 2 — Office Profile =====
+  doc.addPage();
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(20);
@@ -269,11 +414,11 @@ export function generateOfficePDF(
   doc.setFont("helvetica", "normal");
   doc.text(office.activities.join(", "), 15, y);
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Financial Benchmark =====
   doc.addPage();
-  addHeader(doc, officeName, 2);
+  addHeader(doc, year, lang);
   y = 28;
   // Group-wide benchmark
   const bmOfficeSize = getOfficeSize(office);
@@ -350,7 +495,7 @@ export function generateOfficePDF(
   y += 6;
 
   // Portfolio distribution with size-category markers
-  const ORANGE = [220, 120, 20] as const;
+  const ORANGE = [215, 173, 123] as const;
   const barMaxW = w - 60;
   const pdfSizeLabel = bmOfficeSize ? getOfficeSizeLabel(bmOfficeSize, lang) : "";
 
@@ -362,7 +507,7 @@ export function generateOfficePDF(
     doc.setFont("helvetica", "normal");
     if (officeVal !== null) doc.text(`${officeVal}%`, w - 40, yPos, { align: "right" });
     yPos += 3;
-    doc.setFillColor(235, 235, 240);
+    doc.setFillColor(236, 231, 223);
     doc.roundedRect(15, yPos, barMaxW, 5, 1.5, 1.5, "F");
     if (officeVal !== null && officeVal > 0) {
       doc.setFillColor(...PRIMARY);
@@ -420,11 +565,11 @@ export function generateOfficePDF(
     y = drawPortfolioBar(t("field.pct_life", lang), office.pct_life, calcFieldAvg(allData, "pct_life"), bmSizeData ? calcFieldAvg(bmSizeData, "pct_life") : null, y);
   }
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
 
   // ===== PAGE 3 — Companies & Strategy =====
   doc.addPage();
-  addHeader(doc, officeName, 3);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Companies - styled like app with numbered list and group position badges
@@ -443,7 +588,7 @@ export function generateOfficePDF(
       if (i < 3) {
         doc.setFillColor(...PRIMARY_LIGHT);
       } else {
-        doc.setFillColor(235, 235, 240);
+        doc.setFillColor(236, 231, 223);
       }
       doc.circle(19, yPos + 0.5, 3, "F");
       doc.setFontSize(7);
@@ -471,7 +616,7 @@ export function generateOfficePDF(
           doc.setFillColor(...PRIMARY_LIGHT);
           doc.setTextColor(...PRIMARY);
         } else {
-          doc.setFillColor(235, 235, 240);
+          doc.setFillColor(236, 231, 223);
           doc.setTextColor(...GREY);
         }
         doc.roundedRect(badgeX, yPos - 1.5, badgeW, 5, 1.5, 1.5, "F");
@@ -548,11 +693,11 @@ export function generateOfficePDF(
     doc.text(cLines, 15, y);
   }
 
-  addFooter(doc, year, 3, totalPages, lang);
+  addFooter(doc, year, 4, totalPages, lang);
 
   // ===== PAGE 4 — Aquilae Engagement =====
   doc.addPage();
-  addHeader(doc, officeName, 4);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, t("office.engagement", lang), y);
 
@@ -623,11 +768,11 @@ export function generateOfficePDF(
     doc.text(rLines, 15, y);
   }
 
-  addFooter(doc, year, 4, totalPages, lang);
+  addFooter(doc, year, 5, totalPages, lang);
 
   // ===== PAGE 5 — Evolution =====
   doc.addPage();
-  addHeader(doc, officeName, 5);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, t("office.evolution", lang), y);
 
@@ -706,7 +851,7 @@ export function generateOfficePDF(
       const areaX = xOff;
       const areaY = chartY + 3;
 
-      doc.setDrawColor(200, 200, 210);
+      doc.setDrawColor(236, 231, 223);
       doc.setLineWidth(0.3);
       doc.line(areaX, areaY, areaX, areaY + chartH);
       doc.line(areaX, areaY + chartH, areaX + chartW, areaY + chartH);
@@ -735,7 +880,7 @@ export function generateOfficePDF(
       // Group line (dashed)
       const groupPts = groupVals.map((v, i) => v !== null ? { x: toX(i), y: toY(v) } : null).filter(Boolean) as { x: number; y: number }[];
       if (groupPts.length > 1) {
-        doc.setDrawColor(180, 180, 195);
+        doc.setDrawColor(236, 231, 223);
         doc.setLineWidth(0.5);
         doc.setLineDashPattern([1.5, 1.5], 0);
         for (let i = 1; i < groupPts.length; i++) doc.line(groupPts[i - 1].x, groupPts[i - 1].y, groupPts[i].x, groupPts[i].y);
@@ -779,14 +924,14 @@ export function generateOfficePDF(
     y += chartH + 18;
 
     // Chart row 2: Commission/FTE + % Particulieren vs KMO
-    drawMiniChart(t("field.commission_per_fte", lang), 15, y, chartCommPerFte, [], (v) => `€${(v / 1000).toFixed(0)}k`, undefined, [34, 139, 34] as const);
+    drawMiniChart(t("field.commission_per_fte", lang), 15, y, chartCommPerFte, [], (v) => `€${(v / 1000).toFixed(0)}k`, undefined, [79, 138, 110] as const);
     drawMiniChart(
       lang === "nl" ? "% Particulieren vs KMO" : "% Particuliers vs PME",
       15 + chartW + 15, y,
       chartPctPrivate, groupPriMeans,
       (v) => `${Math.round(v)}%`, 100,
       PRIMARY,
-      { vals: chartPctSme, color: [220, 160, 40] as const, label: t("field.pct_sme", lang) }
+      { vals: chartPctSme, color: [215, 173, 123] as const, label: t("field.pct_sme", lang) }
     );
     y += chartH + 14;
 
@@ -801,7 +946,7 @@ export function generateOfficePDF(
     doc.setFont("helvetica", "normal");
     doc.text(t("benchmark.office", lang), 22, y + 1);
 
-    doc.setDrawColor(180, 180, 195);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.5);
     doc.setLineDashPattern([1.5, 1.5], 0);
     doc.line(50, y, 55, y);
@@ -833,11 +978,11 @@ export function generateOfficePDF(
     const companyNonlife = buildCompanyEvolution("ranking_nonlife");
     const companyLife = buildCompanyEvolution("ranking_life");
 
-    addFooter(doc, year, 5, totalPages, lang);
+    addFooter(doc, year, 6, totalPages, lang);
 
     // === New page for company rankings ===
     doc.addPage();
-    addHeader(doc, officeName, 6);
+    addHeader(doc, year, lang);
     y = 28;
 
     // Company non-life table
@@ -896,9 +1041,9 @@ export function generateOfficePDF(
     doc.text(lang === "nl"
       ? "Evolutiedata beschikbaar wanneer meerdere surveyjaren zijn geimporteerd."
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
-    addFooter(doc, year, 5, totalPages, lang);
+    addFooter(doc, year, 6, totalPages, lang);
     doc.addPage();
-    addHeader(doc, officeName, 6);
+    addHeader(doc, year, lang);
     y = 28;
   }
 
@@ -916,7 +1061,7 @@ export function generateOfficePDF(
     for (const insight of insights) {
       const isPositive = insight.type === "positive";
       const isNegative = insight.type === "negative";
-      const indicatorColor: readonly [number, number, number] = isPositive ? [34, 139, 34] : isNegative ? [220, 120, 20] : [...GREY];
+      const indicatorColor: readonly [number, number, number] = isPositive ? [79, 138, 110] : isNegative ? [215, 173, 123] : [...GREY];
 
       doc.setFillColor(indicatorColor[0], indicatorColor[1], indicatorColor[2]);
       doc.circle(19, y + 1, 1.5, "F");
@@ -950,7 +1095,7 @@ export function generateOfficePDF(
     doc.text(lang === "nl" ? "Onvoldoende data voor analyse." : "Données insuffisantes pour l'analyse.", 15, y);
   }
 
-  addFooter(doc, year, 6, totalPages, lang);
+  addFooter(doc, year, 7, totalPages, lang);
 
   return doc;
 }
@@ -978,7 +1123,7 @@ function drawMiniLineChart(
   const areaY = y + 4;
 
   // Axes
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY, x, areaY + h);
   doc.line(x, areaY + h, x + w, areaY + h);
@@ -1051,7 +1196,7 @@ function drawMiniStackedBar(
   doc.text(title, x, y);
 
   const areaY = y + 4;
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY + h, x + w, areaY + h);
 
@@ -1108,7 +1253,7 @@ function drawMiniMultiLineChart(
   doc.text(title, x, y);
 
   const areaY = y + 4;
-  doc.setDrawColor(200, 200, 210);
+  doc.setDrawColor(236, 231, 223);
   doc.setLineWidth(0.3);
   doc.line(x, areaY, x, areaY + h);
   doc.line(x, areaY + h, x + w, areaY + h);
@@ -1174,7 +1319,7 @@ export function generateGroupPDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 5;
+  const totalPages = 6;
 
   // Filter data for selected year
   const data = allData
@@ -1199,8 +1344,23 @@ export function generateGroupPDF(
     return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
   };
 
-  // ===== PAGE 1 — Overview & KPIs =====
-  addHeader(doc, "Groepsrapport", 1);
+  // ===== PAGE 1 — Cover =====
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Rapport de groupe" : "Groepsrapport",
+    title: lang === "fr" ? "Rapport de groupe" : "Groepsrapport",
+    introLines: [
+      `${data.length} ${t("common.offices", lang)} · ${sourceLanguageFilter.toUpperCase()}`,
+      lang === "fr"
+        ? "Synthèse annuelle des bureaux Aquilae"
+        : "Jaarlijkse synthese van de Aquilae-kantoren",
+    ],
+  });
+
+  // ===== PAGE 2 — Overview & KPIs =====
+  doc.addPage();
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(20);
@@ -1275,11 +1435,11 @@ export function generateGroupPDF(
     columnStyles: { 0: { cellWidth: 10 } },
   });
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Top 10 Efficiency + Companies & Engagement =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Top 10 efficiency
@@ -1307,7 +1467,7 @@ export function generateGroupPDF(
   });
   y = lastAutoTableFinalY(doc, y) + 10;
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Company rankings
@@ -1374,11 +1534,11 @@ export function generateGroupPDF(
     styles: { cellPadding: 2 },
   });
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
 
   // ===== PAGE 3 — Groei en strategie =====
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 3);
+  addHeader(doc, year, lang);
   y = 28;
 
   y = sectionTitle(doc, lang === "nl" ? "Groei en strategie" : "Croissance et stratégie", y);
@@ -1430,11 +1590,11 @@ export function generateGroupPDF(
   }
 
 
-  addFooter(doc, year, 3, totalPages, lang);
+  addFooter(doc, year, 4, totalPages, lang);
 
   // ===== PAGE 4 — Evolution Trends =====
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 4);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie groepsgemiddelden" : "Évolution moyennes de groupe", y);
 
@@ -1484,7 +1644,7 @@ export function generateGroupPDF(
       x: 115, y, w: chartW, h: chartH,
       title: lang === "nl" ? "Gem. FTE" : "ETP moyen",
       formatFn: (v) => v.toFixed(1),
-      color: [76, 175, 80],
+      color: [79, 138, 110],
     });
 
     y += chartH + 20;
@@ -1493,7 +1653,7 @@ export function generateGroupPDF(
       x: 25, y, w: chartW, h: chartH,
       title: lang === "nl" ? "Gem. commissie/FTE" : "Commission moy./ETP",
       formatFn: (v) => `€${(v / 1000).toFixed(0)}k`,
-      color: [76, 175, 80],
+      color: [79, 138, 110],
     });
 
     drawMiniLineChart(doc, evolutionData.map((d) => ({ year: d.year, value: d.count, groupValue: null })), {
@@ -1507,9 +1667,9 @@ export function generateGroupPDF(
 
     // Size distribution (stacked bar)
     const sizeColors = {
-      klein: [41, 182, 246] as const,  // blue
-      middel: [245, 166, 35] as const, // orange
-      groot: [121, 97, 171] as const,  // purple
+      klein: [30, 51, 80] as const,  // blue
+      middel: [215, 173, 123] as const, // orange
+      groot: [45, 74, 108] as const,  // purple
     };
     drawMiniStackedBar(doc, evolutionData.map((d) => ({
       year: d.year,
@@ -1528,7 +1688,7 @@ export function generateGroupPDF(
       year: d.year,
       lines: [
         { value: d.avgPrivate, label: lang === "nl" ? "% Particulieren" : "% Particuliers", color: PRIMARY },
-        { value: d.avgSme, label: lang === "nl" ? "% KMO" : "% PME", color: [76, 175, 80] as const },
+        { value: d.avgSme, label: lang === "nl" ? "% KMO" : "% PME", color: [79, 138, 110] as const },
       ],
     })), {
       x: 115, y, w: chartW, h: chartH,
@@ -1547,17 +1707,17 @@ export function generateGroupPDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
   }
 
-  addFooter(doc, year, 4, totalPages, lang);
+  addFooter(doc, year, 5, totalPages, lang);
 
   // ===== PAGE 5 — Company Evolution + Cijfers per jaar =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 5);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie top maatschappijen" : "Évolution top compagnies", y);
 
   if (allYears.length >= 2) {
     const COMPANY_COLORS: (readonly [number, number, number])[] = [
-      [121, 97, 171], [76, 175, 80], [245, 166, 35], [41, 182, 246], [233, 30, 99],
+      [45, 74, 108], [79, 138, 110], [215, 173, 123], [30, 51, 80], [184, 85, 68],
     ];
 
     const allFiltered = allData.filter((r) => sourceLanguageFilter === "all" || r.source_language === sourceLanguageFilter);
@@ -1647,18 +1807,18 @@ export function generateGroupPDF(
     });
   }
 
-  addFooter(doc, year, 5, totalPages, lang);
+  addFooter(doc, year, 6, totalPages, lang);
   return doc;
 }
 
 // ===== Compare PDF =====
 const COMPARE_PDF_COLORS: [number, number, number][] = [
-  [121, 97, 171],   // purple
-  [76, 175, 80],    // green
-  [255, 87, 34],    // orange
-  [33, 150, 243],   // blue
-  [255, 193, 7],    // yellow
-  [186, 104, 200],  // pink
+  [45, 74, 108],   // purple
+  [79, 138, 110],    // green
+  [215, 173, 123],    // orange
+  [30, 51, 80],   // blue
+  [196, 154, 99],    // yellow
+  [138, 139, 137],  // pink
 ];
 
 export interface CompareInsight {
@@ -1676,10 +1836,22 @@ export function generateComparePDF(
 ): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const w = doc.internal.pageSize.getWidth();
-  const totalPages = 2;
+  const totalPages = 3;
 
-  // ===== PAGE 1 — Radar + Detail Table =====
-  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 1);
+  // ===== PAGE 1 — Cover =====
+  drawCoverPage(doc, {
+    year,
+    lang,
+    kicker: lang === "fr" ? "Comparaison" : "Vergelijking",
+    title: lang === "fr" ? "Comparaison des bureaux" : "Vergelijking kantoren",
+    introLines: [
+      selectedRecords.map((r) => r.office_name).join(" · "),
+    ],
+  });
+
+  // ===== PAGE 2 — Radar + Detail Table =====
+  doc.addPage();
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(18);
@@ -1731,7 +1903,7 @@ export function generateComparePDF(
   // Draw radar grid
   for (let ring = 1; ring <= 4; ring++) {
     const r = (ring / 4) * radius;
-    doc.setDrawColor(220, 220, 230);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.2);
     for (let i = 0; i < n; i++) {
       const a1 = (Math.PI * 2 * i) / n - Math.PI / 2;
@@ -1745,7 +1917,7 @@ export function generateComparePDF(
   doc.setFont("helvetica", "normal");
   for (let i = 0; i < n; i++) {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    doc.setDrawColor(200, 200, 210);
+    doc.setDrawColor(236, 231, 223);
     doc.setLineWidth(0.15);
     doc.line(cx, cy, cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
     const lx = cx + Math.cos(angle) * (radius + 8);
@@ -1832,11 +2004,11 @@ export function generateComparePDF(
     columnStyles: { 0: { fontStyle: "bold", textColor: [...GREY] } },
   });
 
-  addFooter(doc, year, 1, totalPages, lang);
+  addFooter(doc, year, 2, totalPages, lang);
 
   // ===== PAGE 2 — Bar chart + Analysis =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Commission bar chart
@@ -1907,7 +2079,7 @@ export function generateComparePDF(
 
       if (y + blockH > pageH - 25) {
         doc.addPage();
-        addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 3);
+        addHeader(doc, year, lang);
         y = 28;
         y = sectionTitle(doc, lang === "nl" ? "Analyse (vervolg)" : "Analyse (suite)", y);
       }
@@ -1916,14 +2088,14 @@ export function generateComparePDF(
       let bgColor: [number, number, number];
       let dotColor: [number, number, number];
       if (insight.type === "positive") {
-        bgColor = [232, 245, 233];
-        dotColor = [56, 142, 60];
+        bgColor = [207, 225, 214];
+        dotColor = [79, 138, 110];
       } else if (insight.type === "negative") {
-        bgColor = [255, 243, 224];
-        dotColor = [230, 126, 34];
+        bgColor = [247, 238, 223];
+        dotColor = [215, 173, 123];
       } else {
-        bgColor = [245, 245, 250];
-        dotColor = [120, 120, 150];
+        bgColor = [248, 247, 243];
+        dotColor = [138, 139, 137];
       }
 
       doc.setFillColor(...bgColor);
@@ -1940,6 +2112,6 @@ export function generateComparePDF(
     }
   }
 
-  addFooter(doc, year, 2, totalPages, lang);
+  addFooter(doc, year, 3, totalPages, lang);
   return doc;
 }
