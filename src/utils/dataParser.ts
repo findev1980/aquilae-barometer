@@ -21,9 +21,33 @@ function splitSemicolon(value: string | null | undefined): string[] {
 
 function parseNum(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
-  if (typeof value === "number") return value;
-  const cleaned = String(value).replace(/[,\s]/g, "").replace(/\./g, ".");
-  const n = parseFloat(cleaned);
+  if (typeof value === "number") return isNaN(value) ? null : value;
+  if (typeof value !== "string") {
+    const n = Number(value);
+    return isNaN(n) ? null : n;
+  }
+  // Strip currency symbols, percent, normal spaces and non-breaking spaces
+  let s = value.replace(/[€$£%]/g, "").replace(/[\s\u00A0]/g, "");
+  if (s === "") return null;
+  const hasDot = s.includes(".");
+  const hasComma = s.includes(",");
+  if (hasDot && hasComma) {
+    // The last-occurring separator is the decimal; the other is thousands
+    const lastDot = s.lastIndexOf(".");
+    const lastComma = s.lastIndexOf(",");
+    if (lastComma > lastDot) {
+      // comma is decimal, dot is thousands
+      s = s.replace(/\./g, "").replace(",", ".");
+    } else {
+      // dot is decimal, comma is thousands
+      s = s.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    // Belgian convention: comma is decimal separator
+    s = s.replace(",", ".");
+  }
+  // hasDot only or none: parse directly
+  const n = parseFloat(s);
   return isNaN(n) ? null : n;
 }
 

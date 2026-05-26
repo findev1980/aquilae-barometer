@@ -73,46 +73,12 @@ export const useBarometerStore = create<BarometerState>((set, get) => ({
   },
 
   importData: async (records, year) => {
-    // Delete existing records for this year
-    await supabase.from("office_records").delete().eq("survey_year", year);
-
-    // Insert new records in batches of 100
-    for (let i = 0; i < records.length; i += 100) {
-      const batch = records.slice(i, i + 100).map((r) => ({
-        office_name: r.office_name,
-        source_language: r.source_language,
-        survey_year: r.survey_year,
-        activities: r.activities,
-        num_managers: r.num_managers,
-        num_employees_fte: r.num_employees_fte,
-        commission_insurance: r.commission_insurance,
-        commission_bank: r.commission_bank,
-        pct_private: r.pct_private,
-        pct_sme: r.pct_sme,
-        pct_life: r.pct_life,
-        pct_nonlife: r.pct_nonlife,
-        ranking_nonlife: r.ranking_nonlife,
-        ranking_life: r.ranking_life,
-        growth_phase: r.growth_phase,
-        strengths_text: r.strengths_text,
-        challenges_text: r.challenges_text,
-        priorities: r.priorities,
-        satisfaction_aquilae: r.satisfaction_aquilae,
-        recommend_aquilae: r.recommend_aquilae,
-        reasons_membership: r.reasons_membership,
-        participation_charter: r.participation_charter,
-        mission_alignment: r.mission_alignment,
-        vision_alignment: r.vision_alignment,
-        values_alignment: r.values_alignment,
-      }));
-      await supabase.from("office_records").insert(batch);
-    }
-
-    // Upsert import_meta
-    await supabase.from("import_meta").upsert(
-      { survey_year: year, record_count: records.length, imported_at: new Date().toISOString() },
-      { onConflict: "survey_year" }
-    );
+    // Atomic import via Postgres function (transactional, admin-only)
+    const { error } = await supabase.rpc("import_office_records", {
+      _year: year,
+      _records: records as unknown as any,
+    });
+    if (error) throw error;
 
     // Reload all data
     await get().loadData();

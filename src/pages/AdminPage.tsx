@@ -81,7 +81,7 @@ export default function AdminPage() {
       <div
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 transition-colors hover:border-primary/50 animate-fade-in"
+        className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-card p-12 transition-colors hover:border-primary/50 animate-fade-in"
         style={{ animationDelay: "60ms" }}
       >
         {file ? (
@@ -103,7 +103,6 @@ export default function AdminPage() {
           accept=".xlsx"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="absolute inset-0 cursor-pointer opacity-0"
-          style={{ position: "relative" }}
         />
       </div>
 
