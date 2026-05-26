@@ -292,7 +292,7 @@ export function generateOfficePDF(
   const totalPages = 6;
 
   // ===== PAGE 1 — Office Profile =====
-  addHeader(doc, officeName, 1);
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(20);
@@ -402,7 +402,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 2 — Financial Benchmark =====
   doc.addPage();
-  addHeader(doc, officeName, 2);
+  addHeader(doc, year, lang);
   y = 28;
   // Group-wide benchmark
   const bmOfficeSize = getOfficeSize(office);
@@ -553,7 +553,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 3 — Companies & Strategy =====
   doc.addPage();
-  addHeader(doc, officeName, 3);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Companies - styled like app with numbered list and group position badges
@@ -681,7 +681,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 4 — Aquilae Engagement =====
   doc.addPage();
-  addHeader(doc, officeName, 4);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, t("office.engagement", lang), y);
 
@@ -756,7 +756,7 @@ export function generateOfficePDF(
 
   // ===== PAGE 5 — Evolution =====
   doc.addPage();
-  addHeader(doc, officeName, 5);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, t("office.evolution", lang), y);
 
@@ -966,7 +966,7 @@ export function generateOfficePDF(
 
     // === New page for company rankings ===
     doc.addPage();
-    addHeader(doc, officeName, 6);
+    addHeader(doc, year, lang);
     y = 28;
 
     // Company non-life table
@@ -1027,7 +1027,7 @@ export function generateOfficePDF(
       : "Donnees d'evolution disponibles lorsque plusieurs annees d'enquete sont importees.", 15, y);
     addFooter(doc, year, 5, totalPages, lang);
     doc.addPage();
-    addHeader(doc, officeName, 6);
+    addHeader(doc, year, lang);
     y = 28;
   }
 
@@ -1329,7 +1329,7 @@ export function generateGroupPDF(
   };
 
   // ===== PAGE 1 — Overview & KPIs =====
-  addHeader(doc, "Groepsrapport", 1);
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(20);
@@ -1408,7 +1408,7 @@ export function generateGroupPDF(
 
   // ===== PAGE 2 — Top 10 Efficiency + Companies & Engagement =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Top 10 efficiency
@@ -1436,7 +1436,7 @@ export function generateGroupPDF(
   });
   y = lastAutoTableFinalY(doc, y) + 10;
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Company rankings
@@ -1507,7 +1507,7 @@ export function generateGroupPDF(
 
   // ===== PAGE 3 — Groei en strategie =====
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 3);
+  addHeader(doc, year, lang);
   y = 28;
 
   y = sectionTitle(doc, lang === "nl" ? "Groei en strategie" : "Croissance et stratégie", y);
@@ -1563,7 +1563,7 @@ export function generateGroupPDF(
 
   // ===== PAGE 4 — Evolution Trends =====
   doc.addPage();
-  addHeader(doc, "Groepsrapport", 4);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie groepsgemiddelden" : "Évolution moyennes de groupe", y);
 
@@ -1680,7 +1680,7 @@ export function generateGroupPDF(
 
   // ===== PAGE 5 — Company Evolution + Cijfers per jaar =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Groepsrapport" : "Rapport de groupe", 5);
+  addHeader(doc, year, lang);
   y = 28;
   y = sectionTitle(doc, lang === "nl" ? "Evolutie top maatschappijen" : "Évolution top compagnies", y);
 
@@ -1808,7 +1808,7 @@ export function generateComparePDF(
   const totalPages = 2;
 
   // ===== PAGE 1 — Radar + Detail Table =====
-  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 1);
+  addHeader(doc, year, lang);
   let y = 28;
 
   doc.setFontSize(18);
@@ -1965,7 +1965,7 @@ export function generateComparePDF(
 
   // ===== PAGE 2 — Bar chart + Analysis =====
   doc.addPage();
-  addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 2);
+  addHeader(doc, year, lang);
   y = 28;
 
   // Commission bar chart
@@ -2036,7 +2036,7 @@ export function generateComparePDF(
 
       if (y + blockH > pageH - 25) {
         doc.addPage();
-        addHeader(doc, lang === "nl" ? "Vergelijking" : "Comparaison", 3);
+        addHeader(doc, year, lang);
         y = 28;
         y = sectionTitle(doc, lang === "nl" ? "Analyse (vervolg)" : "Analyse (suite)", y);
       }
