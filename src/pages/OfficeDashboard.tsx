@@ -524,11 +524,11 @@ export default function OfficeDashboard() {
               {radarData.length > 0 && (
                 <ResponsiveContainer width="100%" height={220}>
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={70}>
-                    <PolarGrid stroke="hsl(252,25%,90%)" />
+                    <PolarGrid stroke="hsl(var(--border))" />
                     <PolarAngleAxis dataKey="label" tick={{ fontSize: 9 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-                    <Radar name={t("benchmark.office", language)} dataKey="office" stroke="hsl(262,30%,53%)" fill="hsl(262,30%,53%)" fillOpacity={0.3} />
-                    <Radar name={t("benchmark.group", language)} dataKey="group" stroke="hsl(252,25%,70%)" fill="hsl(252,25%,70%)" fillOpacity={0.1} />
+                    <Radar name={t("benchmark.office", language)} dataKey="office" stroke="hsl(var(--chart-1))" fill="hsl(var(--chart-1))" fillOpacity={0.3} />
+                    <Radar name={t("benchmark.group", language)} dataKey="group" stroke="hsl(var(--chart-5))" fill="hsl(var(--chart-5))" fillOpacity={0.1} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -561,8 +561,8 @@ export default function OfficeDashboard() {
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
                       <Tooltip formatter={(v: number, name: string) => [formatCurrency(v), name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="totalComm" name={t("office.value", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
-                      <Line type="monotone" dataKey="groupCommMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="totalComm" name={t("office.value", language)} stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--chart-1))" }} />
+                      <Line type="monotone" dataKey="groupCommMean" name={t("office.group_mean", language)} stroke="hsl(var(--chart-5))" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -577,8 +577,8 @@ export default function OfficeDashboard() {
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 10 }} />
                       <Tooltip formatter={(v: number, name: string) => [v?.toFixed(1) ?? "—", name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="totalFte" name={t("office.value", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
-                      <Line type="monotone" dataKey="groupFteMean" name={t("office.group_mean", language)} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="totalFte" name={t("office.value", language)} stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--chart-1))" }} />
+                      <Line type="monotone" dataKey="groupFteMean" name={t("office.group_mean", language)} stroke="hsl(var(--chart-5))" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -593,7 +593,7 @@ export default function OfficeDashboard() {
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `€${(v / 1000).toFixed(0)}k`} />
                       <Tooltip formatter={(v: number, name: string) => [formatCurrency(v), name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="commPerFte" name={t("office.value", language)} stroke="hsl(142,60%,40%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(142,60%,40%)" }} />
+                      <Line type="monotone" dataKey="commPerFte" name={t("office.value", language)} stroke="hsl(var(--accent-green))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--accent-green))" }} />
                       <Legend wrapperStyle={{ fontSize: 11 }} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -608,10 +608,10 @@ export default function OfficeDashboard() {
                       <XAxis dataKey="year" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} />
                       <Tooltip formatter={(v: number, name: string) => [`${v}%`, name]} labelFormatter={(l) => `${t("evolution.year", language)}: ${l}`} />
-                      <Line type="monotone" dataKey="pctPrivate" name={t("field.pct_private", language)} stroke="hsl(262,30%,53%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(262,30%,53%)" }} />
-                      <Line type="monotone" dataKey="pctSme" name={t("field.pct_sme", language)} stroke="hsl(35,90%,55%)" strokeWidth={2} dot={{ r: 4, fill: "hsl(35,90%,55%)" }} />
-                      <Line type="monotone" dataKey="groupPriMean" name={`${t("field.pct_private", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(252,25%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="groupSmeMean" name={`${t("field.pct_sme", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(35,60%,70%)" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="pctPrivate" name={t("field.pct_private", language)} stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--chart-1))" }} />
+                      <Line type="monotone" dataKey="pctSme" name={t("field.pct_sme", language)} stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--chart-2))" }} />
+                      <Line type="monotone" dataKey="groupPriMean" name={`${t("field.pct_private", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(var(--chart-5))" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="groupSmeMean" name={`${t("field.pct_sme", language)} (${language === "nl" ? "groep" : "groupe"})`} stroke="hsl(var(--chart-4))" strokeWidth={1.5} strokeDasharray="5 5" dot={{ r: 3 }} />
                       <Legend wrapperStyle={{ fontSize: 10 }} />
                     </LineChart>
                   </ResponsiveContainer>
