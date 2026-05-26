@@ -12,11 +12,18 @@ import {
 import type { OfficeSize } from "@/utils/benchmarkCalc";
 import { calcFrequencyTranslated, GROWTH_PHASE_MAP, PRIORITIES_MAP } from "@/utils/termMappings";
 
-const PRIMARY = [45, 74, 108] as const; // #7961AB
-const PRIMARY_LIGHT = [237, 232, 245] as const;
-const DARK = [45, 45, 63] as const;
-const GREY = [102, 102, 119] as const;
+const PRIMARY = [45, 74, 108] as const;         // navy
+const PRIMARY_LIGHT = [232, 237, 242] as const;  // navy-tint
+const DARK = [22, 32, 41] as const;              // ink
+const GREY = [138, 139, 137] as const;           // grey
 const WHITE = [255, 255, 255] as const;
+const GOLD = [215, 173, 123] as const;           // gold
+const GOLD_DARK = [196, 154, 99] as const;
+const CREME = [240, 226, 210] as const;
+const OFFWHITE = [250, 250, 247] as const;
+const BORDER_SOFT = [236, 231, 223] as const;
+const GREEN = [79, 138, 110] as const;
+const RED = [184, 85, 68] as const;
 
 type DocWithLastAutoTable = jsPDF & { lastAutoTable?: { finalY?: number } };
 
@@ -29,41 +36,163 @@ function fmtCur(v: number | null): string {
   return "\u20AC" + Math.round(v).toLocaleString("de-DE");
 }
 
-function addHeader(doc: jsPDF, officeName: string, pageNum: number) {
-  const w = doc.internal.pageSize.getWidth();
-  // Purple top bar
-  doc.setFillColor(...PRIMARY);
-  doc.rect(0, 0, w, 14, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...WHITE);
-  doc.setFont("helvetica", "bold");
-  doc.text("AQUILAE BAROMETER", 15, 9);
-  doc.setFont("helvetica", "normal");
-  doc.text(officeName, w - 15, 9, { align: "right" });
+function drawSpacedText(doc: jsPDF, text: string, x: number, y: number, spacing: number, align: "left" | "right" = "left") {
+  // Draw uppercase letters with manual letter-spacing
+  const chars = text.split("");
+  const widths = chars.map((c) => doc.getTextWidth(c));
+  const total = widths.reduce((a, b) => a + b, 0) + spacing * Math.max(0, chars.length - 1);
+  let cx = align === "right" ? x - total : x;
+  for (let i = 0; i < chars.length; i++) {
+    doc.text(chars[i], cx, y);
+    cx += widths[i] + spacing;
+  }
 }
 
-function addFooter(doc: jsPDF, year: number, pageNum: number, totalPages: number, lang: Language) {
+function addHeader(doc: jsPDF, year: number, lang: Language) {
+  const w = doc.internal.pageSize.getWidth();
+  // Wordmark left
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, "AQUILAE", 15, 14, 0.8);
+  // Context right
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  const ctx = `${lang === "fr" ? "Baromètre" : "Barometer"} · ${year}`;
+  doc.text(ctx, w - 15, 14, { align: "right" });
+  // Hairline
+  doc.setDrawColor(...BORDER_SOFT);
+  doc.setLineWidth(0.5);
+  doc.line(15, 18, w - 15, 18);
+}
+
+function addFooter(doc: jsPDF, _year: number, pageNum: number, totalPages: number, lang: Language) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
-  doc.setDrawColor(...PRIMARY_LIGHT);
-  doc.line(15, h - 15, w - 15, h - 15);
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setTextColor(...GREY);
-  doc.text(`${t("filter.year", lang)}: ${year}`, 15, h - 9);
-  doc.text(`${pageNum} / ${totalPages}`, w / 2, h - 9, { align: "center" });
-  doc.text(new Date().toLocaleDateString(lang === "fr" ? "fr-BE" : "nl-BE"), w - 15, h - 9, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  const confidential = lang === "fr"
+    ? "Confidentiel — usage interne uniquement"
+    : "Vertrouwelijk — uitsluitend voor intern gebruik";
+  doc.text(confidential, 15, h - 8);
+  doc.text(`${pageNum} / ${totalPages}`, w - 15, h - 8, { align: "right" });
+  // 4pt gold bar at very bottom
+  doc.setFillColor(...GOLD);
+  doc.rect(0, h - 4, w, 4, "F");
 }
 
-function sectionTitle(doc: jsPDF, title: string, y: number): number {
-  doc.setFontSize(12);
-  doc.setTextColor(...PRIMARY);
+function sectionTitle(doc: jsPDF, title: string, y: number, kicker?: string): number {
+  const kickerText = (kicker ?? title).toUpperCase();
+  // Kicker
   doc.setFont("helvetica", "bold");
-  doc.text(title, 15, y);
-  const titleWidth = doc.getTextWidth(title);
-  doc.setDrawColor(...PRIMARY);
-  doc.setLineWidth(0.5);
-  doc.line(15, y + 2, 15 + titleWidth, y + 2);
-  return y + 10;
+  doc.setFontSize(7);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, kickerText, 15, y, 0.5);
+  // Title in ink
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...DARK);
+  doc.text(title, 15, y + 6);
+  // Gold accent line 36 x 2 pt
+  doc.setFillColor(...GOLD);
+  doc.rect(15, y + 8.5, 36 / 2.83465, 2 / 2.83465, "F"); // 36pt ~ 12.7mm, 2pt ~ 0.7mm
+  return y + 14;
+}
+
+function drawCoverPage(doc: jsPDF, opts: {
+  year: number;
+  lang: Language;
+  kicker: string;     // small navy uppercase kicker on lower half
+  title: string;      // large ink title on lower half
+  introLines?: string[]; // 1-3 short lines shown in off-white card
+}) {
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  const lang = opts.lang;
+
+  // Navy block (top ~50%)
+  const blockH = h * 0.5;
+  doc.setFillColor(...PRIMARY);
+  doc.rect(0, 0, w, blockH, "F");
+  // Gold rectangle top-right (~120 x 80 pt = 42.3 x 28.2 mm)
+  const goldW = 120 / 2.83465;
+  const goldH = 80 / 2.83465;
+  doc.setFillColor(...GOLD);
+  doc.rect(w - goldW, 0, goldW, goldH, "F");
+
+  // White wordmark top-left
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(26);
+  doc.setTextColor(...WHITE);
+  drawSpacedText(doc, "AQUILAE", 20, 30, 2.2);
+  // Short white line
+  doc.setDrawColor(...WHITE);
+  doc.setLineWidth(0.6);
+  doc.line(20, 36, 60, 36);
+  // Tagline
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  const tagline = lang === "fr" ? "BAROMÈTRE ANNUEL" : "JAARLIJKSE BAROMETER";
+  drawSpacedText(doc, tagline, 20, 42, 1.0);
+
+  // Big white year (bottom-left of navy block)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(72);
+  doc.setTextColor(...WHITE);
+  doc.text(String(opts.year), 20, blockH - 14);
+
+  // Lower half (white): kicker + title
+  let y = blockH + 24;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...PRIMARY);
+  drawSpacedText(doc, opts.kicker.toUpperCase(), 20, y, 1.0);
+  y += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(26);
+  doc.setTextColor(...DARK);
+  const titleLines = doc.splitTextToSize(opts.title, w - 40);
+  doc.text(titleLines, 20, y);
+  y += titleLines.length * 10 + 6;
+
+  // Off-white card with gold left edge
+  if (opts.introLines && opts.introLines.length > 0) {
+    const cardX = 20;
+    const cardW = w - 40;
+    const lineH = 5.2;
+    const cardH = opts.introLines.length * lineH + 10;
+    doc.setFillColor(...OFFWHITE);
+    doc.rect(cardX, y, cardW, cardH, "F");
+    doc.setFillColor(...GOLD);
+    doc.rect(cardX, y, 0.7, cardH, "F"); // ~2pt
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(...DARK);
+    let ly = y + 7;
+    for (const line of opts.introLines) {
+      doc.text(line, cardX + 6, ly);
+      ly += lineH;
+    }
+    y += cardH + 8;
+  }
+
+  // Meta line near bottom (above the gold bar)
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY);
+  const dateStr = new Date().toLocaleDateString(lang === "fr" ? "fr-BE" : "nl-BE");
+  const meta = lang === "fr"
+    ? `Généré le ${dateStr} — Confidentiel, usage interne uniquement`
+    : `Gegenereerd op ${dateStr} — Vertrouwelijk, uitsluitend voor intern gebruik`;
+  doc.text(meta, 20, h - 12);
+
+  // 4pt gold bar at very bottom
+  doc.setFillColor(...GOLD);
+  doc.rect(0, h - 4, w, 4, "F");
 }
 
 function labelValue(doc: jsPDF, label: string, value: string, x: number, y: number): number {
